@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Premium Gold Theme */
+:root {
+  --gold: #d4af37;
+  --gold-soft: rgba(212, 175, 55, 0.4);
+  --gold-glow: rgba(212, 175, 55, 0.15);
+}
+
+/* Global Reset */
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: #000;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gold-soft);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
+
+/* Gold Text Utility */
+.text-gold {
+  color: var(--gold);
+}
+
+/* Gold Glow Utility */
+.gold-glow {
+  box-shadow: 0 0 20px var(--gold-glow);
+}
+
+/* Smooth Transitions */
+* {
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}

@@ -1,0 +1,68 @@
+/* =========================================================
+   SLIDE-IN SIDEBAR STYLES
+   ========================================================= */
+
+.slidein-sidebar {
+  background: var(--lynq-surface-strong);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-y: auto;
+  padding-top: 1rem;
+  height: 100vh;
+}
+
+.sidebar-section {
+  margin-bottom: 1rem;
+}
+
+.sidebar-section-header {
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.sidebar-items {
+  display: flex;
+  flex-direction: column;
+  padding-left: 0.25rem;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--lynq-radius);
+  color: var(--lynq-text);
+  text-decoration: none;
+  transition: background var(--anim-fast), color var(--anim-fast);
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-item.active {
+  background: var(--lynq-gold-soft);
+  color: var(--lynq-gold);
+}
+
+/* Mobile overlay */
+@media (max-width: 768px) {
+  .slidein-sidebar {
+    width: 240px;
+    left: -260px;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    z-index: 50;
+    transition: left var(--anim-normal);
+  }
+
+  .slidein-sidebar.open {
+    left: 0;
+  }
+}

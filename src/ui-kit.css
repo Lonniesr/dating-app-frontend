@@ -1,0 +1,251 @@
+/* -------------------------------------------------------
+   BUTTONS
+------------------------------------------------------- */
+
+.btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: var(--lynq-dark-3);
+  color: var(--lynq-text);
+  transition: background var(--anim-normal), box-shadow var(--anim-normal);
+}
+
+.btn:hover {
+  background: var(--lynq-dark-4);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Gold Button */
+.btn-gold {
+  background: var(--lynq-gold);
+  color: #000;
+  border-color: var(--lynq-gold);
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-gold:hover {
+  background: var(--lynq-gold-light);
+  border-color: var(--lynq-gold-light);
+  box-shadow: 0 0 16px var(--lynq-gold-glow);
+}
+
+/* Outline Button */
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--lynq-border-strong);
+  color: var(--lynq-text);
+}
+
+.btn-outline:hover {
+  border-color: var(--lynq-gold);
+  color: var(--lynq-gold);
+}
+
+/* Danger Button */
+.btn-danger {
+  background: rgba(255, 0, 0, 0.15);
+  border: 1px solid rgba(255, 0, 0, 0.25);
+  color: #ff6b6b;
+}
+
+.btn-danger:hover {
+  background: rgba(255, 0, 0, 0.25);
+}
+
+/* -------------------------------------------------------
+   INPUTS
+------------------------------------------------------- */
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--lynq-dark-3);
+  border: 1px solid var(--lynq-border);
+  border-radius: var(--radius-md);
+  color: var(--lynq-text);
+  transition: border-color var(--anim-normal), box-shadow var(--anim-normal);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--lynq-gold);
+  box-shadow: 0 0 8px var(--lynq-gold-glow);
+}
+
+.input::placeholder {
+  color: var(--lynq-text-muted);
+}
+
+/* -------------------------------------------------------
+   TEXTAREA
+------------------------------------------------------- */
+
+.textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 1rem;
+  background: var(--lynq-dark-3);
+  border: 1px solid var(--lynq-border);
+  border-radius: var(--radius-md);
+  color: var(--lynq-text);
+  resize: vertical;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--lynq-gold);
+  box-shadow: 0 0 8px var(--lynq-gold-glow);
+}
+
+/* -------------------------------------------------------
+   SELECT
+------------------------------------------------------- */
+
+.select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--lynq-dark-3);
+  border: 1px solid var(--lynq-border);
+  border-radius: var(--radius-md);
+  color: var(--lynq-text);
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--lynq-gold);
+}
+
+/* -------------------------------------------------------
+   CARDS
+------------------------------------------------------- */
+
+.card {
+  background: var(--glass-bg-2);
+  border: 1px solid var(--glass-border-1);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(var(--glass-blur-md));
+  box-shadow: var(--shadow-medium);
+}
+
+.card-title {
+  font-size: var(--font-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--lynq-gold);
+  margin-bottom: var(--space-4);
+}
+
+/* -------------------------------------------------------
+   TABLES
+------------------------------------------------------- */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--glass-bg-2);
+  border: 1px solid var(--glass-border-1);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.table th {
+  background: var(--lynq-dark-3);
+  color: var(--lynq-gold);
+  font-weight: var(--font-weight-semibold);
+  border-bottom: 1px solid var(--lynq-border);
+}
+
+.table tr {
+  border-bottom: 1px solid var(--lynq-border);
+}
+
+.table tr:hover {
+  background: var(--lynq-dark-2);
+}
+
+/* -------------------------------------------------------
+   BADGES
+------------------------------------------------------- */
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.badge-gold {
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--lynq-gold);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.badge-danger {
+  background: rgba(255, 0, 0, 0.15);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 0, 0, 0.25);
+}
+
+/* -------------------------------------------------------
+   ALERTS
+------------------------------------------------------- */
+
+.alert {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--lynq-border);
+  background: var(--lynq-dark-3);
+  color: var(--lynq-text);
+}
+
+.alert-gold {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.25);
+  color: var(--lynq-gold);
+}
+
+.alert-danger {
+  background: rgba(255, 0, 0, 0.1);
+  border-color: rgba(255, 0, 0, 0.25);
+  color: #ff6b6b;
+}
+
+/* -------------------------------------------------------
+   FORM LABELS
+------------------------------------------------------- */
+
+.label {
+  font-size: var(--font-sm);
+  color: var(--lynq-gold);
+  margin-bottom: var(--space-2);
+  display: block;
+}
+
+/* -------------------------------------------------------
+   SECTIONS
+------------------------------------------------------- */
+
+.section {
+  margin-bottom: var(--space-8);
+}
+
+.section-title {
+  font-size: var(--font-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--lynq-gold);
+  margin-bottom: var(--space-4);
+}

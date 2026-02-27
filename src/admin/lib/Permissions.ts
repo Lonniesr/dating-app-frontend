@@ -1,0 +1,17 @@
+export type AdminRole =
+  | "OWNER"
+  | "ADMIN"
+  | "MODERATOR"
+  | "SUPPORT"
+  | "VIEWER";
+
+export const PERMISSIONS = {
+  DASHBOARD: ["OWNER", "ADMIN", "MODERATOR", "SUPPORT", "VIEWER"],
+  USERS: ["OWNER", "ADMIN", "MODERATOR"],
+  USER_DETAIL: ["OWNER", "ADMIN", "MODERATOR"],
+  INVITES: ["OWNER", "ADMIN"],
+  SYSTEM_HEALTH: ["OWNER", "ADMIN"],
+  SETTINGS: ["OWNER"],
+  FEATURE_FLAGS: ["OWNER", "ADMIN"],
+  AUDIT_LOGS: ["OWNER", "ADMIN"],
+};

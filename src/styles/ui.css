@@ -1,0 +1,78 @@
+/* =========================================================
+   UI COMPONENT SYSTEM
+   Buttons, Inputs, Selects, Textareas
+   ========================================================= */
+
+/* ---------- BUTTONS ---------- */
+
+.btn {
+  padding: 0.6rem 1rem;
+  border-radius: var(--lynq-radius);
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity var(--anim-fast), background var(--anim-fast);
+}
+
+.btn-gold {
+  background: var(--lynq-gold);
+  color: #000;
+}
+
+.btn-gold:hover {
+  opacity: 0.85;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--lynq-gold);
+  color: var(--lynq-gold);
+}
+
+.btn-outline:hover {
+  background: var(--lynq-gold-soft);
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--lynq-text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: opacity var(--anim-fast);
+}
+
+.btn-icon:hover {
+  opacity: 0.7;
+}
+
+/* ---------- INPUTS ---------- */
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--lynq-radius);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--lynq-surface-strong);
+  color: var(--lynq-text);
+  outline: none;
+  transition: border var(--anim-fast);
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--lynq-gold);
+}
+
+.select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.textarea {
+  min-height: 120px;
+  resize: vertical;
+}

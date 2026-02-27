@@ -1,0 +1,29 @@
+.log-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.log-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(212, 175, 55, 0.25),
+    transparent
+  );
+  animation: shimmer 1.2s ease-out;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -150%;
+  }
+  100% {
+    left: 150%;
+  }
+}

@@ -1,0 +1,175 @@
+/* =========================================================
+   HYBRID LYNQ UI THEME SYSTEM
+   Dark + Light modes, gold accents, glass surfaces
+   ========================================================= */
+
+/* ---------- BASE TOKENS ---------- */
+:root {
+  --lynq-gold: #f5c76b;
+  --lynq-gold-soft: rgba(245, 199, 107, 0.25);
+
+  --lynq-radius: 14px;
+  --lynq-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+
+  --anim-fast: 120ms ease;
+  --anim-normal: 220ms ease;
+  --anim-slow: 380ms ease;
+
+  --font-main: "Inter", system-ui, sans-serif;
+}
+
+/* ---------- DARK MODE ---------- */
+:root[data-theme="dark"] {
+  --lynq-bg: #050509;
+  --lynq-bg-2: #0b0b12;
+
+  --lynq-surface: rgba(15, 15, 25, 0.65);
+  --lynq-surface-strong: rgba(20, 20, 30, 0.85);
+
+  --lynq-text: #f7f7ff;
+  --lynq-text-dim: #b8b8c8;
+}
+
+/* ---------- LIGHT MODE ---------- */
+:root[data-theme="light"] {
+  --lynq-bg: #f5f5fb;
+  --lynq-bg-2: #ffffff;
+
+  --lynq-surface: rgba(255, 255, 255, 0.65);
+  --lynq-surface-strong: rgba(255, 255, 255, 0.85);
+
+  --lynq-text: #111118;
+  --lynq-text-dim: #44445a;
+}
+
+/* ---------- GLOBAL ---------- */
+body {
+  background: var(--lynq-bg);
+  color: var(--lynq-text);
+  font-family: var(--font-main);
+  margin: 0;
+  padding: 0;
+}
+
+/* ---------- GLASS SURFACES ---------- */
+.glass-panel {
+  background: var(--lynq-surface);
+  backdrop-filter: blur(18px);
+  border-radius: var(--lynq-radius);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--lynq-shadow);
+}
+
+.glass-card {
+  background: var(--lynq-surface-strong);
+  backdrop-filter: blur(22px);
+  border-radius: var(--lynq-radius);
+  padding: 1rem;
+}
+
+/* ---------- GOLD SHIMMER ---------- */
+.admin-gold-shimmer {
+  background: linear-gradient(90deg, var(--lynq-gold), #fff2c6, var(--lynq-gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 0% }
+  100% { background-position: 200% }
+}
+
+/* ---------- INPUTS ---------- */
+.input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--lynq-radius);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--lynq-surface-strong);
+  color: var(--lynq-text);
+  outline: none;
+  transition: border var(--anim-fast);
+}
+
+.input:focus {
+  border-color: var(--lynq-gold);
+}
+
+/* ---------- BUTTONS ---------- */
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--lynq-text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: opacity var(--anim-fast);
+}
+
+.btn-icon:hover {
+  opacity: 0.7;
+}
+
+.btn-gold {
+  background: var(--lynq-gold);
+  color: #000;
+  padding: 0.6rem 1rem;
+  border-radius: var(--lynq-radius);
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity var(--anim-fast);
+}
+
+.btn-gold:hover {
+  opacity: 0.85;
+}
+
+/* ---------- SIDEBAR ---------- */
+.slidein-sidebar {
+  background: var(--lynq-surface-strong);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-y: auto;
+  padding-top: 1rem;
+}
+
+.sidebar-section-header {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+}
+
+.sidebar-item {
+  color: var(--lynq-text);
+  text-decoration: none;
+  border-radius: var(--lynq-radius);
+  transition: background var(--anim-fast);
+}
+
+.sidebar-item.active {
+  background: var(--lynq-gold-soft);
+  color: var(--lynq-gold);
+}
+
+/* ---------- HEADER ---------- */
+.admin-header {
+  background: var(--lynq-surface-strong);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+}
+
+/* ---------- UTILITIES ---------- */
+.fade-in {
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}

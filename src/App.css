@@ -1,0 +1,333 @@
+/* -------------------------------------------------------
+   RESET & BASE
+------------------------------------------------------- */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  background: var(--lynq-dark-1);
+  color: var(--lynq-text);
+  font-family: "Inter", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Smooth transitions everywhere */
+* {
+  transition:
+    background-color var(--anim-normal) ease,
+    color var(--anim-normal) ease,
+    border-color var(--anim-normal) ease,
+    opacity var(--anim-normal) ease;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--lynq-dark-5);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--lynq-dark-4);
+}
+
+/* -------------------------------------------------------
+   LAYOUT
+------------------------------------------------------- */
+
+/* ❗ FIXED: removed margin-left: 16rem and collapsed margin-left: 5rem */
+.admin-layout {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.admin-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* no padding, no margin-left — layout.css handles spacing */
+}
+
+/* -------------------------------------------------------
+   TYPOGRAPHY
+------------------------------------------------------- */
+
+.h2 {
+  font-size: var(--font-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--lynq-gold);
+  margin-bottom: var(--space-4);
+}
+
+/* -------------------------------------------------------
+   CARDS
+------------------------------------------------------- */
+
+.card {
+  background: var(--glass-bg-2);
+  border: 1px solid var(--glass-border-1);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(var(--glass-blur-md));
+  box-shadow: var(--shadow-medium);
+}
+
+/* -------------------------------------------------------
+   GOLD SHIMMER SYSTEM (GLOBAL)
+------------------------------------------------------- */
+
+.gold-shimmer {
+  background: var(--gold-shimmer-gradient);
+  background-size: var(--gold-shimmer-size);
+  background-clip: text;               /* added */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: goldShimmer var(--gold-shimmer-duration) ease-in-out infinite;
+}
+
+@keyframes goldShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* -------------------------------------------------------
+   HEADER TITLE — PREMIUM GOLD SHIMMER
+------------------------------------------------------- */
+
+.admin-gold-shimmer {
+  background: var(--gold-shimmer-gradient);
+  background-size: var(--gold-shimmer-size);
+  background-clip: text;               /* added */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: goldShimmerHeader var(--gold-shimmer-duration) ease-in-out infinite;
+  text-shadow: var(--shadow-gold);
+}
+
+@keyframes goldShimmerHeader {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* -------------------------------------------------------
+   BUTTONS
+------------------------------------------------------- */
+
+.btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: var(--lynq-dark-3);
+  color: var(--lynq-text);
+}
+
+.btn:hover {
+  background: var(--lynq-dark-4);
+}
+
+.btn-gold {
+  background: var(--lynq-gold);
+  color: #000;
+  border-color: var(--lynq-gold);
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-gold:hover {
+  background: var(--lynq-gold-light);
+  border-color: var(--lynq-gold-light);
+  box-shadow: 0 0 16px var(--lynq-gold-glow);
+}
+
+.btn-gold:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* -------------------------------------------------------
+   INPUTS
+------------------------------------------------------- */
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--lynq-dark-3);
+  border: 1px solid var(--lynq-border);
+  border-radius: var(--radius-md);
+  color: var(--lynq-text);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--lynq-gold);
+  box-shadow: 0 0 8px var(--lynq-gold-glow);
+}
+
+/* -------------------------------------------------------
+   TABLES
+------------------------------------------------------- */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--glass-bg-2);
+  border: 1px solid var(--glass-border-1);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.table th {
+  background: var(--lynq-dark-3);
+  color: var(--lynq-gold);
+  font-weight: var(--font-weight-semibold);
+  border-bottom: 1px solid var(--lynq-border);
+}
+
+.table tr {
+  border-bottom: 1px solid var(--lynq-border);
+}
+
+.table tr:hover {
+  background: var(--lynq-dark-2);
+}
+
+/* -------------------------------------------------------
+   GLASS SURFACES
+------------------------------------------------------- */
+
+.glass-card {
+  background: var(--glass-bg-1);
+  border: 1px solid var(--glass-border-1);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  backdrop-filter: blur(var(--glass-blur-md));
+}
+
+.glass-panel {
+  background: var(--glass-bg-2);
+  border: 1px solid var(--glass-border-2);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  backdrop-filter: blur(var(--glass-blur-lg));
+}
+
+/* -------------------------------------------------------
+   GOLD HOVER SHIMMER (Sidebar + Breadcrumbs)
+------------------------------------------------------- */
+
+.gold-hover-shimmer {
+  position: relative;
+}
+
+.gold-hover-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--lynq-gold), transparent);
+  opacity: 0;
+  transition: opacity var(--anim-normal) ease;
+  filter: blur(6px);
+}
+
+.gold-hover-shimmer:hover::after {
+  opacity: 0.2;
+}
+
+/* -------------------------------------------------------
+   ANIMATIONS
+------------------------------------------------------- */
+
+.fade-in {
+  animation: fadeIn var(--anim-slow) ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -------------------------------------------------------
+   BADGES
+------------------------------------------------------- */
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.badge-gold {
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--lynq-gold);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.badge-danger {
+  background: rgba(255, 0, 0, 0.15);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 0, 0, 0.25);
+}
+
+/* -------------------------------------------------------
+   FORMS — LABELS
+------------------------------------------------------- */
+
+.label {
+  font-size: var(--font-sm);
+  color: var(--lynq-gold);
+  margin-bottom: var(--space-2);
+  display: block;
+}
+
+/* -------------------------------------------------------
+   PANELS / SECTIONS
+------------------------------------------------------- */
+
+.section {
+  margin-bottom: var(--space-8);
+}
+
+.section-title {
+  font-size: var(--font-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--lynq-gold);
+  margin-bottom: var(--space-4);
+}

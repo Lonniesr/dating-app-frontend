@@ -1,0 +1,47 @@
+{
+  "compilerOptions": {
+    /* Build info */
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+
+    /* Modern JS target */
+    "target": "ES2022",
+
+    /* Browser environment */
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+
+    /* React JSX transform */
+    "jsx": "react-jsx",
+
+    /* Module system for Vite */
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+
+    /* TypeScript 5+ modern rules */
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": false,
+
+    /* No output (Vite handles bundling) */
+    "noEmit": true,
+
+    /* Linting / strictness */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "erasableSyntaxOnly": true,
+
+    /* Interop */
+    "skipLibCheck": true,
+    "types": ["react", "react-dom", "vite/client"],
+
+    /* Path aliases */
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"]
+    }
+  },
+  "include": ["src"]
+}

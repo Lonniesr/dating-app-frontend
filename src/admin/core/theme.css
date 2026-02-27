@@ -1,0 +1,102 @@
+/* -------------------------------------------------------
+   LYNQ THEME — DESIGN TOKENS
+   Dark + Light Mode
+------------------------------------------------------- */
+
+:root {
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+
+  /* Animation */
+  --anim-fast: 120ms;
+  --anim-normal: 240ms;
+  --anim-slow: 420ms;
+
+  /* Shadows */
+  --shadow-soft: 0 4px 12px rgba(0,0,0,0.15);
+  --shadow-medium: 0 6px 18px rgba(0,0,0,0.22);
+  --shadow-gold: 0 0 12px rgba(212,175,55,0.45);
+
+  /* Gold Shimmer */
+  --gold-shimmer-gradient: linear-gradient(
+    90deg,
+    #d4af37,
+    #f7e27c,
+    #d4af37
+  );
+  --gold-shimmer-size: 200%;
+  --gold-shimmer-duration: 3s;
+}
+
+/* -------------------------------------------------------
+   DARK MODE
+------------------------------------------------------- */
+
+:root[data-theme="dark"] {
+  --lynq-dark-1: #0d0d0d;
+  --lynq-dark-2: #141414;
+  --lynq-dark-3: #1c1c1c;
+  --lynq-dark-4: #262626;
+  --lynq-dark-5: #333;
+
+  --lynq-text: #e6e6e6;
+  --lynq-text-muted: #b3b3b3;
+
+  --lynq-border: rgba(255,255,255,0.12);
+
+  --lynq-gold: #d4af37;
+  --lynq-gold-light: #f7e27c;
+  --lynq-gold-glow: rgba(212,175,55,0.55);
+
+  /* Glass */
+  --glass-bg-1: rgba(255,255,255,0.03);
+  --glass-bg-2: rgba(255,255,255,0.06);
+  --glass-border-1: rgba(255,255,255,0.08);
+  --glass-border-2: rgba(255,255,255,0.12);
+
+  --glass-blur-md: 12px;
+  --glass-blur-lg: 20px;
+}
+
+/* -------------------------------------------------------
+   LIGHT MODE
+------------------------------------------------------- */
+
+:root[data-theme="light"] {
+  --lynq-dark-1: #fafafa;
+  --lynq-dark-2: #f2f2f2;
+  --lynq-dark-3: #e8e8e8;
+  --lynq-dark-4: #dcdcdc;
+  --lynq-dark-5: #cfcfcf;
+
+  --lynq-text: #1a1a1a;
+  --lynq-text-muted: #555;
+
+  --lynq-border: rgba(0,0,0,0.12);
+
+  --lynq-gold: #b38a1e;
+  --lynq-gold-light: #e6c76a;
+  --lynq-gold-glow: rgba(179,138,30,0.45);
+
+  /* Glass */
+  --glass-bg-1: rgba(0,0,0,0.03);
+  --glass-bg-2: rgba(0,0,0,0.06);
+  --glass-border-1: rgba(0,0,0,0.08);
+  --glass-border-2: rgba(0,0,0,0.12);
+
+  --glass-blur-md: 10px;
+  --glass-blur-lg: 18px;
+}

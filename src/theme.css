@@ -1,0 +1,117 @@
+/* -------------------------------------------------------
+   LYNQ THEME — VARIABLES ONLY
+   Hybrid Lynq UI Theme Pack v2
+------------------------------------------------------- */
+
+:root {
+  /* ---------------------------------------------------
+     GOLD SYSTEM
+  --------------------------------------------------- */
+  --lynq-gold: #d4af37;
+  --lynq-gold-dark: #b38a2f;
+  --lynq-gold-light: #e6c45a;
+  --lynq-gold-soft: #f7e7b7;
+  --lynq-gold-glow: rgba(212, 175, 55, 0.35);
+
+  /* ---------------------------------------------------
+     DARK LAYERS
+  --------------------------------------------------- */
+  --lynq-dark-1: #0b0b0b;
+  --lynq-dark-2: #111111;
+  --lynq-dark-3: #1a1a1a;
+  --lynq-dark-4: #222222;
+  --lynq-dark-5: #2a2a2a;
+
+  /* ---------------------------------------------------
+     TEXT COLORS
+  --------------------------------------------------- */
+  --lynq-text: #e5e5e5;
+  --lynq-text-muted: #9a9a9a;
+  --lynq-text-soft: #bdbdbd;
+
+  /* ---------------------------------------------------
+     BORDERS
+  --------------------------------------------------- */
+  --lynq-border: rgba(255, 255, 255, 0.06);
+  --lynq-border-strong: rgba(255, 255, 255, 0.12);
+
+  /* ---------------------------------------------------
+     GLASS SYSTEM
+  --------------------------------------------------- */
+  --glass-bg-1: rgba(255, 255, 255, 0.03);
+  --glass-bg-2: rgba(255, 255, 255, 0.05);
+  --glass-bg-3: rgba(255, 255, 255, 0.08);
+
+  --glass-border-1: rgba(255, 255, 255, 0.06);
+  --glass-border-2: rgba(255, 255, 255, 0.1);
+
+  --glass-blur-sm: 8px;
+  --glass-blur-md: 12px;
+  --glass-blur-lg: 18px;
+
+  /* ---------------------------------------------------
+     SHADOWS
+  --------------------------------------------------- */
+  --shadow-soft: 0 0 12px rgba(0, 0, 0, 0.25);
+  --shadow-medium: 0 0 20px rgba(0, 0, 0, 0.35);
+  --shadow-strong: 0 0 28px rgba(0, 0, 0, 0.45);
+  --shadow-gold: 0 0 14px rgba(212, 175, 55, 0.35);
+
+  /* ---------------------------------------------------
+     RADII
+  --------------------------------------------------- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  /* ---------------------------------------------------
+     SPACING SCALE
+  --------------------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+
+  /* ---------------------------------------------------
+     TYPOGRAPHY SCALE
+  --------------------------------------------------- */
+  --font-xs: 0.75rem;
+  --font-sm: 0.875rem;
+  --font-md: 1rem;
+  --font-lg: 1.25rem;
+  --font-xl: 1.5rem;
+  --font-2xl: 2rem;
+  --font-3xl: 2.5rem;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ---------------------------------------------------
+     ANIMATION SPEEDS
+  --------------------------------------------------- */
+  --anim-fast: 0.15s;
+  --anim-normal: 0.25s;
+  --anim-slow: 0.4s;
+
+  /* ---------------------------------------------------
+     GOLD SHIMMER ANIMATION TOKENS
+  --------------------------------------------------- */
+  --gold-shimmer-gradient: linear-gradient(
+    90deg,
+    var(--lynq-gold-dark),
+    var(--lynq-gold),
+    var(--lynq-gold-soft),
+    var(--lynq-gold),
+    var(--lynq-gold-dark)
+  );
+
+  --gold-shimmer-size: 300%;
+  --gold-shimmer-duration: 4s;
+}

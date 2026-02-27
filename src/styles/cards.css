@@ -1,0 +1,77 @@
+/* =========================================================
+   CARDS — STAT, METRIC, GLASS
+   ========================================================= */
+
+/* ---------- BASE CARD ---------- */
+
+.card {
+  background: var(--lynq-surface-strong);
+  border-radius: var(--lynq-radius);
+  padding: 1.25rem;
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: var(--lynq-shadow);
+}
+
+/* ---------- GLASS CARD ---------- */
+
+.card-glass {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(22px);
+  border-radius: var(--lynq-radius);
+  padding: 1.25rem;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+/* ---------- GOLD CARD ---------- */
+
+.card-gold {
+  border: 1px solid var(--lynq-gold);
+  box-shadow: 0 0 18px rgba(245,199,107,0.25);
+}
+
+/* ---------- STAT CARD ---------- */
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.stat-card .stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.stat-card .stat-label {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+/* ---------- METRIC CARD ---------- */
+
+.metric-card {
+  padding: 1.5rem;
+  border-radius: var(--lynq-radius);
+  background: var(--lynq-surface);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metric-card .metric-title {
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.metric-card .metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.metric-card .metric-change {
+  font-size: 0.85rem;
+  color: var(--lynq-gold);
+}

@@ -1,0 +1,65 @@
+/* =========================================================
+   ADMIN LAYOUT STYLES
+   ========================================================= */
+
+.admin-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--lynq-bg);
+  color: var(--lynq-text);
+}
+
+.admin-content {
+  flex: 1;
+  min-height: 100vh;
+  background: var(--lynq-bg);
+  transition: margin var(--anim-normal);
+}
+
+.admin-main {
+  padding: 1.5rem;
+}
+
+.admin-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--lynq-gold-soft) transparent;
+}
+
+.admin-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-scroll::-webkit-scrollbar-thumb {
+  background: var(--lynq-gold-soft);
+  border-radius: 10px;
+}
+
+/* Cards */
+.admin-card {
+  background: var(--lynq-surface-strong);
+  border-radius: var(--lynq-radius);
+  padding: 1.25rem;
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Grid utilities */
+.admin-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.admin-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.admin-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}

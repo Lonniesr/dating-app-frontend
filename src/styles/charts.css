@@ -1,0 +1,49 @@
+/* =========================================================
+   CHARTS — ANALYTICS VISUALS
+   ========================================================= */
+
+/* Chart container */
+.chart-container {
+  background: var(--lynq-surface-strong);
+  border-radius: var(--lynq-radius);
+  padding: 1.25rem;
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: var(--lynq-shadow);
+}
+
+/* Tooltip */
+.chart-tooltip {
+  background: var(--lynq-surface-strong);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--lynq-radius);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--lynq-text);
+  font-size: 0.85rem;
+}
+
+/* Axis labels */
+.chart-axis text {
+  fill: var(--lynq-text-dim);
+  font-size: 0.75rem;
+}
+
+/* Grid lines */
+.chart-grid line {
+  stroke: rgba(255,255,255,0.08);
+}
+
+/* Gold line highlight */
+.chart-line-gold {
+  stroke: var(--lynq-gold);
+  stroke-width: 2.5;
+}
+
+/* Bar fill */
+.chart-bar {
+  fill: var(--lynq-gold-soft);
+}
+
+.chart-bar:hover {
+  fill: var(--lynq-gold);
+}

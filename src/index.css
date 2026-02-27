@@ -1,0 +1,357 @@
+/* -------------------------------------------------------
+   Tailwind Base
+------------------------------------------------------- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -------------------------------------------------------
+   Global Theme
+------------------------------------------------------- */
+html, body {
+  background: #0b0b0d;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Gold Colors */
+:root {
+  --gold: #d4af37;
+  --gold-soft: rgba(212, 175, 55, 0.4);
+  --gold-glow: rgba(212, 175, 55, 0.7);
+}
+
+/* -------------------------------------------------------
+   Scrollbar
+------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #111;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--gold-soft);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
+
+/* -------------------------------------------------------
+   Gold Glow
+------------------------------------------------------- */
+.glow-gold {
+  text-shadow: 0 0 8px var(--gold-glow);
+}
+
+/* -------------------------------------------------------
+   Gold Shimmer Sweep
+------------------------------------------------------- */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-gold {
+  background: linear-gradient(
+    90deg,
+    rgba(212, 175, 55, 0.1),
+    rgba(212, 175, 55, 0.4),
+    rgba(212, 175, 55, 0.1)
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite linear;
+}
+
+/* -------------------------------------------------------
+   Gold Border Animation
+------------------------------------------------------- */
+@keyframes goldBorder {
+  0% { border-color: rgba(212, 175, 55, 0.2); }
+  50% { border-color: rgba(212, 175, 55, 0.6); }
+  100% { border-color: rgba(212, 175, 55, 0.2); }
+}
+
+.border-gold-animate {
+  animation: goldBorder 3s infinite ease-in-out;
+}
+
+/* -------------------------------------------------------
+   Sidebar Slide-In
+------------------------------------------------------- */
+@keyframes sidebarSlide {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.sidebar-slide-in {
+  animation: sidebarSlide 0.6s ease-out forwards;
+}
+
+/* -------------------------------------------------------
+   Label Fade
+------------------------------------------------------- */
+@keyframes labelFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.label-fade {
+  animation: labelFade 0.4s ease-out forwards;
+}
+
+/* -------------------------------------------------------
+   Icon Hover Glow
+------------------------------------------------------- */
+.sidebar-icon {
+  transition: 0.25s ease;
+}
+.sidebar-icon:hover {
+  color: var(--gold);
+  transform: scale(1.15);
+  text-shadow: 0 0 10px var(--gold-glow);
+}
+
+/* -------------------------------------------------------
+   Collapsed Sidebar Strong Glow
+------------------------------------------------------- */
+.sidebar-collapsed .sidebar-icon {
+  text-shadow: 0 0 12px var(--gold-glow);
+}
+
+/* -------------------------------------------------------
+   Card Hover Lift
+------------------------------------------------------- */
+.card-hover {
+  transition: 0.25s ease;
+}
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 12px var(--gold-soft);
+}
+
+/* -------------------------------------------------------
+   Button Press Micro-Interaction
+------------------------------------------------------- */
+.btn-press {
+  transition: transform 0.1s ease;
+}
+.btn-press:active {
+  transform: scale(0.96);
+}
+
+/* -------------------------------------------------------
+   Floating Gold Particles
+------------------------------------------------------- */
+.sidebar-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--gold-soft) 1px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.12;
+  animation: particleFloat 12s infinite linear;
+}
+
+@keyframes particleFloat {
+  0% { background-position: 0 0; }
+  100% { background-position: 60px 60px; }
+}
+
+/* -------------------------------------------------------
+   Fade & Scale Animations
+------------------------------------------------------- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-scaleIn {
+  animation: scaleIn 0.5s ease-out forwards;
+}
+
+/* -------------------------------------------------------
+   Modal Animations
+------------------------------------------------------- */
+@keyframes modalFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.modal-fade {
+  animation: modalFade 0.4s ease-out forwards;
+}
+
+@keyframes modalScale {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+.modal-scale {
+  animation: modalScale 0.35s ease-out forwards;
+}
+
+/* -------------------------------------------------------
+   Page Transition Shimmer Wipe
+------------------------------------------------------- */
+@keyframes shimmerWipe {
+  0% { transform: translateX(-100%); opacity: 0.2; }
+  50% { transform: translateX(0%); opacity: 0.5; }
+  100% { transform: translateX(100%); opacity: 0.2; }
+}
+
+.animate-shimmerWipe {
+  animation: shimmerWipe 0.6s ease-out forwards;
+}
+
+/* -------------------------------------------------------
+   Tooltip Animations
+------------------------------------------------------- */
+@keyframes tooltipFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tooltip-animate {
+  animation: tooltipFade 0.25s ease-out forwards;
+}
+
+/* -------------------------------------------------------
+   Input Focus Gold Ring
+------------------------------------------------------- */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 6px var(--gold-soft);
+}
+
+/* -------------------------------------------------------
+   MOBILE RESPONSIVENESS PASS
+------------------------------------------------------- */
+
+/* Global spacing adjustments */
+@media (max-width: 640px) {
+  .p-8 { padding: 1.25rem !important; }
+  .px-6 { padding-left: 1rem !important; padding-right: 1rem !important; }
+  .py-3 { padding-top: 0.6rem !important; padding-bottom: 0.6rem !important; }
+}
+
+/* Typography scaling */
+@media (max-width: 640px) {
+  h1, .text-3xl { font-size: 1.75rem !important; }
+  h2, .text-2xl { font-size: 1.5rem !important; }
+  h3, .text-xl  { font-size: 1.25rem !important; }
+  .text-lg      { font-size: 1.1rem !important; }
+}
+
+/* Sidebar collapse on mobile */
+@media (max-width: 768px) {
+  aside {
+    position: fixed;
+    z-index: 50;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  aside.open {
+    transform: translateX(0);
+  }
+}
+
+/* Sidebar overlay */
+@media (max-width: 768px) {
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(3px);
+    z-index: 40;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .sidebar-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* TopBar stacking */
+@media (max-width: 640px) {
+  header {
+    height: auto !important;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+  header .relative.w-72 {
+    width: 100% !important;
+  }
+}
+
+/* Analytics Cards grid */
+@media (max-width: 640px) {
+  .analytics-grid,
+  .grid-cols-3,
+  .grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Chart Cards height */
+@media (max-width: 640px) {
+  .h-48 { height: 200px !important; }
+}
+
+/* Leaderboard Cards */
+@media (max-width: 640px) {
+  .leaderboard-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+}
+
+/* Data Table */
+@media (max-width: 768px) {
+  table { font-size: 0.85rem; }
+  th, td { padding: 0.5rem !important; }
+}
+
+/* Forms */
+@media (max-width: 640px) {
+  form { padding: 1.5rem !important; }
+  textarea { height: 100px !important; }
+}
+
+/* Command Palette */
+@media (max-width: 640px) {
+  .command-palette {
+    width: 90% !important;
+    padding: 1rem !important;
+  }
+}
+
+/* Modals */
+@media (max-width: 640px) {
+  .modal-scale {
+    width: 90% !important;
+    margin: 0 auto;
+  }
+}
+
+/* Page layout */
+@media (max-width: 768px) {
+  main { padding: 1.25rem !important; }
+}
