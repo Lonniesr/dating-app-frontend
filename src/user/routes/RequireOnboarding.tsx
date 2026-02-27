@@ -1,18 +1,22 @@
 import { Navigate } from "react-router-dom";
-import { useUser } from "../context/UserContext";
+import { useUserAuth } from "../context/useUserAuth";
 import type { ReactNode } from "react";
 
-export default function RequireOnboarding({ children }: { children: ReactNode }) {
-  const { user, loading } = useUser();
+export default function RequireOnboarding({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const { authUser, isLoading } = useUserAuth();
 
-  if (loading) return null;
+  if (isLoading) return null;
 
-  if (!user) {
+  if (!authUser) {
     return <Navigate to="/signup" replace />;
   }
 
-  if (!user.onboardingComplete) {
-    return <Navigate to="/onboarding" replace />;
+  if (!authUser.onboardingComplete) {
+    return <Navigate to="/invite/onboarding" replace />;
   }
 
   return children;
