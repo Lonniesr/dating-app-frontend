@@ -74,8 +74,8 @@ export function UserAuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
 
-      const data = await res.json();
-      const rawUser = data.user ?? null;
+      // ✅ FIX: backend returns user directly
+      const rawUser = await res.json();
 
       if (!rawUser) {
         setAuthUser(null);
@@ -133,7 +133,6 @@ export function UserAuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/* ✅ THIS WAS MISSING */
 export function useUserAuth(): UserAuthContextValue {
   const context = useContext(UserAuthContext);
 
