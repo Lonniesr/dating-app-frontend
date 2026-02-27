@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserAuth } from "./context/useUserAuth";
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const { refreshUser } = useUserAuth();
@@ -33,18 +34,28 @@ export default function LoginPage() {
         return;
       }
 
-      // Refresh authenticated user context
-      await refreshUser();
+      // 🔥 Refresh user AFTER login
+      const user = await refreshUser();
 
-      // Redirect to onboarding flow
-      navigate("/invite/onboarding");
+      if (!user) {
+        setError("Failed to load user");
+        setLoading(false);
+        return;
+      }
+
+      // 🎯 Conditional redirect
+      if (!user.onboardingComplete) {
+        navigate("/invite/onboarding", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true }); // change if your main route differs
+      }
 
     } catch (err) {
       console.error("LOGIN ERROR:", err);
       setError("Server error");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
