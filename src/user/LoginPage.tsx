@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserAuth } from "./context/useUserAuth";
-import logo from "../assets/lynq-logo.png"; // 👈 make sure path is correct
-
+import logo from "../assets/lynqlogo.png";
 export default function LoginPage() {
   const navigate = useNavigate();
   const { refreshUser } = useUserAuth();
