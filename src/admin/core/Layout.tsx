@@ -10,7 +10,7 @@ export default function Layout() {
       console.log("ADMIN SOCKET CONNECTED:", socket.id);
     });
 
-    socket.on("connect_error", (err) => {
+    socket.on("connect_error", (err: Error) => {
       console.error("ADMIN SOCKET ERROR:", err.message);
     });
 
