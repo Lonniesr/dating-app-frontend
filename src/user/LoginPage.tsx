@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserAuth } from "./context/useUserAuth";
+import logo from "../assets/lynq-logo.png"; // 👈 make sure path is correct
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -30,24 +31,20 @@ export default function LoginPage() {
 
       if (!res.ok) {
         setError(data.error || "Login failed");
-        setLoading(false);
         return;
       }
 
-      // 🔥 Refresh user AFTER login
       const user = await refreshUser();
 
       if (!user) {
         setError("Failed to load user");
-        setLoading(false);
         return;
       }
 
-      // 🎯 Conditional redirect
       if (!user.onboardingComplete) {
         navigate("/invite/onboarding", { replace: true });
       } else {
-        navigate("/dashboard", { replace: true }); // change if your main route differs
+        navigate("/dashboard", { replace: true });
       }
 
     } catch (err) {
@@ -61,7 +58,19 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
       <div className="bg-[#111] p-8 rounded-2xl shadow-xl border border-white/10 max-w-md w-full">
-        <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
+
+        {/* 🔥 Logo */}
+        <div className="flex justify-center mb-6">
+          <img
+            src={logo}
+            alt="LynQ Logo"
+            className="w-36 object-contain"
+          />
+        </div>
+
+        <h1 className="text-2xl font-semibold mb-6 text-center tracking-wide">
+          Welcome Back
+        </h1>
 
         {error && (
           <div className="mb-4 text-red-400 text-center">{error}</div>
@@ -71,7 +80,7 @@ export default function LoginPage() {
           <input
             type="email"
             placeholder="Email"
-            className="w-full p-3 rounded-lg bg-black border border-white/20 text-white"
+            className="w-full p-3 rounded-lg bg-black border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -79,7 +88,7 @@ export default function LoginPage() {
           <input
             type="password"
             placeholder="Password"
-            className="w-full p-3 rounded-lg bg-black border border-white/20 text-white"
+            className="w-full p-3 rounded-lg bg-black border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -87,7 +96,7 @@ export default function LoginPage() {
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="w-full py-3 bg-yellow-500 text-black rounded-lg font-semibold text-lg disabled:opacity-50"
+            className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 transition text-black rounded-lg font-semibold text-lg disabled:opacity-50"
           >
             {loading ? "Logging in…" : "Login"}
           </button>
