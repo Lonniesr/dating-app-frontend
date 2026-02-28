@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserAuth } from "./context/useUserAuth";
 import logo from "../assets/lynqlogo.png";
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const { refreshUser } = useUserAuth();
@@ -40,9 +41,16 @@ export default function LoginPage() {
         return;
       }
 
-      if (!user.onboardingComplete) {
+      // 🛡 Admin bypass
+      if (user.role === "admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } 
+      // 👤 User onboarding required
+      else if (!user.onboardingComplete) {
         navigate("/invite/onboarding", { replace: true });
-      } else {
+      } 
+      // ✅ Normal dashboard
+      else {
         navigate("/dashboard", { replace: true });
       }
 
@@ -58,7 +66,6 @@ export default function LoginPage() {
     <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
       <div className="bg-[#111] p-8 rounded-2xl shadow-xl border border-white/10 max-w-md w-full">
 
-        {/* 🔥 Logo */}
         <div className="flex justify-center mb-6">
           <img
             src={logo}

@@ -9,13 +9,16 @@ export default function ProtectedRoute({
 }) {
   const { authUser, isLoading } = useUserAuth();
 
+  // ⏳ Wait for auth state to resolve
   if (isLoading) {
-    return <div className="p-6 text-white">Loading…</div>;
+    return null; // prevent flicker / unwanted redirects
   }
 
+  // 🔐 Not logged in
   if (!authUser) {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  // ✅ Logged in
+  return <>{children}</>;
 }

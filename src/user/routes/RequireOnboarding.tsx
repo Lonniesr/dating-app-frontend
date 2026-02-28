@@ -9,15 +9,26 @@ export default function RequireOnboarding({
 }) {
   const { authUser, isLoading } = useUserAuth();
 
-  if (isLoading) return null;
+  // ⏳ Still loading auth state
+  if (isLoading) {
+    return null;
+  }
 
+  // 🔐 Not logged in
   if (!authUser) {
     return <Navigate to="/signup" replace />;
   }
 
+  // 🛡 Admins bypass onboarding entirely
+  if (authUser.role === "admin") {
+    return <>{children}</>;
+  }
+
+  // 👤 Regular users must complete onboarding
   if (!authUser.onboardingComplete) {
     return <Navigate to="/invite/onboarding" replace />;
   }
 
-  return children;
+  // ✅ Fully onboarded user
+  return <>{children}</>;
 }
