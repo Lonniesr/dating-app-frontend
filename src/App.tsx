@@ -15,7 +15,6 @@ import AdminMatches from "./admin/pages/AdminMatches";
 import AdminMessages from "./admin/pages/AdminMessages";
 import AdminSwipes from "./admin/pages/AdminSwipes";
 import AdminBans from "./admin/pages/AdminBans";
-import AdminNotes from "./admin/pages/AdminNotes";
 import AdminUserSearchPage from "./admin/pages/AdminUserSearchPage";
 import AdminBillingPage from "./admin/pages/AdminBillingPage";
 import AdminNotificationsPage from "./admin/pages/AdminNotificationsPage";
@@ -109,7 +108,6 @@ export default function App() {
         <Route path="messages" element={<AdminMessages />} />
         <Route path="swipes" element={<AdminSwipes />} />
         <Route path="bans" element={<AdminBans />} />
-        <Route path="notes" element={<AdminNotes />} />
         <Route path="search" element={<AdminUserSearchPage />} />
         <Route path="billing" element={<AdminBillingPage />} />
         <Route path="notifications" element={<AdminNotificationsPage />} />
