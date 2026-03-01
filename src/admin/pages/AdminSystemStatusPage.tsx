@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import BaseService from "../services/BaseService";
-
+import BaseService from "@/admin/services/BaseService";
 const service = new BaseService("/api/admin/system/health");
 
 const StatusBadge = ({ status }: { status: string }) => {
