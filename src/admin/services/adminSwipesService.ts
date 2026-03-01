@@ -4,4 +4,4 @@ class AdminSwipesService extends BaseService {
   // Optional: add filters or analytics endpoints later
 }
 
-export const adminSwipesService = new AdminSwipesService("api/admin/swipes");
+export const adminSwipesService = new AdminSwipesService("api/admin/swipe");

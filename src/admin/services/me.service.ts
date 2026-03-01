@@ -1,8 +1,10 @@
-import { apiClient } from "./apiClient";
+import api from "../../services/apiClient";
 
 export const adminMeService = {
   async get() {
-    const res = await apiClient.get("/admin/me");
-    return res.data;
+    const response = await api.get("/api/me", {
+      withCredentials: true,
+    });
+    return response.data;
   },
 };

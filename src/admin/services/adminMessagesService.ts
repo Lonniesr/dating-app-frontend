@@ -1,6 +1,6 @@
-import axios from "axios";
+import BaseService from "./BaseService";
 
-const BASE = "/api/admin/messages";
+const base = new BaseService("/api/admin/messages");
 
 export interface MessageUser {
   id: string;
@@ -18,19 +18,19 @@ export interface Message {
 
 export const adminMessagesService = {
   async list(): Promise<Message[]> {
-    const res = await axios.get(BASE);
+    const res = await base.get();
     return res.data.messages as Message[];
   },
 
   async getConversation(userA: string, userB: string): Promise<Message[]> {
-    const res = await axios.get(`${BASE}/conversation`, {
+    const res = await base.get("/conversation", {
       params: { userA, userB },
     });
     return res.data.messages as Message[];
   },
 
   async delete(id: string) {
-    const res = await axios.delete(`${BASE}/${id}`);
+    const res = await base.deleteReq(`/${id}`);
     return res.data;
   },
 };

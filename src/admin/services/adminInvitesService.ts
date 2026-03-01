@@ -1,43 +1,28 @@
-import apiClient from "../../services/apiClient";
-
-export interface InviteUser {
-  id: string;
-  name: string | null;
-  email: string;
-}
+import api from "../../services/apiClient";
 
 export interface Invite {
-  id: string;
+  id: number;
   code: string;
-  used: boolean;
-  usedAt: string | null;
+  email?: string | null;
+  premium: boolean;
   createdAt: string;
   expiresAt?: string | null;
-  premium?: boolean;
-  invitedById?: number | null;
-  usedById: string | null;
-  usedBy?: InviteUser | null;
-  url?: string; // <-- IMPORTANT
+  used: boolean;
+  inviteUrl: string;
 }
 
-const BASE = "/api/admin/invites";
-
 export const adminInvitesService = {
-  async list(): Promise<Invite[]> {
-    const res = await apiClient.get(BASE);
+  async list() {
+    const res = await api.get("/api/admin/invites");
     return res.data.invites as Invite[];
   },
 
-  async create(): Promise<Invite> {
-    const res = await apiClient.post(BASE);
-    return res.data as Invite; // <-- FIXED
-  },
-
-  async markUsed(inviteId: string, userId: string): Promise<Invite> {
-    const res = await apiClient.post(`${BASE}/mark-used`, {
-      inviteId,
-      userId,
-    });
+  async create(payload: {
+    email?: string;
+    expiresAt?: string;
+    premium?: boolean;
+  }) {
+    const res = await api.post("/api/admin/invites", payload);
     return res.data as Invite;
   },
 };

@@ -1,12 +1,29 @@
 import { Navigate } from "react-router-dom";
-import { useAdminAuth } from "../context/AdminAuthContext";
+import { useUserAuth } from "../../user/context/useUserAuth";
+import type { ReactNode } from "react";
 
-export default function RouteGuard({ children }) {
-  const { admin } = useAdminAuth();
+export default function RouteGuard({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const { authUser, isLoading } = useUserAuth();
 
-  if (!admin) {
-    return <Navigate to="/admin/login" replace />;
+  // 🔒 Wait until auth is finished loading
+  if (isLoading) {
+    return null; // or loading spinner
   }
 
-  return children;
+  // ❌ Not logged in
+  if (!authUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // ❌ Logged in but NOT admin
+  if (authUser.role !== "admin") {
+    return <Navigate to="/user/dashboard" replace />;
+  }
+
+  // ✅ Admin allowed
+  return <>{children}</>;
 }

@@ -1,5 +1,8 @@
-import axios from "axios";
-import type { AxiosInstance } from "axios";
+import axios, {
+  AxiosInstance,
+  InternalAxiosRequestConfig,
+  AxiosRequestConfig,
+} from "axios";
 
 class BaseService {
   protected http: AxiosInstance;
@@ -9,18 +12,21 @@ class BaseService {
     this.baseUrl = baseUrl.replace(/\/+$/, "");
 
     this.http = axios.create({
-      baseURL: "/",
+      baseURL: import.meta.env.VITE_API_URL,
       withCredentials: true,
     });
 
-    // ⭐ Attach token to every axios request
-    this.http.interceptors.request.use((config) => {
-      const token = localStorage.getItem("admin_token");
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+    this.http.interceptors.request.use(
+      (config: InternalAxiosRequestConfig) => {
+        const token = localStorage.getItem("admin_token");
+
+        if (token) {
+          config.headers.set("Authorization", `Bearer ${token}`);
+        }
+
+        return config;
       }
-      return config;
-    });
+    );
   }
 
   private build(path?: string) {
@@ -28,20 +34,20 @@ class BaseService {
     return `${this.baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
   }
 
-  get(path?: string) {
-    return this.http.get(this.build(path));
+  get(path?: string, config?: AxiosRequestConfig) {
+    return this.http.get(this.build(path), config);
   }
 
-  post(path?: string, data?: any) {
-    return this.http.post(this.build(path), data);
+  post(path?: string, data?: unknown, config?: AxiosRequestConfig) {
+    return this.http.post(this.build(path), data, config);
   }
 
-  put(path?: string, data?: any) {
-    return this.http.put(this.build(path), data);
+  put(path?: string, data?: unknown, config?: AxiosRequestConfig) {
+    return this.http.put(this.build(path), data, config);
   }
 
-  deleteReq(path?: string) {
-    return this.http.delete(this.build(path));
+  deleteReq(path?: string, config?: AxiosRequestConfig) {
+    return this.http.delete(this.build(path), config);
   }
 }
 

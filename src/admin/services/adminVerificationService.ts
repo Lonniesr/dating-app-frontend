@@ -1,28 +1,28 @@
-import axios from "axios";
-
-const BASE = "/api/admin/verification";
+import BaseService from "./BaseService";
 
 export interface VerificationUser {
   id: string;
-  name: string | null;
   email: string;
-  createdAt: string;
+  role: string;
   verified: boolean;
+  createdAt: string;
 }
+
+const service = new BaseService("/api/admin/verification");
 
 export const adminVerificationService = {
   async list(): Promise<VerificationUser[]> {
-    const res = await axios.get(BASE);
-    return res.data.users as VerificationUser[];
+    const res = await service.get();
+    return res.data.users ?? []; // ✅ matches backend
   },
 
-  async approve(userId: string): Promise<VerificationUser> {
-    const res = await axios.post(`${BASE}/approve`, { userId });
-    return res.data.user as VerificationUser;
+  async approve(userId: string) {
+    const res = await service.post(`/${userId}/approve`);
+    return res.data;
   },
 
-  async reject(userId: string): Promise<VerificationUser> {
-    const res = await axios.post(`${BASE}/reject`, { userId });
-    return res.data.user as VerificationUser;
+  async reject(userId: string) {
+    const res = await service.post(`/${userId}/reject`);
+    return res.data;
   },
 };

@@ -22,6 +22,7 @@ export default function AdminRolesPage() {
   const { data: users, isLoading } = useQuery<RoleUser[]>({
     queryKey: ["admin-role-users", selectedRole],
     queryFn: () => adminRolesService.listUsersByRole(selectedRole),
+    enabled: !!selectedRole,
   });
 
   const assignMutation = useMutation({
@@ -44,6 +45,9 @@ export default function AdminRolesPage() {
         Role Management
       </h1>
 
+      {/* =========================
+          SELECT ROLE
+      ========================= */}
       <div className="glass-panel" style={{ marginBottom: "2rem" }}>
         <h2 className="h2">Select Role</h2>
 
@@ -53,14 +57,20 @@ export default function AdminRolesPage() {
           onChange={(e) => setSelectedRole(e.target.value)}
           style={{ marginTop: "1rem", width: "200px" }}
         >
-          {roles?.map((r) => (
-            <option key={r.id} value={r.id}>
+          {roles?.map((r, index) => (
+            <option
+              key={`${r.id ?? r.name}-${index}`}
+              value={r.id ?? r.name}
+            >
               {r.name}
             </option>
           ))}
         </select>
       </div>
 
+      {/* =========================
+          ASSIGN ROLE
+      ========================= */}
       <div className="glass-panel" style={{ marginBottom: "2rem" }}>
         <h2 className="h2">Assign Role to User</h2>
 
@@ -81,8 +91,11 @@ export default function AdminRolesPage() {
               setAssignForm({ ...assignForm, role: e.target.value })
             }
           >
-            {roles?.map((r) => (
-              <option key={r.id} value={r.id}>
+            {roles?.map((r, index) => (
+              <option
+                key={`${r.id ?? r.name}-${index}`}
+                value={r.id ?? r.name}
+              >
                 {r.name}
               </option>
             ))}
@@ -98,6 +111,9 @@ export default function AdminRolesPage() {
         </div>
       </div>
 
+      {/* =========================
+          USERS TABLE
+      ========================= */}
       <div>
         <h2 className="h2" style={{ marginBottom: "1rem" }}>
           Users with role: {selectedRole}

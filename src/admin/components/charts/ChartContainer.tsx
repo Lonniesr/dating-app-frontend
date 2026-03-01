@@ -8,11 +8,13 @@ export default function ChartContainer({
   children: ReactNode;
 }) {
   return (
-    <div className="bg-[#111111] border border-white/10 rounded-xl p-5 shadow-lg w-full h-full flex flex-col">
-      <h2 className="text-lg font-semibold text-[#d4af37] mb-4">{title}</h2>
+    <div className="bg-[#111111] border border-white/10 rounded-xl p-5 shadow-lg w-full flex flex-col min-w-0">
+      <h2 className="text-lg font-semibold text-[#d4af37] mb-4">
+        {title}
+      </h2>
 
-      {/* This guarantees a real height BEFORE the chart mounts */}
-      <div className="flex-1 min-h-[200px]">
+      {/* This guarantees proper width + height */}
+      <div className="flex-1 min-h-[300px] w-full min-w-0">
         {children}
       </div>
     </div>

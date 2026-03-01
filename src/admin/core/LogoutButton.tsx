@@ -1,13 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import { useAdminAuth } from "../../hooks/useAdminAuth";
+import { useUserAuth } from "../../user/context/useUserAuth";
 
 export default function AdminLogoutButton() {
   const navigate = useNavigate();
-  const { logout } = useAdminAuth();
+  const { logout } = useUserAuth();
 
-  const handleLogout = () => {
-    logout();
-    navigate("/admin/login", { replace: true });
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
   };
 
   return (

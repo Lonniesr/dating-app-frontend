@@ -1,10 +1,10 @@
 import { useTheme } from "../core/ThemeContext";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAdminAuth } from "../context/AdminAuthContext";
+import { useUserAuth } from "../../user/context/useUserAuth";
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
-  const { logout } = useAdminAuth();
+  const { logout } = useUserAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -15,9 +15,9 @@ export default function Header() {
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(" / ");
 
-  const handleLogout = () => {
-    logout();
-    navigate("/admin/login", { replace: true });
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
   };
 
   return (

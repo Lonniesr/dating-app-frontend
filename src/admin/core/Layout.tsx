@@ -2,6 +2,11 @@ import { Outlet } from "react-router-dom";
 import { useEffect } from "react";
 import { getAdminSocket } from "../lib/socket";
 
+import SlideInSidebar from "../core/SlideInSidebar";
+import Header from "../core/Header";
+import { ThemeProvider } from "../core/ThemeContext";
+import { SidebarProvider } from "../core/SidebarContext";
+
 export default function Layout() {
   useEffect(() => {
     const socket = getAdminSocket();
@@ -21,8 +26,32 @@ export default function Layout() {
   }, []);
 
   return (
-    <div className="admin-layout">
-      <Outlet />
-    </div>
+    <ThemeProvider>
+      <SidebarProvider>
+        <div style={{ display: "flex", minHeight: "100vh" }}>
+          
+          {/* Sidebar */}
+          <SlideInSidebar />
+
+          {/* Main Content */}
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              background: "var(--lynq-dark-1)",
+            }}
+          >
+            {/* Header */}
+            <Header />
+
+            {/* Page Content */}
+            <div style={{ flex: 1, padding: "2rem" }}>
+              <Outlet />
+            </div>
+          </div>
+        </div>
+      </SidebarProvider>
+    </ThemeProvider>
   );
 }

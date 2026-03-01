@@ -1,13 +1,14 @@
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 
-let adminSocket;
+let adminSocket: Socket | null = null;
 
 export function getAdminSocket() {
   if (!adminSocket) {
-    adminSocket = io("http://localhost:3001/admin", {
-      transports: ["websocket"],
+    adminSocket = io(import.meta.env.VITE_API_URL, {
       withCredentials: true,
+      transports: ["websocket"], // 🔥 force websocket only
     });
   }
+
   return adminSocket;
 }
