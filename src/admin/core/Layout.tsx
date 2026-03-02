@@ -28,27 +28,22 @@ export default function Layout() {
   return (
     <ThemeProvider>
       <SidebarProvider>
-        <div style={{ display: "flex", minHeight: "100vh" }}>
+        <div className="flex min-h-screen bg-gray-50 text-gray-900 dark:bg-lynq-dark dark:text-white transition-colors duration-300">
           
           {/* Sidebar */}
           <SlideInSidebar />
 
           {/* Main Content */}
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              background: "var(--lynq-dark-1)",
-            }}
-          >
+          <div className="flex flex-1 flex-col">
+            
             {/* Header */}
             <Header />
 
             {/* Page Content */}
-            <div style={{ flex: 1, padding: "2rem" }}>
+            <div className="flex-1 p-8">
               <Outlet />
             </div>
+
           </div>
         </div>
       </SidebarProvider>
