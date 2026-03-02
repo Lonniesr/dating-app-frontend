@@ -1,4 +1,4 @@
-import BaseService from "./BaseService";
+import BaseService from "./baseService";
 
 class AdminBansService extends BaseService {
   updateBanStatus(payload: { id: string; banned: boolean }) {

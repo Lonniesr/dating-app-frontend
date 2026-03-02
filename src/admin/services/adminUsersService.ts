@@ -1,4 +1,4 @@
-import BaseService from "./BaseService";
+import BaseService from "./baseService";
 
 class AdminUsersService extends BaseService {
   updateUser(id: string, payload: { banned: boolean }) {

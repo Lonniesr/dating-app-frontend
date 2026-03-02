@@ -1,4 +1,4 @@
-import BaseService from "./BaseService";
+import BaseService from "./baseService";
 
 class AdminSwipesService extends BaseService {
   // Optional: add filters or analytics endpoints later

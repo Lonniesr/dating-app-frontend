@@ -1,4 +1,4 @@
-import BaseService from "./BaseService";
+import BaseService from "./baseService";
 
 const base = new BaseService("/api/admin/messages");
 
