@@ -28,22 +28,24 @@ export default function Layout() {
   return (
     <ThemeProvider>
       <SidebarProvider>
-        <div className="flex min-h-screen bg-gray-50 text-gray-900 dark:bg-lynq-dark dark:text-white transition-colors duration-300">
+        <div className="flex min-h-screen 
+                        bg-[#F8F6F1] text-gray-900
+                        dark:bg-[#0B0B0C] dark:text-white
+                        transition-colors duration-300">
           
-          {/* Sidebar */}
           <SlideInSidebar />
 
-          {/* Main Content */}
           <div className="flex flex-1 flex-col">
-            
-            {/* Header */}
             <Header />
 
-            {/* Page Content */}
-            <div className="flex-1 p-8">
-              <Outlet />
+            <div className="flex-1 p-10">
+              <div className="rounded-2xl p-10
+                              bg-white border border-gray-200 shadow-md
+                              dark:bg-[#141416] dark:border-[#222226] dark:shadow-[0_0_40px_rgba(212,175,55,0.05)]
+                              transition-all duration-300">
+                <Outlet />
+              </div>
             </div>
-
           </div>
         </div>
       </SidebarProvider>

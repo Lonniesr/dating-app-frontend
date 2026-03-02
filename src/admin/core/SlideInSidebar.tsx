@@ -1,75 +1,118 @@
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
-import "./sidebar.css";
+
+interface NavItemProps {
+  to: string;
+  icon: string;
+  label: string;
+  collapsed: boolean;
+}
+
+interface SidebarSectionProps {
+  title: string;
+  collapsed: boolean;
+}
 
 export default function SlideInSidebar() {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-      <div className="sidebar-scroll">
+    <div
+      className={`
+        ${collapsed ? "w-20" : "w-64"}
+        transition-all duration-300
+        bg-white border-r border-gray-200
+        dark:bg-[#101012] dark:border-[#1E1E22]
+        min-h-screen
+      `}
+    >
+      <div className="h-full overflow-y-auto p-4 space-y-6">
 
-        {/* Collapse Toggle */}
-        <div
-          className="sidebar-item"
+        {/* Collapse */}
+        <button
           onClick={() => setCollapsed(!collapsed)}
-          style={{ marginBottom: "12px", cursor: "pointer" }}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg
+                     hover:bg-gray-100
+                     dark:hover:bg-[#1A1A1E]
+                     text-gold transition w-full"
         >
-          <span className="sidebar-icon">≡</span>
-          <span className="sidebar-label">Collapse</span>
-        </div>
+          <span>≡</span>
+          {!collapsed && (
+            <span className="text-sm font-medium">Collapse</span>
+          )}
+        </button>
 
-        {/* Overview */}
-        <SidebarSection title="Overview" />
-        <NavItem to="/admin" icon="🏠" label="Dashboard" />
+        <SidebarSection title="Overview" collapsed={collapsed} />
+        <NavItem to="/admin" icon="🏠" label="Dashboard" collapsed={collapsed} />
 
-        {/* Users */}
-        <SidebarSection title="Users" />
-        <NavItem to="/admin/users" icon="👤" label="Users" />
-        <NavItem to="/admin/search" icon="🔍" label="User Search" />
+        <SidebarSection title="Users" collapsed={collapsed} />
+        <NavItem to="/admin/users" icon="👤" label="Users" collapsed={collapsed} />
+        <NavItem to="/admin/search" icon="🔍" label="User Search" collapsed={collapsed} />
 
-        {/* Admin Tools */}
-        <SidebarSection title="Admin Tools" />
-        {/* Removed AdminAdmins */}
-        <NavItem to="/admin/roles" icon="🛡️" label="Roles" />
+        <SidebarSection title="Admin Tools" collapsed={collapsed} />
+        <NavItem to="/admin/roles" icon="🛡️" label="Roles" collapsed={collapsed} />
 
-        {/* System */}
-        <SidebarSection title="System" />
-        <NavItem to="/admin/settings" icon="⚙️" label="Settings" />
-        <NavItem to="/admin/invites" icon="✉️" label="Invites" />
-        <NavItem to="/admin/verification" icon="✔️" label="Verification" />
-        <NavItem to="/admin/matches" icon="❤️" label="Matches" />
-        <NavItem to="/admin/messages" icon="💬" label="Messages" />
-        <NavItem to="/admin/swipes" icon="➡️" label="Swipes" />
-        <NavItem to="/admin/bans" icon="⛔" label="Bans" />
-        <NavItem to="/admin/notes" icon="📝" label="Notes" />
+        <SidebarSection title="System" collapsed={collapsed} />
+        <NavItem to="/admin/settings" icon="⚙️" label="Settings" collapsed={collapsed} />
+        <NavItem to="/admin/invites" icon="✉️" label="Invites" collapsed={collapsed} />
+        <NavItem to="/admin/verification" icon="✔️" label="Verification" collapsed={collapsed} />
+        <NavItem to="/admin/matches" icon="❤️" label="Matches" collapsed={collapsed} />
+        <NavItem to="/admin/messages" icon="💬" label="Messages" collapsed={collapsed} />
+        <NavItem to="/admin/swipes" icon="➡️" label="Swipes" collapsed={collapsed} />
+        <NavItem to="/admin/bans" icon="⛔" label="Bans" collapsed={collapsed} />
+        <NavItem to="/admin/notes" icon="📝" label="Notes" collapsed={collapsed} />
 
-        {/* Advanced */}
-        <SidebarSection title="Advanced" />
-        <NavItem to="/admin/billing" icon="💳" label="Billing" />
-        <NavItem to="/admin/notifications" icon="🔔" label="Notifications" />
-        <NavItem to="/admin/system-status" icon="📊" label="System Status" />
-        <NavItem to="/admin/integrations" icon="🔗" label="Integrations" />
+        <SidebarSection title="Advanced" collapsed={collapsed} />
+        <NavItem to="/admin/billing" icon="💳" label="Billing" collapsed={collapsed} />
+        <NavItem to="/admin/notifications" icon="🔔" label="Notifications" collapsed={collapsed} />
+        <NavItem to="/admin/system-status" icon="📊" label="System Status" collapsed={collapsed} />
+        <NavItem to="/admin/integrations" icon="🔗" label="Integrations" collapsed={collapsed} />
       </div>
     </div>
   );
 }
 
-function NavItem({ to, icon, label }) {
+function NavItem({ to, icon, label, collapsed }: NavItemProps) {
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `sidebar-item ${isActive ? "active" : ""}`
+        `
+        group flex items-center justify-between
+        px-3 py-2 rounded-lg
+        transition-all duration-200
+
+        ${
+          isActive
+            ? "bg-gold/10 text-gold border border-gold/20"
+            : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-[#1A1A1E] hover:text-gold"
+        }
+      `
       }
     >
-      <span className="sidebar-icon">{icon}</span>
-      <span className="sidebar-label">{label}</span>
-      <span className="sidebar-arrow">›</span>
+      <div className="flex items-center gap-3">
+        <span>{icon}</span>
+        {!collapsed && (
+          <span className="text-sm font-medium tracking-tight">
+            {label}
+          </span>
+        )}
+      </div>
+
+      {!collapsed && (
+        <span className="opacity-40 group-hover:opacity-80">›</span>
+      )}
     </NavLink>
   );
 }
 
-function SidebarSection({ title }) {
-  return <div className="sidebar-section-title">{title}</div>;
+function SidebarSection({ title, collapsed }: SidebarSectionProps) {
+  if (collapsed) return null;
+
+  return (
+    <div className="text-xs uppercase tracking-widest
+                    text-gray-400 dark:text-gray-500 px-3">
+      {title}
+    </div>
+  );
 }
