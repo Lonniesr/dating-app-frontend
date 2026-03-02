@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { adminInvitesService } from "../services/adminInvitesService";
 import { Copy } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 
 export default function AdminInvites() {
   const [invites, setInvites] = useState<any[]>([]);
@@ -9,6 +10,7 @@ export default function AdminInvites() {
   const [expiresAt, setExpiresAt] = useState("");
   const [createdInvite, setCreatedInvite] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
+  const qrRef = useRef<HTMLDivElement>(null);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -44,6 +46,17 @@ export default function AdminInvites() {
     navigator.clipboard.writeText(text);
   }
 
+  function downloadQR() {
+    const canvas = qrRef.current?.querySelector("canvas");
+    if (!canvas) return;
+
+    const url = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "invite-qr.png";
+    a.click();
+  }
+
   const filteredInvites = useMemo(() => {
     return invites
       .filter((invite) =>
@@ -61,17 +74,14 @@ export default function AdminInvites() {
     <div className="max-w-6xl mx-auto space-y-16">
 
       {/* CREATE SECTION */}
-      <div className="relative bg-gradient-to-br from-lynq-dark-2 to-lynq-dark p-10 rounded-3xl border border-lynq-gray-2 shadow-card transition-all duration-300 hover:shadow-xl">
-
-        <div className="absolute -top-10 -right-10 w-60 h-60 bg-gold/5 rounded-full blur-3xl" />
-
-        <h1 className="text-2xl font-semibold text-gold mb-8 tracking-wide">
+      <div className="relative bg-gradient-to-br from-lynq-dark-2 to-lynq-dark p-10 rounded-3xl border border-lynq-gray-2 shadow-card">
+        <h1 className="text-2xl font-semibold text-gold mb-8">
           Create Invite
         </h1>
 
         <div className="grid md:grid-cols-2 gap-6">
           <input
-            className="bg-lynq-gray-2 p-4 rounded-2xl border border-lynq-gray-3 focus:border-gold outline-none transition-all duration-200 focus:scale-[1.01]"
+            className="bg-lynq-gray-2 p-4 rounded-2xl border border-lynq-gray-3 focus:border-gold outline-none"
             placeholder="Email (optional)"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -79,7 +89,7 @@ export default function AdminInvites() {
 
           <input
             type="date"
-            className="bg-lynq-gray-2 p-4 rounded-2xl border border-lynq-gray-3 focus:border-gold outline-none transition-all duration-200 focus:scale-[1.01]"
+            className="bg-lynq-gray-2 p-4 rounded-2xl border border-lynq-gray-3 focus:border-gold outline-none"
             value={expiresAt}
             onChange={(e) => setExpiresAt(e.target.value)}
           />
@@ -99,38 +109,10 @@ export default function AdminInvites() {
           <button
             onClick={createInvite}
             disabled={loading}
-            className="px-8 py-3 rounded-2xl bg-gold text-black font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
+            className="px-8 py-3 rounded-2xl bg-gold text-black font-semibold hover:opacity-90 transition disabled:opacity-50"
           >
             {loading ? "Generating..." : "Generate Invite"}
           </button>
-        </div>
-      </div>
-
-      {/* FILTERS */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-
-        <h2 className="text-xl font-semibold text-gold tracking-wide">
-          Existing Invites
-        </h2>
-
-        <div className="flex gap-4 w-full md:w-auto">
-
-          <input
-            placeholder="Search code..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="bg-lynq-gray-2 px-4 py-2 rounded-xl border border-lynq-gray-3 focus:border-gold outline-none text-sm w-full md:w-64"
-          />
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-lynq-gray-2 px-4 py-2 rounded-xl border border-lynq-gray-3 focus:border-gold outline-none text-sm"
-          >
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="used">Used</option>
-          </select>
         </div>
       </div>
 
@@ -139,38 +121,11 @@ export default function AdminInvites() {
         {filteredInvites.map((invite) => (
           <div
             key={invite.id}
-            className="bg-lynq-dark-2 p-8 rounded-3xl border border-lynq-gray-2 hover:border-gold/40 transition-all duration-300 hover:-translate-y-1 shadow-card group"
+            className="bg-lynq-dark-2 p-8 rounded-3xl border border-lynq-gray-2 shadow-card"
           >
-            <div className="flex justify-between items-start">
-
-              <div>
-                <div className="text-xs uppercase tracking-wider text-gray-500 mb-2">
-                  Invite Code
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="font-mono text-gold text-sm">
-                    {invite.code}
-                  </div>
-
-                  <Copy
-                    size={16}
-                    className="text-gray-500 cursor-pointer opacity-0 group-hover:opacity-100 transition"
-                    onClick={() => copyToClipboard(invite.inviteUrl)}
-                  />
-                </div>
-
-                <div className="text-xs text-gray-400 mt-4 space-y-1">
-                  <div>
-                    Created: {new Date(invite.createdAt).toLocaleDateString()}
-                  </div>
-                  <div>
-                    Expires:{" "}
-                    {invite.expiresAt
-                      ? new Date(invite.expiresAt).toLocaleDateString()
-                      : "Never"}
-                  </div>
-                </div>
+            <div className="flex justify-between">
+              <div className="font-mono text-gold text-sm">
+                {invite.code}
               </div>
 
               <span
@@ -187,10 +142,10 @@ export default function AdminInvites() {
         ))}
       </div>
 
-      {/* SUCCESS MODAL */}
+      {/* SUCCESS MODAL WITH QR */}
       {createdInvite && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-lynq-dark p-10 rounded-3xl border border-gold shadow-lg max-w-lg w-full space-y-8 animate-fadeSlide">
+          <div className="bg-lynq-dark p-10 rounded-3xl border border-gold max-w-lg w-full space-y-8">
             <h2 className="text-2xl font-semibold text-gold">
               Invite Created
             </h2>
@@ -203,23 +158,40 @@ export default function AdminInvites() {
               {createdInvite.inviteUrl}
             </div>
 
+            <div
+              ref={qrRef}
+              className="flex justify-center bg-white p-4 rounded-xl"
+            >
+              <QRCodeCanvas
+                value={createdInvite.inviteUrl}
+                size={200}
+              />
+            </div>
+
             <div className="flex gap-4">
               <button
                 onClick={() =>
                   copyToClipboard(createdInvite.inviteUrl)
                 }
-                className="flex-1 bg-gold text-black py-3 rounded-2xl font-semibold transition hover:opacity-90"
+                className="flex-1 bg-gold text-black py-3 rounded-2xl font-semibold"
               >
                 Copy Link
               </button>
 
               <button
-                onClick={() => setCreatedInvite(null)}
+                onClick={downloadQR}
                 className="flex-1 border border-lynq-gray-3 py-3 rounded-2xl hover:border-gold transition"
               >
-                Close
+                Download QR
               </button>
             </div>
+
+            <button
+              onClick={() => setCreatedInvite(null)}
+              className="w-full border border-lynq-gray-3 py-3 rounded-2xl hover:border-gold transition"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
