@@ -1,9 +1,29 @@
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
+import {
+  LayoutDashboard,
+  Users,
+  Search,
+  Shield,
+  Settings,
+  Mail,
+  CheckCircle,
+  Heart,
+  MessageSquare,
+  ArrowRightLeft,
+  Ban,
+  StickyNote,
+  CreditCard,
+  Bell,
+  Activity,
+  Link2,
+  ChevronRight,
+  PanelLeftClose,
+} from "lucide-react";
 
 interface NavItemProps {
   to: string;
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   collapsed: boolean;
 }
@@ -19,54 +39,54 @@ export default function SlideInSidebar() {
   return (
     <div
       className={`
-        ${collapsed ? "w-20" : "w-64"}
+        ${collapsed ? "w-20" : "w-72"}
         transition-all duration-300
-        bg-white border-r border-gray-200
-        dark:bg-[#101012] dark:border-[#1E1E22]
+        bg-gradient-to-b from-[#0f0f12] to-[#0c0c0f]
+        border-r border-[#1c1c22]
         min-h-screen
+        shadow-2xl
       `}
     >
-      <div className="h-full overflow-y-auto p-4 space-y-6">
+      <div className="h-full overflow-y-auto p-6 space-y-8">
 
         {/* Collapse */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg
-                     hover:bg-gray-100
-                     dark:hover:bg-[#1A1A1E]
-                     text-gold transition w-full"
+          className="flex items-center gap-3 text-gray-400 hover:text-gold transition"
         >
-          <span>≡</span>
+          <PanelLeftClose size={18} />
           {!collapsed && (
-            <span className="text-sm font-medium">Collapse</span>
+            <span className="text-sm font-medium tracking-wide">
+              Collapse
+            </span>
           )}
         </button>
 
         <SidebarSection title="Overview" collapsed={collapsed} />
-        <NavItem to="/admin" icon="🏠" label="Dashboard" collapsed={collapsed} />
+        <NavItem to="/admin" icon={<LayoutDashboard size={18} />} label="Dashboard" collapsed={collapsed} />
 
         <SidebarSection title="Users" collapsed={collapsed} />
-        <NavItem to="/admin/users" icon="👤" label="Users" collapsed={collapsed} />
-        <NavItem to="/admin/search" icon="🔍" label="User Search" collapsed={collapsed} />
+        <NavItem to="/admin/users" icon={<Users size={18} />} label="Users" collapsed={collapsed} />
+        <NavItem to="/admin/search" icon={<Search size={18} />} label="User Search" collapsed={collapsed} />
 
         <SidebarSection title="Admin Tools" collapsed={collapsed} />
-        <NavItem to="/admin/roles" icon="🛡️" label="Roles" collapsed={collapsed} />
+        <NavItem to="/admin/roles" icon={<Shield size={18} />} label="Roles" collapsed={collapsed} />
 
         <SidebarSection title="System" collapsed={collapsed} />
-        <NavItem to="/admin/settings" icon="⚙️" label="Settings" collapsed={collapsed} />
-        <NavItem to="/admin/invites" icon="✉️" label="Invites" collapsed={collapsed} />
-        <NavItem to="/admin/verification" icon="✔️" label="Verification" collapsed={collapsed} />
-        <NavItem to="/admin/matches" icon="❤️" label="Matches" collapsed={collapsed} />
-        <NavItem to="/admin/messages" icon="💬" label="Messages" collapsed={collapsed} />
-        <NavItem to="/admin/swipes" icon="➡️" label="Swipes" collapsed={collapsed} />
-        <NavItem to="/admin/bans" icon="⛔" label="Bans" collapsed={collapsed} />
-        <NavItem to="/admin/notes" icon="📝" label="Notes" collapsed={collapsed} />
+        <NavItem to="/admin/settings" icon={<Settings size={18} />} label="Settings" collapsed={collapsed} />
+        <NavItem to="/admin/invites" icon={<Mail size={18} />} label="Invites" collapsed={collapsed} />
+        <NavItem to="/admin/verification" icon={<CheckCircle size={18} />} label="Verification" collapsed={collapsed} />
+        <NavItem to="/admin/matches" icon={<Heart size={18} />} label="Matches" collapsed={collapsed} />
+        <NavItem to="/admin/messages" icon={<MessageSquare size={18} />} label="Messages" collapsed={collapsed} />
+        <NavItem to="/admin/swipes" icon={<ArrowRightLeft size={18} />} label="Swipes" collapsed={collapsed} />
+        <NavItem to="/admin/bans" icon={<Ban size={18} />} label="Bans" collapsed={collapsed} />
+        <NavItem to="/admin/notes" icon={<StickyNote size={18} />} label="Notes" collapsed={collapsed} />
 
         <SidebarSection title="Advanced" collapsed={collapsed} />
-        <NavItem to="/admin/billing" icon="💳" label="Billing" collapsed={collapsed} />
-        <NavItem to="/admin/notifications" icon="🔔" label="Notifications" collapsed={collapsed} />
-        <NavItem to="/admin/system-status" icon="📊" label="System Status" collapsed={collapsed} />
-        <NavItem to="/admin/integrations" icon="🔗" label="Integrations" collapsed={collapsed} />
+        <NavItem to="/admin/billing" icon={<CreditCard size={18} />} label="Billing" collapsed={collapsed} />
+        <NavItem to="/admin/notifications" icon={<Bell size={18} />} label="Notifications" collapsed={collapsed} />
+        <NavItem to="/admin/system-status" icon={<Activity size={18} />} label="System Status" collapsed={collapsed} />
+        <NavItem to="/admin/integrations" icon={<Link2 size={18} />} label="Integrations" collapsed={collapsed} />
       </div>
     </div>
   );
@@ -78,30 +98,39 @@ function NavItem({ to, icon, label, collapsed }: NavItemProps) {
       to={to}
       className={({ isActive }) =>
         `
-        group flex items-center justify-between
-        px-3 py-2 rounded-lg
+        group relative flex items-center justify-between
+        px-4 py-3 rounded-xl
         transition-all duration-200
 
         ${
           isActive
-            ? "bg-gold/10 text-gold border border-gold/20"
-            : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-[#1A1A1E] hover:text-gold"
+            ? "bg-gold/10 text-gold"
+            : "text-gray-400 hover:text-white hover:bg-[#1a1a20]"
         }
       `
       }
     >
       <div className="flex items-center gap-3">
-        <span>{icon}</span>
+        <span className="opacity-80 group-hover:opacity-100 transition">
+          {icon}
+        </span>
+
         {!collapsed && (
-          <span className="text-sm font-medium tracking-tight">
+          <span className="text-sm font-medium tracking-wide">
             {label}
           </span>
         )}
       </div>
 
       {!collapsed && (
-        <span className="opacity-40 group-hover:opacity-80">›</span>
+        <ChevronRight
+          size={16}
+          className="opacity-0 group-hover:opacity-50 transition"
+        />
       )}
+
+      {/* Gold Active Indicator Bar */}
+      <div className="absolute left-0 top-2 bottom-2 w-1 bg-gold rounded-r opacity-0 group-[.active]:opacity-100" />
     </NavLink>
   );
 }
@@ -110,8 +139,7 @@ function SidebarSection({ title, collapsed }: SidebarSectionProps) {
   if (collapsed) return null;
 
   return (
-    <div className="text-xs uppercase tracking-widest
-                    text-gray-400 dark:text-gray-500 px-3">
+    <div className="text-[10px] uppercase tracking-[0.2em] text-gray-500">
       {title}
     </div>
   );
