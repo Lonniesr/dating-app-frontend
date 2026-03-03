@@ -81,8 +81,7 @@ export default function SlideInSidebar() {
         <NavItem to="/admin/swipes" icon={<ArrowRightLeft size={18} />} label="Swipes" collapsed={collapsed} />
         <NavItem to="/admin/bans" icon={<Ban size={18} />} label="Bans" collapsed={collapsed} />
         <NavItem to="/admin/notes" icon={<StickyNote size={18} />} label="Notes" collapsed={collapsed} />
-
-        <SidebarSection title="Advanced" collapsed={collapsed} />
+        <NavItem to="/admin/analytics" icon={<Activity size={18} />} label="Analytics" collapsed={collapsed} />        <SidebarSection title="Advanced" collapsed={collapsed} />
         <NavItem to="/admin/billing" icon={<CreditCard size={18} />} label="Billing" collapsed={collapsed} />
         <NavItem to="/admin/notifications" icon={<Bell size={18} />} label="Notifications" collapsed={collapsed} />
         <NavItem to="/admin/system-status" icon={<Activity size={18} />} label="System Status" collapsed={collapsed} />
