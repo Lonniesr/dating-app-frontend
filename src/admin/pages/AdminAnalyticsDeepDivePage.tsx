@@ -1,144 +1,137 @@
 import { useEffect, useState } from "react";
 import {
-  PieChart,
-  Pie,
-  Cell,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
   Tooltip,
+  CartesianGrid,
   ResponsiveContainer,
   BarChart,
   Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
 } from "recharts";
+import axios from "axios";
 
-interface Invite {
-  id: number;
-  code: string;
-  scanCount: number;
-  signupCount: number;
-  createdAt: string;
-}
+const API = import.meta.env.VITE_API_URL;
 
-interface AnalyticsData {
-  totalScans: number;
-  totalSignups: number;
-  conversionRate: number;
-  invites: Invite[];
-}
-
-export default function AdminAnalytics() {
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+export default function AdminAnalyticsDeepDivePage() {
+  const [overview, setOverview] = useState<any>(null);
+  const [dailyScans, setDailyScans] = useState<any[]>([]);
+  const [dailyConversion, setDailyConversion] = useState<any[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   useEffect(() => {
-    loadData();
+    loadAnalytics();
   }, []);
 
-  async function loadData() {
-    try {
-      const [aRes, dRes] = await Promise.all([
-        fetch("/api/admin/analytics/invites", { credentials: "include" }),
-        fetch("/api/admin/analytics/devices", { credentials: "include" }),
-      ]);
+  async function loadAnalytics() {
+    const [o, scans, conv, dev, lead] = await Promise.all([
+      axios.get(`${API}/api/admin/analytics/overview`, { withCredentials: true }),
+      axios.get(`${API}/api/admin/analytics/daily-scans`, { withCredentials: true }),
+      axios.get(`${API}/api/admin/analytics/daily-conversion`, { withCredentials: true }),
+      axios.get(`${API}/api/admin/analytics/devices`, { withCredentials: true }),
+      axios.get(`${API}/api/admin/analytics/leaderboard`, { withCredentials: true }),
+    ]);
 
-      const analyticsData = await aRes.json();
-      const deviceData = await dRes.json();
-
-      const formattedDevices = deviceData.map((d: any) => ({
-        name: d.device || "unknown",
-        value: d._count.device,
-      }));
-
-      setAnalytics(analyticsData);
-      setDevices(formattedDevices);
-    } catch (err) {
-      console.error("Analytics load error:", err);
-    } finally {
-      setLoading(false);
-    }
+    setOverview(o.data);
+    setDailyScans(scans.data);
+    setDailyConversion(conv.data);
+    setDevices(dev.data);
+    setLeaderboard(lead.data);
   }
 
-  if (loading) {
-    return <div className="text-gold">Loading analytics...</div>;
-  }
-
-  if (!analytics) {
-    return <div className="text-red-400">Failed to load analytics</div>;
-  }
-
-  const topInvites = [...analytics.invites]
-    .sort((a, b) => b.signupCount - a.signupCount)
-    .slice(0, 5);
+  if (!overview) return <div className="text-white">Loading analytics...</div>;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-12">
+    <div className="space-y-12 text-white">
 
-      {/* TOP METRICS */}
-      <div className="grid md:grid-cols-3 gap-8">
-        <MetricCard label="Total Scans" value={analytics.totalScans} />
-        <MetricCard label="Total Signups" value={analytics.totalSignups} />
-        <MetricCard
-          label="Conversion Rate"
-          value={`${analytics.conversionRate}%`}
-        />
+      {/* METRICS */}
+      <div className="grid md:grid-cols-5 gap-6">
+        <Metric label="Total Scans" value={overview.totalScans} />
+        <Metric label="Total Signups" value={overview.totalSignups} />
+        <Metric label="Conversion %" value={`${overview.conversionRate}%`} />
+        <Metric label="Premium Signups" value={overview.premiumSignups} />
+        <Metric label="Revenue" value={`$${overview.revenue}`} />
       </div>
+
+      {/* DAILY SCANS */}
+      <Section title="Daily Scan Growth">
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={dailyScans}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Line type="monotone" dataKey="scans" stroke="#D4AF37" strokeWidth={2} />
+          </LineChart>
+        </ResponsiveContainer>
+      </Section>
+
+      {/* DAILY CONVERSION */}
+      <Section title="Daily Signups">
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={dailyConversion}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Line type="monotone" dataKey="signups" stroke="#00FFB2" strokeWidth={2} />
+          </LineChart>
+        </ResponsiveContainer>
+      </Section>
 
       {/* DEVICE BREAKDOWN */}
-      <div className="bg-lynq-dark-2 p-8 rounded-3xl border border-lynq-gray-2 shadow-card">
-        <h2 className="text-xl text-gold mb-6">Device Breakdown</h2>
+      <Section title="Device Breakdown">
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={devices}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="device" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="_count.device" fill="#D4AF37" />
+          </BarChart>
+        </ResponsiveContainer>
+      </Section>
 
-        <div className="h-80">
-          <ResponsiveContainer>
-            <PieChart>
-              <Pie
-                data={devices}
-                dataKey="value"
-                nameKey="name"
-                outerRadius={100}
-              >
-                {devices.map((_, index) => (
-                  <Cell
-                    key={index}
-                    fill={["#D4AF37", "#444", "#777", "#999"][index % 4]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+      {/* LEADERBOARD */}
+      <Section title="Top Performing Invites">
+        <div className="space-y-3">
+          {leaderboard.map((invite, index) => (
+            <div
+              key={invite.code}
+              className="flex justify-between bg-lynq-dark-2 p-4 rounded-xl border border-lynq-gray-2"
+            >
+              <div className="font-mono text-gold">
+                #{index + 1} {invite.code}
+              </div>
+              <div className="text-sm text-gray-300">
+                Scans: {invite.scanCount} | Signups: {invite.signupCount}
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
-
-      {/* TOP INVITES */}
-      <div className="bg-lynq-dark-2 p-8 rounded-3xl border border-lynq-gray-2 shadow-card">
-        <h2 className="text-xl text-gold mb-6">Top Performing Invites</h2>
-
-        <div className="h-96">
-          <ResponsiveContainer>
-            <BarChart data={topInvites}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
-              <XAxis dataKey="code" stroke="#aaa" />
-              <YAxis stroke="#aaa" />
-              <Tooltip />
-              <Bar dataKey="signupCount" fill="#D4AF37" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
+      </Section>
     </div>
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: any }) {
+function Metric({ label, value }: { label: string; value: any }) {
   return (
-    <div className="bg-gradient-to-br from-lynq-dark-2 to-lynq-dark p-8 rounded-3xl border border-gold/20 shadow-card">
-      <div className="text-sm text-gray-400 uppercase tracking-widest mb-2">
-        {label}
+    <div className="bg-lynq-dark-2 p-6 rounded-2xl border border-lynq-gray-2 text-center">
+      <div className="text-sm text-gray-400">{label}</div>
+      <div className="text-2xl font-semibold text-gold mt-2">{value}</div>
+    </div>
+  );
+}
+
+function Section({ title, children }: any) {
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold text-gold">{title}</h2>
+      <div className="bg-lynq-dark p-6 rounded-2xl border border-lynq-gray-2">
+        {children}
       </div>
-      <div className="text-3xl font-semibold text-gold">{value}</div>
     </div>
   );
 }
