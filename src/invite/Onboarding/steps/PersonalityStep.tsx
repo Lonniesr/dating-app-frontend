@@ -58,11 +58,14 @@ export default function PersonalityStep({
   const submit = async () => {
     setError(null);
 
-    const validPrompts = prompts.filter(
-      (p) => p.question && p.answer.trim().length > 0
-    );
+    const cleanedPrompts = prompts
+      .map((p) => ({
+        question: p.question,
+        answer: p.answer.trim(),
+      }))
+      .filter((p) => p.question && p.answer.length > 0);
 
-    if (validPrompts.length === 0) {
+    if (cleanedPrompts.length === 0) {
       setError("Please complete at least one personality prompt.");
       return;
     }
@@ -79,7 +82,7 @@ export default function PersonalityStep({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            prompts: validPrompts,
+            prompts: cleanedPrompts,
           }),
         }
       );
@@ -99,21 +102,25 @@ export default function PersonalityStep({
       next();
     } catch (err) {
       console.error("Personality error:", err);
-      setError("Something went wrong.");
+      setError("Something went wrong. Please try again.");
     }
 
     setLoading(false);
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Personality Prompts</h1>
+    <div className="bg-[#111] p-8 rounded-2xl border border-white/10 shadow-xl">
+      <h1 className="text-2xl font-bold mb-2">Personality Prompts</h1>
 
-      <p className="text-white/60 mb-6">
+      <p className="text-white/60 mb-6 text-sm">
         Choose up to 3 prompts and answer them. This helps others get to know you.
       </p>
 
-      {error && <p className="text-red-400 mb-4">{error}</p>}
+      {error && (
+        <div className="bg-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm">
+          {error}
+        </div>
+      )}
 
       {prompts.map((prompt, i) => {
         const selectedQuestions = prompts.map((p) => p.question);
@@ -129,7 +136,7 @@ export default function PersonalityStep({
               onChange={(e) =>
                 updatePrompt(i, "question", e.target.value)
               }
-              className="w-full p-3 mb-3 rounded-lg bg-zinc-900 text-white border border-white/20"
+              className="w-full p-3 mb-3 rounded-lg bg-white/10 text-white border border-white/20 outline-none"
             >
               <option value="">Select a prompt...</option>
               {PROMPT_OPTIONS.map((option) => (
@@ -150,14 +157,18 @@ export default function PersonalityStep({
             <textarea
               value={prompt.answer}
               onChange={(e) =>
-                updatePrompt(i, "answer", e.target.value.slice(0, 250))
+                updatePrompt(
+                  i,
+                  "answer",
+                  e.target.value.slice(0, 250)
+                )
               }
               placeholder="Your answer..."
               rows={3}
-              className="w-full p-3 rounded-lg bg-zinc-900 text-white border border-white/20 resize-none"
+              className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 resize-none outline-none"
             />
 
-            <div className="flex justify-between mt-2 text-sm text-white/50">
+            <div className="flex justify-between mt-2 text-xs text-white/50">
               <span>{prompt.answer.length}/250</span>
 
               {prompts.length > 1 && (
