@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useUserAuth } from "../../user/context/useUserAuth";
+import { useUserAuth } from "../../user/context/UserAuthContext";
 
 import BasicStep from "./steps/BasicStep";
 import PhotosStep from "./steps/PhotosStep";

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useUserAuth } from "../../user/context/useUserAuth";
+import { useUserAuth } from "../../user/context/UserAuthContext";
 
 export default function AdminLogoutButton() {
   const navigate = useNavigate();

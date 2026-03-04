@@ -1,6 +1,6 @@
 import { useTheme } from "../core/ThemeContext";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useUserAuth } from "../../user/context/useUserAuth";
+import { useUserAuth } from "../../user/context/UserAuthContext";
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();

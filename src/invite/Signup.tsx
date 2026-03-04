@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useUserAuth } from "../user/context/UserAuthContext";
 
 export default function Signup() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { refreshUser } = useUserAuth();
 
   const params = new URLSearchParams(location.search);
   const inviteCode = params.get("invite");
 
-  const [name, setName] = useState(""); // ✅ Added
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -45,10 +46,9 @@ export default function Signup() {
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            name, // ✅ Required by backend
             email,
             password,
-            inviteCode, // ✅ Must match backend exactly
+            invite: inviteCode,
           }),
         }
       );
@@ -56,13 +56,23 @@ export default function Signup() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Signup failed.");
+        setError(data.message || data.reason || "Signup failed.");
         setLoading(false);
         return;
       }
 
-      // Backend already sets httpOnly cookie
-      navigate("/invite/onboarding"); // ✅ matches your router
+      // 🔥 DO NOT navigate yet
+      const user = await refreshUser();
+
+      if (!user) {
+        setError("Authentication failed after signup.");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Only navigate AFTER user confirmed
+      navigate("/invite/onboarding", { replace: true });
+
     } catch {
       setError("Server error.");
     }
@@ -93,15 +103,6 @@ export default function Signup() {
         )}
 
         <form onSubmit={handleSignup} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Full Name"
-            className="w-full p-3 rounded-lg bg-white/10 text-white outline-none"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-
           <input
             type="email"
             placeholder="Email"
@@ -137,13 +138,6 @@ export default function Signup() {
             {loading ? "Creating account..." : "Sign Up"}
           </button>
         </form>
-
-        <button
-          onClick={() => navigate("/")}
-          className="w-full py-2 mt-4 bg-white/10 text-white rounded-lg"
-        >
-          Return Home
-        </button>
       </div>
     </div>
   );

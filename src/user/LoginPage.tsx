@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUserAuth } from "./context/useUserAuth";
+import { useUserAuth } from "./context/UserAuthContext";
 import logo from "../assets/lynqlogo.png";
 
 export default function LoginPage() {

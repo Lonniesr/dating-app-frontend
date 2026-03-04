@@ -11,7 +11,7 @@ import axios from "axios";
 
 import { useUserChat } from "./hooks/useUserChat";
 import { useChatSocket } from "./hooks/useChatSocket";
-import { useUserAuth } from "./context/useUserAuth";
+import { useUserAuth } from "./context/UserAuthContext";
 /* -------------------------------------------------------------------------- */
 /*                               Types & helpers                              */
 /* -------------------------------------------------------------------------- */

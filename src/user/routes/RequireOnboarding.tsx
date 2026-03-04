@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useUserAuth } from "../context/useUserAuth";
+import { useUserAuth } from "../context/UserAuthContext";
 import type { ReactNode } from "react";
 
 export default function RequireOnboarding({

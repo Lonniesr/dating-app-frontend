@@ -1,7 +1,7 @@
 // src/user/guards/UserRouteGuard.tsx
 import { Navigate } from "react-router-dom";
 import type { ReactNode } from "react";
-import { useUserAuth } from "../context/useUserAuth";
+import { useUserAuth } from "../context/UserAuthContext";
 export default function UserRouteGuard({ children }: { children: ReactNode }) {
   const { authUser, isLoading } = useUserAuth();
 

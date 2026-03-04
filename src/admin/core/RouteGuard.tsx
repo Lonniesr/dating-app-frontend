@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useUserAuth } from "../../user/context/useUserAuth";
+import { useUserAuth } from "../../user/context/UserAuthContext";
 import type { ReactNode } from "react";
 
 export default function RouteGuard({
