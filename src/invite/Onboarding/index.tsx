@@ -15,6 +15,9 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
 
+  const totalSteps = 4;
+  const progressPercent = ((step + 1) / totalSteps) * 100;
+
   /* ================================
      Grab invite code from URL
   ================================= */
@@ -55,12 +58,15 @@ export default function OnboardingPage() {
   ================================= */
   const finish = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_API_URL}/api/onboarding/complete`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inviteCode }),
-      });
+      await fetch(
+        `${import.meta.env.VITE_API_URL}/api/onboarding/complete`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inviteCode }),
+        }
+      );
     } catch (err) {
       console.error("Error completing onboarding:", err);
     }
@@ -72,20 +78,41 @@ export default function OnboardingPage() {
      Render
   ================================= */
   return (
-    <div className="max-w-xl mx-auto py-10 text-white">
-      {step === 0 && <BasicStep next={goNext} />}
+    <div className="max-w-xl mx-auto py-10 text-white px-4">
 
-      {step === 1 && (
-        <PhotosStep next={goNext} back={goBack} />
-      )}
+      {/* ===== Progress Bar ===== */}
+      <div className="mb-8">
+        <div className="flex justify-between text-sm text-white/60 mb-2">
+          <span>
+            Step {step + 1} of {totalSteps}
+          </span>
+          <span>{Math.round(progressPercent)}%</span>
+        </div>
 
-      {step === 2 && (
-        <PreferencesStep next={goNext} back={goBack} />
-      )}
+        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-yellow-500 transition-all duration-300"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </div>
 
-      {step === 3 && (
-        <PersonalityStep next={finish} back={goBack} />
-      )}
+      {/* ===== Step Content ===== */}
+      <div className="transition-all duration-300">
+        {step === 0 && <BasicStep next={goNext} />}
+
+        {step === 1 && (
+          <PhotosStep next={goNext} back={goBack} />
+        )}
+
+        {step === 2 && (
+          <PreferencesStep next={goNext} back={goBack} />
+        )}
+
+        {step === 3 && (
+          <PersonalityStep next={finish} back={goBack} />
+        )}
+      </div>
     </div>
   );
 }
