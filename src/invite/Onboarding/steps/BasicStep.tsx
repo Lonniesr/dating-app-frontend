@@ -11,22 +11,31 @@ export default function BasicStep({ next }: BasicStepProps) {
   const [name, setName] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [gender, setGender] = useState("");
+  const [race, setRace] = useState(""); // ✅ FIX ADDED
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     setError(null);
 
-    const token = localStorage.getItem("token");
+    if (!name || !birthdate || !gender || !race) {
+      setError("All fields are required.");
+      return;
+    }
 
     const res = await fetch(
-      `${(import.meta as any).env.VITE_API_URL}/api/onboarding/basic`,
+      `${import.meta.env.VITE_API_URL}/api/onboarding/basic`,
       {
         method: "POST",
+        credentials: "include", // ✅ use cookie auth
         headers: {
           "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
         },
-        body: JSON.stringify({ name, birthdate, gender }),
+        body: JSON.stringify({
+          name,
+          birthdate,
+          gender,
+          race,
+        }),
       }
     );
 
@@ -41,7 +50,7 @@ export default function BasicStep({ next }: BasicStepProps) {
       queryKey: ["authUser"],
     });
 
-    next(); // ← move to next step
+    next();
   };
 
   return (
@@ -50,6 +59,7 @@ export default function BasicStep({ next }: BasicStepProps) {
 
       {error && <p className="text-red-400 mb-3">{error}</p>}
 
+      {/* Name */}
       <input
         type="text"
         placeholder="Name"
@@ -58,6 +68,7 @@ export default function BasicStep({ next }: BasicStepProps) {
         onChange={(e) => setName(e.target.value)}
       />
 
+      {/* Birthdate */}
       <input
         type="date"
         className="w-full p-3 mb-3 rounded bg-white/10 text-white border border-white/20"
@@ -65,15 +76,42 @@ export default function BasicStep({ next }: BasicStepProps) {
         onChange={(e) => setBirthdate(e.target.value)}
       />
 
+      {/* Gender */}
       <select
         className="w-full p-3 mb-3 rounded bg-white/10 text-white border border-white/20 focus:border-yellow-500"
         value={gender}
         onChange={(e) => setGender(e.target.value)}
       >
-        <option value="" className="text-black">Select gender</option>
-        <option value="male" className="text-black">♂ Male</option>
-        <option value="female" className="text-black">♀ Female</option>
-        <option value="other" className="text-black">⚧ Other</option>
+        <option value="" className="text-black">
+          Select gender
+        </option>
+        <option value="male" className="text-black">
+          ♂ Male
+        </option>
+        <option value="female" className="text-black">
+          ♀ Female
+        </option>
+        <option value="other" className="text-black">
+          ⚧ Other
+        </option>
+      </select>
+
+      {/* Race */}
+      <select
+        className="w-full p-3 mb-4 rounded bg-white/10 text-white border border-white/20 focus:border-yellow-500"
+        value={race}
+        onChange={(e) => setRace(e.target.value)}
+      >
+        <option value="" className="text-black">
+          Select race
+        </option>
+        <option value="Black" className="text-black">Black</option>
+        <option value="White" className="text-black">White</option>
+        <option value="Asian" className="text-black">Asian</option>
+        <option value="Latino" className="text-black">Latino</option>
+        <option value="Middle Eastern" className="text-black">Middle Eastern</option>
+        <option value="Mixed" className="text-black">Mixed</option>
+        <option value="Other" className="text-black">Other</option>
       </select>
 
       <button
