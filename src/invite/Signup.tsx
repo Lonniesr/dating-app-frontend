@@ -61,7 +61,6 @@ export default function Signup() {
         return;
       }
 
-      // 🔥 DO NOT navigate yet
       const user = await refreshUser();
 
       if (!user) {
@@ -70,9 +69,7 @@ export default function Signup() {
         return;
       }
 
-      // ✅ Only navigate AFTER user confirmed
       navigate("/invite/onboarding", { replace: true });
-
     } catch {
       setError("Server error.");
     }
