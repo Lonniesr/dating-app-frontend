@@ -16,8 +16,6 @@ export default function PreferencesStep({
   const [racePreference, setRacePreference] = useState<string>("");
   const [minAge, setMinAge] = useState<number>(18);
   const [maxAge, setMaxAge] = useState<number>(35);
-
-  // null = Any distance
   const [locationRadius, setLocationRadius] = useState<number | null>(25);
 
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +26,16 @@ export default function PreferencesStep({
 
     if (!interestedIn) {
       setError("Please select who you're interested in.");
+      return;
+    }
+
+    if (minAge < 18) {
+      setError("Minimum age must be at least 18.");
+      return;
+    }
+
+    if (maxAge > 100) {
+      setError("Maximum age cannot exceed 100.");
       return;
     }
 
@@ -53,7 +61,7 @@ export default function PreferencesStep({
               racePreference: racePreference || null,
               minAge,
               maxAge,
-              locationRadius, // null = unlimited
+              locationRadius,
             },
           }),
         }
@@ -74,17 +82,21 @@ export default function PreferencesStep({
       next();
     } catch (err) {
       console.error("Preferences error:", err);
-      setError("Something went wrong.");
+      setError("Something went wrong. Please try again.");
     }
 
     setLoading(false);
   };
 
   return (
-    <div>
+    <div className="bg-[#111] p-8 rounded-2xl border border-white/10 shadow-xl">
       <h1 className="text-2xl font-bold mb-6">Dating Preferences</h1>
 
-      {error && <p className="text-red-400 mb-4">{error}</p>}
+      {error && (
+        <div className="bg-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm">
+          {error}
+        </div>
+      )}
 
       {/* Interested In */}
       <div className="mb-4">
@@ -92,7 +104,7 @@ export default function PreferencesStep({
         <select
           value={interestedIn}
           onChange={(e) => setInterestedIn(e.target.value)}
-          className="w-full p-3 rounded-lg bg-zinc-900 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
         >
           <option value="">Select...</option>
           <option value="Men">Men</option>
@@ -109,7 +121,7 @@ export default function PreferencesStep({
         <select
           value={racePreference}
           onChange={(e) => setRacePreference(e.target.value)}
-          className="w-full p-3 rounded-lg bg-zinc-900 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
         >
           <option value="">No Preference</option>
           <option value="White">White</option>
@@ -132,7 +144,7 @@ export default function PreferencesStep({
             max={100}
             value={minAge}
             onChange={(e) => setMinAge(Number(e.target.value))}
-            className="w-1/2 p-3 rounded-lg bg-zinc-900 text-white border border-white/20"
+            className="w-1/2 p-3 rounded-lg bg-white/10 text-white border border-white/20 outline-none"
           />
           <input
             type="number"
@@ -140,7 +152,7 @@ export default function PreferencesStep({
             max={100}
             value={maxAge}
             onChange={(e) => setMaxAge(Number(e.target.value))}
-            className="w-1/2 p-3 rounded-lg bg-zinc-900 text-white border border-white/20"
+            className="w-1/2 p-3 rounded-lg bg-white/10 text-white border border-white/20 outline-none"
           />
         </div>
       </div>
@@ -163,7 +175,7 @@ export default function PreferencesStep({
                 : Number(e.target.value)
             )
           }
-          className="w-full p-3 rounded-lg bg-zinc-900 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
         >
           <option value="any">Any distance</option>
           <option value={5}>5 miles</option>
