@@ -61,7 +61,7 @@ export default function PreferencesStep({
               racePreference: racePreference || null,
               minAge,
               maxAge,
-              locationRadius,
+              locationRadius, // null = unlimited
             },
           }),
         }
@@ -89,7 +89,7 @@ export default function PreferencesStep({
   };
 
   return (
-    <div className="bg-[#111] p-8 rounded-2xl border border-white/10 shadow-xl">
+    <div className="bg-[#111] p-8 rounded-2xl border border-white/10 shadow-xl text-white">
       <h1 className="text-2xl font-bold mb-6">Dating Preferences</h1>
 
       {error && (
@@ -104,12 +104,20 @@ export default function PreferencesStep({
         <select
           value={interestedIn}
           onChange={(e) => setInterestedIn(e.target.value)}
-          className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
+          className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-yellow-500"
         >
-          <option value="">Select...</option>
-          <option value="Men">Men</option>
-          <option value="Women">Women</option>
-          <option value="Everyone">Everyone</option>
+          <option value="" className="text-black">
+            Select...
+          </option>
+          <option value="Men" className="text-black">
+            Men
+          </option>
+          <option value="Women" className="text-black">
+            Women
+          </option>
+          <option value="Everyone" className="text-black">
+            Everyone
+          </option>
         </select>
       </div>
 
@@ -121,16 +129,32 @@ export default function PreferencesStep({
         <select
           value={racePreference}
           onChange={(e) => setRacePreference(e.target.value)}
-          className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
+          className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-yellow-500"
         >
-          <option value="">No Preference</option>
-          <option value="White">White</option>
-          <option value="Black">Black</option>
-          <option value="Asian">Asian</option>
-          <option value="Latino">Latino</option>
-          <option value="Middle Eastern">Middle Eastern</option>
-          <option value="Mixed">Mixed</option>
-          <option value="Other">Other</option>
+          <option value="" className="text-black">
+            No Preference
+          </option>
+          <option value="White" className="text-black">
+            White
+          </option>
+          <option value="Black" className="text-black">
+            Black
+          </option>
+          <option value="Asian" className="text-black">
+            Asian
+          </option>
+          <option value="Latino" className="text-black">
+            Latino
+          </option>
+          <option value="Middle Eastern" className="text-black">
+            Middle Eastern
+          </option>
+          <option value="Mixed" className="text-black">
+            Mixed
+          </option>
+          <option value="Other" className="text-black">
+            Other
+          </option>
         </select>
       </div>
 
@@ -144,7 +168,7 @@ export default function PreferencesStep({
             max={100}
             value={minAge}
             onChange={(e) => setMinAge(Number(e.target.value))}
-            className="w-1/2 p-3 rounded-lg bg-white/10 text-white border border-white/20 outline-none"
+            className="w-1/2 p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-yellow-500"
           />
           <input
             type="number"
@@ -152,7 +176,7 @@ export default function PreferencesStep({
             max={100}
             value={maxAge}
             onChange={(e) => setMaxAge(Number(e.target.value))}
-            className="w-1/2 p-3 rounded-lg bg-white/10 text-white border border-white/20 outline-none"
+            className="w-1/2 p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-yellow-500"
           />
         </div>
       </div>
@@ -160,36 +184,54 @@ export default function PreferencesStep({
       {/* Location Radius */}
       <div className="mb-6">
         <label className="block mb-2 font-medium">
-          Location Radius:{" "}
-          {locationRadius === null
-            ? "Any distance"
-            : `${locationRadius} miles`}
+          Location Radius
         </label>
 
-        <select
-          value={locationRadius ?? "any"}
-          onChange={(e) =>
-            setLocationRadius(
-              e.target.value === "any"
-                ? null
-                : Number(e.target.value)
-            )
-          }
-          className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
-        >
-          <option value="any">Any distance</option>
-          <option value={5}>5 miles</option>
-          <option value={10}>10 miles</option>
-          <option value={25}>25 miles</option>
-          <option value={50}>50 miles</option>
-          <option value={100}>100 miles</option>
-        </select>
+        <div className="flex items-center gap-2 mb-3">
+          <input
+            type="checkbox"
+            checked={locationRadius === null}
+            onChange={(e) =>
+              setLocationRadius(e.target.checked ? null : 25)
+            }
+            className="w-4 h-4"
+          />
+          <span className="text-sm text-white/80">
+            No location limit
+          </span>
+        </div>
+
+        {locationRadius !== null && (
+          <select
+            value={locationRadius}
+            onChange={(e) =>
+              setLocationRadius(Number(e.target.value))
+            }
+            className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          >
+            <option value={5} className="text-black">
+              5 miles
+            </option>
+            <option value={10} className="text-black">
+              10 miles
+            </option>
+            <option value={25} className="text-black">
+              25 miles
+            </option>
+            <option value={50} className="text-black">
+              50 miles
+            </option>
+            <option value={100} className="text-black">
+              100 miles
+            </option>
+          </select>
+        )}
       </div>
 
       <div className="flex gap-3">
         <button
           onClick={back}
-          className="flex-1 py-3 bg-white/10 rounded-lg"
+          className="flex-1 py-3 bg-white/10 rounded-lg hover:bg-white/20 transition"
         >
           Back
         </button>

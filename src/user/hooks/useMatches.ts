@@ -4,10 +4,26 @@ type MatchUser = {
   id: string;
   name: string;
   gender?: string;
-  photo?: string;
+  photos?: string[];
   age?: number;
   location?: string;
 };
+
+function calculateAge(birthdate?: string) {
+  if (!birthdate) return undefined;
+
+  const birth = new Date(birthdate);
+  const today = new Date();
+
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+
+  return age;
+}
 
 export function useMatches() {
   return useQuery<MatchUser[]>({
@@ -21,7 +37,19 @@ export function useMatches() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      return data;
-    }
+      // 🔥 Normalize backend shape → UI shape
+      return data.map((match: any) => {
+        const user = match.user;
+
+        return {
+          id: user.id,
+          name: user.name,
+          gender: user.gender,
+          photos: user.photos,
+          age: calculateAge(user.birthdate),
+          location: user.location,
+        };
+      });
+    },
   });
 }

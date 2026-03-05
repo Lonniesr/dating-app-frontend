@@ -14,6 +14,7 @@ export default function OnboardingPage() {
 
   const [step, setStep] = useState(0);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false); // ✅ prevents remount resets
 
   const totalSteps = 4;
   const progressPercent = ((step + 1) / totalSteps) * 100;
@@ -29,10 +30,10 @@ export default function OnboardingPage() {
   }, [searchParams]);
 
   /* ================================
-     Smart Resume Logic
+     Smart Resume Logic (RUNS ONCE)
   ================================= */
   useEffect(() => {
-    if (!authUser) return;
+    if (!authUser || initialized) return;
 
     if (!authUser.birthdate) {
       setStep(0);
@@ -45,7 +46,9 @@ export default function OnboardingPage() {
     } else {
       navigate("/user/dashboard");
     }
-  }, [authUser, navigate]);
+
+    setInitialized(true);
+  }, [authUser, initialized, navigate]);
 
   /* ================================
      Navigation Helpers

@@ -14,7 +14,12 @@ export type Preferences = {
   racePreference: string | null;
   minAge: number;
   maxAge: number;
-  locationRadius: number;
+  locationRadius: number | null;
+};
+
+export type PromptItem = {
+  question: string;
+  answer: string;
 };
 
 export type AuthUser = {
@@ -27,8 +32,9 @@ export type AuthUser = {
   gender?: string;
   location?: string;
   birthdate?: string;
+  bio?: string | null;               // ✅ FIXED
   preferences?: Preferences | null;
-  prompts?: string | null;
+  prompts?: PromptItem[] | null;     // ✅ FIXED (was string)
 };
 
 export type UserAuthContextValue = {
@@ -65,7 +71,8 @@ export function UserAuthProvider({ children }: { children: ReactNode }) {
 
   const fetchMe = async (): Promise<AuthUser | null> => {
     try {
-      const res = await fetch(`${API}/api/me`, {
+      // ✅ CORRECT ENDPOINT
+      const res = await fetch(`${API}/api/auth/me`, {
         credentials: "include",
       });
 
@@ -74,7 +81,6 @@ export function UserAuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
 
-      // ✅ FIX: backend returns user directly
       const rawUser = await res.json();
 
       if (!rawUser) {
@@ -90,7 +96,7 @@ export function UserAuthProvider({ children }: { children: ReactNode }) {
       setAuthUser(parsedUser);
       return parsedUser;
     } catch (err) {
-      console.error("Error fetching /api/me:", err);
+      console.error("Error fetching /api/auth/me:", err);
       setAuthUser(null);
       return null;
     }

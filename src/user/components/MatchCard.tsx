@@ -3,22 +3,29 @@ type MatchCardProps = {
     id: string;
     name: string;
     gender?: string;
-    photo?: string;
+    photos?: string[];
   };
 };
 
 export default function MatchCard({ match }: MatchCardProps) {
+  const primaryPhoto =
+    match.photos && match.photos.length > 0
+      ? match.photos[0]
+      : "/placeholder.jpg";
+
   return (
     <div className="bg-white/5 p-4 rounded-xl border border-white/10 flex items-center gap-4 hover:bg-white/10 transition">
       <img
-        src={match.photo || "/placeholder.jpg"}
+        src={primaryPhoto}
         alt={match.name}
         className="w-16 h-16 rounded-lg object-cover"
       />
 
       <div>
         <p className="font-bold text-lg">{match.name}</p>
-        <p className="text-white/60 text-sm">{match.gender}</p>
+        <p className="text-white/60 text-sm">
+          {match.gender || "—"}
+        </p>
       </div>
 
       <div className="ml-auto">

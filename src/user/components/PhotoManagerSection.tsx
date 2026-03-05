@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useUserAuth } from "../context/UserAuthContext";
+import { supabase } from "../../lib/supabaseClient";
+
 import {
   DndContext,
   closestCenter,
@@ -19,7 +21,6 @@ import {
 
 import { CSS } from "@dnd-kit/utilities";
 
-// Ensure the user type includes photos
 type AuthUserWithPhotos = {
   photos: string[];
   [key: string]: any;
@@ -62,13 +63,11 @@ function SortablePhoto({ photo, index, onDelete }: SortablePhotoProps) {
 
 export default function PhotoManagerSection() {
   const { authUser, refreshUser } = useUserAuth();
-
   const user = authUser as AuthUserWithPhotos | null;
 
   const [isUploading, setIsUploading] = useState(false);
   const [items, setItems] = useState<string[]>([]);
 
-  // Load photos when user data changes
   useEffect(() => {
     if (user?.photos) {
       setItems(user.photos);
@@ -77,23 +76,47 @@ export default function PhotoManagerSection() {
 
   const sensors = useSensors(useSensor(PointerSensor));
 
+  // ✅ FIXED UPLOAD LOGIC
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
 
-    const formData = new FormData();
-    formData.append("photo", file);
+    try {
+      const filePath = `user-photos/${crypto.randomUUID()}.jpg`;
 
-    await fetch(`${import.meta.env.VITE_API_URL}/api/user/photos/upload`, {
-      method: "POST",
-      credentials: "include",
-      body: formData,
-    });
+      const { error: uploadError } = await supabase.storage
+        .from("photos")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("photos")
+        .getPublicUrl(filePath);
+
+      // Send URL to backend
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/user/photos/upload`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ url: data.publicUrl }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to save photo URL");
+
+      await refreshUser();
+    } catch (err) {
+      console.error("Upload error:", err);
+    }
 
     setIsUploading(false);
-    refreshUser();
   };
 
   const handleDelete = async (index: number) => {
@@ -129,20 +152,17 @@ export default function PhotoManagerSection() {
     <div className="bg-white/5 p-5 rounded-xl border border-white/10 text-white mb-6">
       <h2 className="text-xl font-bold mb-4">Your Photos</h2>
 
-      {/* Upload Button */}
       <label className="inline-block mb-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 transition rounded-lg font-semibold cursor-pointer">
         {isUploading ? "Uploading…" : "Upload Photo"}
         <input type="file" className="hidden" onChange={handleUpload} />
       </label>
 
-      {/* Empty State */}
       {items.length === 0 && (
         <p className="text-white/50 text-sm">
           You haven't uploaded any photos yet.
         </p>
       )}
 
-      {/* Drag-and-Drop Grid */}
       {items.length > 0 && (
         <DndContext
           sensors={sensors}
