@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserAuth } from "./context/UserAuthContext";
+import { getToken } from "firebase/messaging";
+import { messaging } from "../lib/firebase";
 import logo from "../assets/lynqlogo.png";
 
 export default function LoginPage() {
@@ -11,6 +13,32 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // 🔔 Register push notifications
+  const registerPush = async () => {
+    try {
+      const permission = await Notification.requestPermission();
+
+      if (permission !== "granted") return;
+
+      const token = await getToken(messaging, {
+        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+      });
+
+      if (!token) return;
+
+      await fetch(`${import.meta.env.VITE_API_URL}/api/push/register`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token }),
+      });
+    } catch (err) {
+      console.error("Push registration failed:", err);
+    }
+  };
 
   const handleLogin = async () => {
     setError("");
@@ -41,19 +69,21 @@ export default function LoginPage() {
         return;
       }
 
+      // 🔔 Register push notifications after login
+      registerPush();
+
       // 🛡 Admin bypass
       if (user.role === "admin") {
         navigate("/admin/dashboard", { replace: true });
-      } 
+      }
       // 👤 User onboarding required
       else if (!user.onboardingComplete) {
         navigate("/invite/onboarding", { replace: true });
-      } 
+      }
       // ✅ Normal dashboard
       else {
         navigate("/dashboard", { replace: true });
       }
-
     } catch (err) {
       console.error("LOGIN ERROR:", err);
       setError("Server error");

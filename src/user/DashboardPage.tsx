@@ -7,15 +7,99 @@ export default function DashboardPage() {
 
   const prefs = authUser?.preferences;
 
+  // -------- PROFILE COMPLETION --------
+  const completionItems = [
+    !!authUser?.photos?.length,
+    !!authUser?.bio,
+    !!authUser?.gender,
+    !!authUser?.preferences,
+  ];
+
+  const completionScore = Math.round(
+    (completionItems.filter(Boolean).length / completionItems.length) * 100
+  );
+
   return (
     <div className="space-y-8">
-      {/* Header */}
+
+      {/* HEADER */}
       <h1 className="text-3xl font-bold text-yellow-400">
         Welcome, {authUser?.name || "User"}
       </h1>
 
+      {/* ---------------- PROFILE COMPLETION ---------------- */}
+      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
+
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Profile Strength</h2>
+          <span className="text-yellow-400 font-bold">
+            {completionScore}%
+          </span>
+        </div>
+
+        <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
+          <div
+            className="bg-yellow-400 h-full transition-all"
+            style={{ width: `${completionScore}%` }}
+          />
+        </div>
+
+        <p className="text-sm text-gray-400 mt-3">
+          Profiles with photos and bios get more matches.
+        </p>
+
+      </section>
+
+      {/* ---------------- PROFILE SUMMARY ---------------- */}
+      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
+
+        <h2 className="text-xl font-semibold mb-6">Profile Overview</h2>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+
+          <div>
+            <p className="text-2xl font-bold text-yellow-400">
+              {authUser?.photos?.length || 0}
+            </p>
+            <p className="text-xs text-gray-400 uppercase">
+              Photos
+            </p>
+          </div>
+
+          <div>
+            <p className="text-2xl font-bold text-yellow-400">
+              {authUser?.bio ? "1" : "0"}
+            </p>
+            <p className="text-xs text-gray-400 uppercase">
+              Bio
+            </p>
+          </div>
+
+          <div>
+            <p className="text-2xl font-bold text-yellow-400">
+              {prefs ? "1" : "0"}
+            </p>
+            <p className="text-xs text-gray-400 uppercase">
+              Preferences
+            </p>
+          </div>
+
+          <div>
+            <p className="text-2xl font-bold text-yellow-400">
+              {authUser?.prompts?.length || 0}
+            </p>
+            <p className="text-xs text-gray-400 uppercase">
+              Prompts
+            </p>
+          </div>
+
+        </div>
+
+      </section>
+
       {/* ---------------- PREFERENCES ---------------- */}
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
+
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Your Preferences</h2>
 
@@ -29,6 +113,7 @@ export default function DashboardPage() {
 
         {prefs ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
+
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wide">
                 Interested In
@@ -67,6 +152,7 @@ export default function DashboardPage() {
                   : `${prefs.locationRadius} miles`}
               </p>
             </div>
+
           </div>
         ) : (
           <div className="text-gray-400 text-sm">
@@ -79,25 +165,69 @@ export default function DashboardPage() {
             </button>
           </div>
         )}
+
       </section>
 
       {/* ---------------- DISCOVER ---------------- */}
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-        <h2 className="text-xl font-semibold mb-2">Discover</h2>
-        <p className="text-gray-400">No more people right now.</p>
+
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-xl font-semibold">Discover</h2>
+
+          <button
+            onClick={() => navigate("/user/discover")}
+            className="text-yellow-400 hover:underline text-sm"
+          >
+            Start swiping
+          </button>
+        </div>
+
+        <p className="text-gray-400">
+          Find new people who match your preferences.
+        </p>
+
       </section>
 
       {/* ---------------- MATCHES ---------------- */}
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-        <h2 className="text-xl font-semibold mb-2">Your Matches</h2>
-        <p className="text-gray-400">No matches yet.</p>
+
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-xl font-semibold">Your Matches</h2>
+
+          <button
+            onClick={() => navigate("/user/matches")}
+            className="text-yellow-400 hover:underline text-sm"
+          >
+            View matches
+          </button>
+        </div>
+
+        <p className="text-gray-400">
+          When you and someone like each other, they'll appear here.
+        </p>
+
       </section>
 
       {/* ---------------- MESSAGES ---------------- */}
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-        <h2 className="text-xl font-semibold mb-2">Messages</h2>
-        <p className="text-gray-400">No recent messages.</p>
+
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-xl font-semibold">Messages</h2>
+
+          <button
+            onClick={() => navigate("/user/messages")}
+            className="text-yellow-400 hover:underline text-sm"
+          >
+            Open inbox
+          </button>
+        </div>
+
+        <p className="text-gray-400">
+          Start conversations with your matches.
+        </p>
+
       </section>
+
     </div>
   );
 }
