@@ -1,4 +1,5 @@
 import { useAuthUser } from "../../hooks/useAuthUser";
+import GenderIcon from "./GenderIcon";
 
 type ProfileUser = {
   name: string;
@@ -22,11 +23,13 @@ export default function ProfileSummary() {
 
   return (
     <div className="bg-white/5 rounded-xl p-5 border border-white/10 text-white">
-      <h2 className="text-xl font-semibold mb-3">My Profile</h2>
 
-      <div className="flex items-center gap-4">
+      <h2 className="text-sm text-white/60 mb-3">My Profile</h2>
+
+      <div className="flex items-center gap-3">
+
         {/* Avatar */}
-        <div className="w-20 h-20 rounded-full overflow-hidden border border-white/20 bg-white/10">
+        <div className="w-12 h-12 rounded-full overflow-hidden border border-white/20 bg-white/10">
           <img
             src={user.photos?.[0] || "/placeholder.jpg"}
             alt={user.name}
@@ -36,20 +39,20 @@ export default function ProfileSummary() {
 
         {/* Basic Info */}
         <div>
-          <p className="font-bold text-lg">{user.name}</p>
-          <p className="text-white/60 text-sm">{user.email}</p>
+          <p className="font-semibold">{user.name}</p>
+
+          <div className="flex items-center gap-2 text-xs text-white/60">
+
+            {user.gender && <GenderIcon gender={user.gender} />}
+
+            {user.location && <span>{user.location}</span>}
+
+          </div>
+
         </div>
+
       </div>
 
-      {/* Details */}
-      <div className="mt-4 text-white/70 text-sm space-y-1">
-        <p>
-          <strong>Gender:</strong> {user.gender || "—"}
-        </p>
-        <p>
-          <strong>Location:</strong> {user.location || "—"}
-        </p>
-      </div>
     </div>
   );
 }

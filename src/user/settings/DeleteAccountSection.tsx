@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 
 export default function DeleteAccountSection() {
   const { deleteAccount } = useSettings();
+
   const isLoading = deleteAccount.isPending;
 
   const handleDelete = () => {
@@ -16,9 +17,8 @@ export default function DeleteAccountSection() {
       onSuccess: () => {
         toast.success("Account deleted");
 
-        setTimeout(() => {
-          window.location.href = "/signup";
-        }, 600);
+        // Redirect after account removal
+        window.location.href = "/signup";
       },
       onError: () => {
         toast.error("Failed to delete account");
@@ -30,8 +30,9 @@ export default function DeleteAccountSection() {
     <section className="bg-[#111] p-6 rounded-2xl border border-red-500/30 space-y-4">
       <h2 className="text-2xl font-semibold text-red-400">Danger Zone</h2>
 
-      <p className="text-gray-400 text-sm leading-relaxed">
-        Deleting your account is permanent. All your matches, messages, and data will be removed.
+      <p className="text-gray-400 text-sm">
+        Deleting your account is permanent. All matches, messages and profile
+        data will be removed.
       </p>
 
       <button

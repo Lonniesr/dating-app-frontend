@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserAuth } from "./context/UserAuthContext";
-import { getToken } from "firebase/messaging";
-import { messaging } from "../lib/firebase";
 import logo from "../assets/lynqlogo.png";
 
 export default function LoginPage() {
@@ -14,33 +12,12 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔔 Register push notifications
-  const registerPush = async () => {
-    try {
-      const permission = await Notification.requestPermission();
-
-      if (permission !== "granted") return;
-
-      const token = await getToken(messaging, {
-        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-      });
-
-      if (!token) return;
-
-      await fetch(`${import.meta.env.VITE_API_URL}/api/push/register`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token }),
-      });
-    } catch (err) {
-      console.error("Push registration failed:", err);
-    }
-  };
-
   const handleLogin = async () => {
+    if (!email || !password) {
+      setError("Please enter email and password");
+      return;
+    }
+
     setError("");
     setLoading(true);
 
@@ -69,26 +46,25 @@ export default function LoginPage() {
         return;
       }
 
-      // 🔔 Register push notifications after login
-      registerPush();
-
-      // 🛡 Admin bypass
       if (user.role === "admin") {
         navigate("/admin/dashboard", { replace: true });
-      }
-      // 👤 User onboarding required
-      else if (!user.onboardingComplete) {
+      } else if (!user.onboardingComplete) {
         navigate("/invite/onboarding", { replace: true });
-      }
-      // ✅ Normal dashboard
-      else {
+      } else {
         navigate("/dashboard", { replace: true });
       }
+
     } catch (err) {
       console.error("LOGIN ERROR:", err);
       setError("Server error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleLogin();
     }
   };
 
@@ -119,6 +95,7 @@ export default function LoginPage() {
             className="w-full p-3 rounded-lg bg-black border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={handleKeyPress}
           />
 
           <input
@@ -127,16 +104,21 @@ export default function LoginPage() {
             className="w-full p-3 rounded-lg bg-black border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={handleKeyPress}
           />
 
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 transition text-black rounded-lg font-semibold text-lg disabled:opacity-50"
+            className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 transition text-black rounded-lg font-semibold text-lg disabled:opacity-50 flex items-center justify-center gap-2"
           >
+            {loading && (
+              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+            )}
             {loading ? "Logging in…" : "Login"}
           </button>
         </div>
+
       </div>
     </div>
   );

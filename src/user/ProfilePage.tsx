@@ -16,16 +16,11 @@ import type { Preferences } from "./context/UserAuthContext";
 function resolvePhotoUrl(photo: string) {
   if (!photo) return "";
 
-  // If it's already a full URL, use it
   if (photo.startsWith("http")) {
     return photo;
   }
 
-  // Otherwise generate Supabase public URL
-  const { data } = supabase.storage
-    .from("photos")
-    .getPublicUrl(photo);
-
+  const { data } = supabase.storage.from("photos").getPublicUrl(photo);
   return data.publicUrl;
 }
 
@@ -65,16 +60,15 @@ export default function ProfilePage() {
   return (
     <div className="p-6 text-white">
 
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
+      {/* HEADER */}
+      <div className="flex items-center gap-3 mb-6">
         <h1 className="text-2xl font-bold">My Profile</h1>
-        {authUser.gender && <GenderIcon gender={authUser.gender} />}
       </div>
 
-      {/* Edit Profile */}
+      {/* EDIT PROFILE */}
       <Link
         to="/edit-profile"
-        className="inline-block mb-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 transition rounded-lg font-semibold"
+        className="inline-block mb-6 px-4 py-2 bg-blue-600 hover:bg-blue-700 transition rounded-lg font-semibold"
       >
         Edit Profile
       </Link>
@@ -84,7 +78,7 @@ export default function ProfilePage() {
 
         <div className="flex items-center gap-5 mb-4">
 
-          {/* Main Profile Image */}
+          {/* MAIN PHOTO */}
           <div className="w-24 h-24 rounded-full overflow-hidden border border-white/20 bg-white/10">
             {photos.length ? (
               <img
@@ -98,18 +92,39 @@ export default function ProfilePage() {
             )}
           </div>
 
+          {/* NAME + VERIFIED + GENDER ICON */}
           <div>
-            <p className="font-bold text-xl">{authUser.name}</p>
-            <p className="text-white/60">{authUser.email}</p>
+
+            <div className="flex items-center gap-2">
+
+              <p className="font-bold text-xl">
+                {authUser.name}
+              </p>
+
+              {/* VERIFIED BADGE */}
+              {authUser.verified && (
+                <span className="text-blue-400 text-sm font-semibold">
+                  ✔ Verified
+                </span>
+              )}
+
+              {/* GENDER ICON */}
+              {authUser.gender && (
+                <GenderIcon gender={authUser.gender} />
+              )}
+
+            </div>
+
+            <p className="text-white/60">
+              {authUser.email}
+            </p>
+
           </div>
+
         </div>
 
-        <div className="space-y-1 text-white/70">
-
-          <p className="flex items-center gap-2">
-            <strong>Gender:</strong> {authUser.gender || "—"}
-            {authUser.gender && <GenderIcon gender={authUser.gender} />}
-          </p>
+        {/* PROFILE DETAILS */}
+        <div className="space-y-2 text-white/70">
 
           <p>
             <strong>Preferences:</strong>{" "}
@@ -120,7 +135,7 @@ export default function ProfilePage() {
 
         </div>
 
-        {/* Invite Button */}
+        {/* INVITE BUTTON */}
         <div className="mt-6">
           <button
             onClick={() => createInviteMutation.mutate()}
@@ -183,13 +198,15 @@ export default function ProfilePage() {
       <MatchCountSection />
       <SwipeActivityChart />
 
-      {/* Invite Modal */}
+      {/* INVITE MODAL */}
       {newInvite && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
 
           <div className="bg-white/10 backdrop-blur-lg p-6 rounded-xl border border-white/20 w-full max-w-md">
 
-            <h2 className="text-xl font-bold mb-3">Invite Created</h2>
+            <h2 className="text-xl font-bold mb-3">
+              Invite Created
+            </h2>
 
             <p className="mb-2">
               <strong>Code:</strong> {newInvite.code}

@@ -29,15 +29,14 @@ export default function ChangePasswordSection() {
           setOldPass("");
           setNewPass("");
         },
-        onError: () => {
-          toast.error("Incorrect password");
-        },
+        onError: () => toast.error("Incorrect password"),
       }
     );
   };
 
   return (
     <section className="bg-[#111] p-6 rounded-2xl border border-white/10 space-y-4">
+
       <h2 className="text-2xl font-semibold">Change Password</h2>
 
       <input
@@ -67,6 +66,7 @@ export default function ChangePasswordSection() {
       >
         {isLoading ? "Updating..." : "Update Password"}
       </button>
+
     </section>
   );
 }

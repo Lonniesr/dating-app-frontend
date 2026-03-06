@@ -1,6 +1,6 @@
 // src/user/settings/PreferencesSection.tsx
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUserAuth } from "../context/UserAuthContext";
 
 const API = import.meta.env.VITE_API_URL;
@@ -9,22 +9,31 @@ export default function PreferencesSection() {
   const { authUser, refreshUser } = useUserAuth();
   const existing = authUser?.preferences;
 
-  const [interestedIn, setInterestedIn] = useState(
-    existing?.interestedIn || ""
-  );
-  const [minAge, setMinAge] = useState(existing?.minAge || 25);
-  const [maxAge, setMaxAge] = useState(existing?.maxAge || 40);
-  const [racePreference, setRacePreference] = useState(
-    existing?.racePreference || ""
-  );
-  const [locationRadius, setLocationRadius] = useState<
-    number | "any"
-  >(existing?.locationRadius ?? "any");
+  const [interestedIn, setInterestedIn] = useState("");
+  const [minAge, setMinAge] = useState(25);
+  const [maxAge, setMaxAge] = useState(40);
+  const [racePreference, setRacePreference] = useState("");
+  const [locationRadius, setLocationRadius] = useState<number | "any">("any");
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (existing) {
+      setInterestedIn(existing.interestedIn || "");
+      setMinAge(existing.minAge || 25);
+      setMaxAge(existing.maxAge || 40);
+      setRacePreference(existing.racePreference || "");
+      setLocationRadius(existing.locationRadius ?? "any");
+    }
+  }, [existing]);
+
   const save = async () => {
+    if (minAge >= maxAge) {
+      setMessage("Minimum age must be lower than maximum age.");
+      return;
+    }
+
     setLoading(true);
     setMessage(null);
 
@@ -70,6 +79,7 @@ export default function PreferencesSection() {
           <label className="block text-sm text-white/60 mb-1">
             Interested In
           </label>
+
           <select
             value={interestedIn}
             onChange={(e) => setInterestedIn(e.target.value)}
@@ -86,19 +96,27 @@ export default function PreferencesSection() {
           <label className="block text-sm text-white/60 mb-1">
             Age Range
           </label>
+
           <div className="flex gap-4">
+
             <input
               type="number"
               value={minAge}
+              min={18}
+              max={99}
               onChange={(e) => setMinAge(Number(e.target.value))}
               className="w-1/2 p-3 rounded bg-white/10"
             />
+
             <input
               type="number"
               value={maxAge}
+              min={18}
+              max={99}
               onChange={(e) => setMaxAge(Number(e.target.value))}
               className="w-1/2 p-3 rounded bg-white/10"
             />
+
           </div>
         </div>
 
@@ -106,6 +124,7 @@ export default function PreferencesSection() {
           <label className="block text-sm text-white/60 mb-1">
             Race Preference
           </label>
+
           <select
             value={racePreference}
             onChange={(e) => setRacePreference(e.target.value)}
@@ -124,6 +143,7 @@ export default function PreferencesSection() {
           <label className="block text-sm text-white/60 mb-1">
             Distance
           </label>
+
           <select
             value={locationRadius}
             onChange={(e) =>
@@ -151,6 +171,7 @@ export default function PreferencesSection() {
         >
           {loading ? "Saving..." : "Save Preferences"}
         </button>
+
       </div>
     </section>
   );

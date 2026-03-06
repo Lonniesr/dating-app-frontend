@@ -4,7 +4,6 @@ import ProfileEditSection from "./settings/ProfileEditSection";
 import PreferencesSection from "./settings/PreferencesSection"; // ✅ ADDED
 import ChangePasswordSection from "./settings/ChangePasswordSection";
 import NotificationSettingsSection from "./settings/NotificationSettingsSection";
-import PrivacySettingsSection from "./settings/PrivacySettingsSection";
 import ThemeToggleSection from "./settings/ThemeToggleSection";
 import LogoutSection from "./settings/LogoutSection";
 import DeleteAccountSection from "./settings/DeleteAccountSection";

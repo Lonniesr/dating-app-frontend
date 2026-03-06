@@ -49,6 +49,7 @@ import SignupPage from "./invite/Signup";
 export default function App() {
   return (
     <Routes>
+
       {/* ---------------- PUBLIC ROUTES ---------------- */}
 
       <Route path="/invite/:code" element={<InviteLandingPage />} />
@@ -65,9 +66,12 @@ export default function App() {
           </UserRouteGuard>
         }
       >
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<DashboardPage />} />
+        {/* Default page */}
+        <Route index element={<Navigate to="discover" replace />} />
+
+        {/* Main app */}
         <Route path="discover" element={<DiscoverPage />} />
+        <Route path="dashboard" element={<DashboardPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="messages" element={<MessagesPage />} />
@@ -125,7 +129,8 @@ export default function App() {
 
       {/* ---------------- GLOBAL FALLBACK ---------------- */}
 
-      <Route path="*" element={<Navigate to="/user/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/user/discover" replace />} />
+
     </Routes>
   );
 }

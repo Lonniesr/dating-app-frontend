@@ -5,14 +5,22 @@ export default function DashboardPage() {
   const { authUser } = useUserAuth();
   const navigate = useNavigate();
 
-  const prefs = authUser?.preferences;
+  if (!authUser) {
+    return (
+      <div className="text-center text-gray-400 mt-20">
+        Loading dashboard...
+      </div>
+    );
+  }
+
+  const prefs = authUser.preferences;
 
   // -------- PROFILE COMPLETION --------
   const completionItems = [
-    !!authUser?.photos?.length,
-    !!authUser?.bio,
-    !!authUser?.gender,
-    !!authUser?.preferences,
+    (authUser.photos?.length ?? 0) > 0,
+    !!authUser.bio,
+    !!authUser.gender,
+    !!authUser.preferences,
   ];
 
   const completionScore = Math.round(
@@ -24,10 +32,10 @@ export default function DashboardPage() {
 
       {/* HEADER */}
       <h1 className="text-3xl font-bold text-yellow-400">
-        Welcome, {authUser?.name || "User"}
+        Welcome, {authUser.name || "User"}
       </h1>
 
-      {/* ---------------- PROFILE COMPLETION ---------------- */}
+      {/* PROFILE COMPLETION */}
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
 
         <div className="flex justify-between items-center mb-4">
@@ -50,7 +58,7 @@ export default function DashboardPage() {
 
       </section>
 
-      {/* ---------------- PROFILE SUMMARY ---------------- */}
+      {/* PROFILE SUMMARY */}
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
 
         <h2 className="text-xl font-semibold mb-6">Profile Overview</h2>
@@ -59,7 +67,7 @@ export default function DashboardPage() {
 
           <div>
             <p className="text-2xl font-bold text-yellow-400">
-              {authUser?.photos?.length || 0}
+              {authUser.photos?.length ?? 0}
             </p>
             <p className="text-xs text-gray-400 uppercase">
               Photos
@@ -68,7 +76,7 @@ export default function DashboardPage() {
 
           <div>
             <p className="text-2xl font-bold text-yellow-400">
-              {authUser?.bio ? "1" : "0"}
+              {authUser.bio ? "1" : "0"}
             </p>
             <p className="text-xs text-gray-400 uppercase">
               Bio
@@ -86,7 +94,7 @@ export default function DashboardPage() {
 
           <div>
             <p className="text-2xl font-bold text-yellow-400">
-              {authUser?.prompts?.length || 0}
+              {authUser.prompts?.length ?? 0}
             </p>
             <p className="text-xs text-gray-400 uppercase">
               Prompts
@@ -97,7 +105,7 @@ export default function DashboardPage() {
 
       </section>
 
-      {/* ---------------- PREFERENCES ---------------- */}
+      {/* PREFERENCES */}
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
 
         <div className="flex items-center justify-between mb-6">
@@ -146,8 +154,7 @@ export default function DashboardPage() {
                 Distance
               </p>
               <p className="font-medium mt-1">
-                {prefs.locationRadius === null ||
-                prefs.locationRadius === undefined
+                {prefs.locationRadius == null
                   ? "Any distance"
                   : `${prefs.locationRadius} miles`}
               </p>
@@ -168,7 +175,7 @@ export default function DashboardPage() {
 
       </section>
 
-      {/* ---------------- DISCOVER ---------------- */}
+      {/* DISCOVER */}
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
 
         <div className="flex justify-between items-center mb-2">
@@ -188,7 +195,7 @@ export default function DashboardPage() {
 
       </section>
 
-      {/* ---------------- MATCHES ---------------- */}
+      {/* MATCHES */}
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
 
         <div className="flex justify-between items-center mb-2">
@@ -208,7 +215,7 @@ export default function DashboardPage() {
 
       </section>
 
-      {/* ---------------- MESSAGES ---------------- */}
+      {/* MESSAGES */}
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
 
         <div className="flex justify-between items-center mb-2">

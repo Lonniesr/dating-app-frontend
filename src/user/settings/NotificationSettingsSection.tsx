@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSettings } from "../hooks/useSettings";
 import toast from "react-hot-toast";
 
@@ -14,12 +14,8 @@ export default function NotificationSettingsSection() {
     updateNotifications.mutate(
       { push, email },
       {
-        onSuccess: () => {
-          toast.success("Notification settings saved");
-        },
-        onError: () => {
-          toast.error("Failed to save notification settings");
-        },
+        onSuccess: () => toast.success("Notification settings saved"),
+        onError: () => toast.error("Failed to save notification settings"),
       }
     );
   };
@@ -29,25 +25,31 @@ export default function NotificationSettingsSection() {
       <h2 className="text-2xl font-semibold">Notifications</h2>
 
       <div className="space-y-3">
+
         <label className="flex items-center justify-between cursor-pointer">
           <span className="text-gray-300">Push Notifications</span>
+
           <input
             type="checkbox"
             checked={push}
             onChange={() => setPush(!push)}
             className="h-5 w-5 accent-yellow-500"
           />
+
         </label>
 
         <label className="flex items-center justify-between cursor-pointer">
           <span className="text-gray-300">Email Notifications</span>
+
           <input
             type="checkbox"
             checked={email}
             onChange={() => setEmail(!email)}
             className="h-5 w-5 accent-yellow-500"
           />
+
         </label>
+
       </div>
 
       <button

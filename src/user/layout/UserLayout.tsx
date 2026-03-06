@@ -1,4 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
+import MobileNav from "../layout/MobileNav"; // ✅ add this
 
 export default function UserLayout() {
   const base = "block px-4 py-2 rounded-lg transition font-medium";
@@ -36,32 +37,15 @@ export default function UserLayout() {
         </nav>
       </aside>
 
-      {/* Content Area */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 p-8">
-        {/* Main */}
+      {/* Main Content */}
+      <div className="flex-1 p-8 pb-24">
         <main className="space-y-6">
           <Outlet />
         </main>
-
-        {/* Right Panel (Profile Preview) */}
-        <aside className="hidden lg:block">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
-            <h3 className="text-lg font-semibold mb-4">
-              My Profile
-            </h3>
-
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-neutral-700 rounded-full" />
-              <div>
-                <p className="font-medium">Lion</p>
-                <p className="text-sm text-neutral-400">
-                  Gender preference...
-                </p>
-              </div>
-            </div>
-          </div>
-        </aside>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileNav />
     </div>
   );
 }

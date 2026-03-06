@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 
 export default function LogoutSection() {
   const { logout } = useSettings();
+
   const isLoading = logout.isPending;
 
   const handleLogout = () => {
@@ -10,9 +11,8 @@ export default function LogoutSection() {
       onSuccess: () => {
         toast.success("Logged out");
 
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 500);
+        // Redirect to login
+        window.location.href = "/login";
       },
       onError: () => {
         toast.error("Failed to logout");

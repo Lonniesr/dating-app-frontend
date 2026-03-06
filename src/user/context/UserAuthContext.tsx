@@ -34,6 +34,7 @@ export type AuthUser = {
   birthdate?: string;
   bio?: string | null;               // ✅ FIXED
   preferences?: Preferences | null;
+  verified?: boolean;
   prompts?: PromptItem[] | null;     // ✅ FIXED (was string)
 };
 

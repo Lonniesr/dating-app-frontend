@@ -11,15 +11,18 @@ export default function ThemeToggleSection() {
   const handleToggle = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
 
+    // Update UI immediately
+    setTheme(newTheme);
+
     updateTheme.mutate(
       { theme: newTheme },
       {
         onSuccess: () => {
-          setTheme(newTheme);
           toast.success(`Switched to ${newTheme} mode`);
         },
         onError: () => {
-          toast.error("Failed to update theme");
+          toast.error("Failed to save theme");
+          setTheme(theme); // revert if backend fails
         },
       }
     );
