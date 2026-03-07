@@ -16,7 +16,7 @@ export default function MobileNav() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
 
-      <div className="bg-black border-t border-white/10 flex items-center h-16">
+      <div className="bg-black border-t border-white/10 flex items-center h-16 relative">
 
         {/* Matches */}
         <NavLink
@@ -29,17 +29,6 @@ export default function MobileNav() {
           {userNav.matches.label}
         </NavLink>
 
-        {/* Discover */}
-        <NavLink
-          to={userNav.discover.path}
-          className={`${base} ${
-            isActive(userNav.discover.path) ? active : inactive
-          }`}
-        >
-          <Flame size={22} />
-          {userNav.discover.label}
-        </NavLink>
-
         {/* Messages */}
         <NavLink
           to={userNav.messages.path}
@@ -50,6 +39,18 @@ export default function MobileNav() {
           <MessageCircle size={22} />
           {userNav.messages.label}
         </NavLink>
+
+        {/* CENTER SWIPE BUTTON */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 -top-6">
+
+          <NavLink
+            to={userNav.discover.path}
+            className="bg-yellow-500 text-black w-16 h-16 rounded-full flex items-center justify-center shadow-xl border border-yellow-300 hover:scale-110 transition"
+          >
+            <Flame size={32} />
+          </NavLink>
+
+        </div>
 
         {/* Profile */}
         <NavLink
