@@ -36,6 +36,7 @@ import ProfilePage from "./user/ProfilePage";
 import SettingsPage from "./user/SettingsPage";
 import MessagesPage from "./user/MessagesPage";
 import MatchesPage from "./user/MatchesPage";
+import EditProfilePage from "./user/EditProfilePage"; // ✅ ADDED
 
 // USER LAYOUT + GUARD
 import UserLayout from "./user/layout/UserLayout";
@@ -73,6 +74,7 @@ export default function App() {
         <Route path="discover" element={<DiscoverPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="edit-profile" element={<EditProfilePage />} /> {/* ✅ ADDED */}
         <Route path="settings" element={<SettingsPage />} />
         <Route path="messages" element={<MessagesPage />} />
         <Route path="matches" element={<MatchesPage />} />

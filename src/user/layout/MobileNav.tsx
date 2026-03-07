@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { MessageCircle, Users, Flame, User } from "lucide-react";
+import { MessageCircle, Users, Flame, User, Settings } from "lucide-react";
 import { userNav } from "../nav/UserNavConfig";
 
 export default function MobileNav() {
@@ -30,14 +30,12 @@ export default function MobileNav() {
 
         {/* Center Swipe Button */}
         <div className="flex justify-center items-center flex-1 -mt-8">
-
           <NavLink
             to={userNav.discover.path}
             className="bg-yellow-500 text-black w-16 h-16 rounded-full flex items-center justify-center shadow-xl border border-yellow-300 hover:scale-110 transition"
           >
             <Flame size={32} />
           </NavLink>
-
         </div>
 
         {/* Messages */}
@@ -52,15 +50,27 @@ export default function MobileNav() {
         </NavLink>
 
         {/* Profile */}
-        <NavLink
-          to={userNav.profile.path}
-          className={`${base} ${
-            isActive(userNav.profile.path) ? active : inactive
-          }`}
-        >
-          <User size={22} />
-          {userNav.profile.label}
-        </NavLink>
+        <div className="flex flex-col items-center justify-center flex-1 relative">
+
+          <NavLink
+            to={userNav.profile.path}
+            className={`${base} ${
+              isActive(userNav.profile.path) ? active : inactive
+            }`}
+          >
+            <User size={22} />
+            {userNav.profile.label}
+          </NavLink>
+
+          {/* Settings shortcut */}
+          <NavLink
+            to={userNav.settings.path}
+            className="absolute top-0 right-4 text-white/50 hover:text-yellow-400 transition"
+          >
+            <Settings size={14} />
+          </NavLink>
+
+        </div>
 
       </div>
     </div>
