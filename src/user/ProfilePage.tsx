@@ -67,6 +67,25 @@ export default function ProfilePage() {
     document.body.removeChild(downloadLink);
   };
 
+  const shareInvite = async () => {
+    if (!newInvite?.inviteLink) return;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Join me on Lynq",
+          text: "Use my invite to join Lynq.",
+          url: newInvite.inviteLink,
+        });
+      } else {
+        navigator.clipboard.writeText(newInvite.inviteLink);
+        alert("Invite link copied");
+      }
+    } catch (err) {
+      console.error("Share failed", err);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-6 text-white">
@@ -265,7 +284,7 @@ export default function ProfilePage() {
 
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
 
               <button
                 onClick={() =>
@@ -275,6 +294,13 @@ export default function ProfilePage() {
                 className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg"
               >
                 Copy Link
+              </button>
+
+              <button
+                onClick={shareInvite}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg"
+              >
+                Share Invite
               </button>
 
               <button
