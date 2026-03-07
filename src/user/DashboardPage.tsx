@@ -1,9 +1,29 @@
 import { useNavigate } from "react-router-dom";
 import { useUserAuth } from "./context/UserAuthContext";
+import { useEffect, useState } from "react";
+import apiClient from "../services/apiClient";
 
 export default function DashboardPage() {
   const { authUser } = useUserAuth();
   const navigate = useNavigate();
+
+  const [inviteStats, setInviteStats] = useState({
+    sent: 0,
+    joined: 0,
+  });
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const res = await apiClient.get("/api/invite/stats");
+        setInviteStats(res.data);
+      } catch (err) {
+        console.error("Invite stats failed", err);
+      }
+    };
+
+    loadStats();
+  }, []);
 
   if (!authUser) {
     return (
@@ -15,7 +35,6 @@ export default function DashboardPage() {
 
   const prefs = authUser.preferences;
 
-  // -------- PROFILE COMPLETION --------
   const completionItems = [
     (authUser.photos?.length ?? 0) > 0,
     !!authUser.bio,
@@ -30,7 +49,6 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
 
-      {/* HEADER */}
       <h1 className="text-3xl font-bold text-yellow-400">
         Welcome, {authUser.name || "User"}
       </h1>
@@ -54,6 +72,59 @@ export default function DashboardPage() {
 
         <p className="text-sm text-gray-400 mt-3">
           Profiles with photos and bios get more matches.
+        </p>
+
+      </section>
+
+      {/* INVITE IMPACT */}
+      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
+
+        <h2 className="text-xl font-semibold mb-6">
+          Invite Impact
+        </h2>
+
+        <div className="grid grid-cols-2 gap-6 text-center">
+
+          <div>
+            <p className="text-3xl font-bold text-yellow-400">
+              {inviteStats.sent}
+            </p>
+            <p className="text-xs text-gray-400 uppercase">
+              Invites Sent
+            </p>
+          </div>
+
+          <div>
+            <p className="text-3xl font-bold text-yellow-400">
+              {inviteStats.joined}
+            </p>
+            <p className="text-xs text-gray-400 uppercase">
+              Friends Joined
+            </p>
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* INVITE FRIENDS */}
+      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
+
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-xl font-semibold">
+            Invite Friends
+          </h2>
+
+          <button
+            onClick={() => navigate("/user/profile")}
+            className="text-yellow-400 hover:underline text-sm"
+          >
+            Generate Invite
+          </button>
+        </div>
+
+        <p className="text-gray-400">
+          Invite friends to Lynq and grow your network.
         </p>
 
       </section>
