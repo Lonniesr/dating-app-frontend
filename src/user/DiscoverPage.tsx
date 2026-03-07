@@ -1,19 +1,36 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { calculateDistance } from "../utils/calculateDistance";
 
 type DiscoverUser = {
   id: string;
   name: string;
   photos: string[];
   gender?: string;
+  birthdate?: string;
+  latitude?: number;
+  longitude?: number;
+  lastActive?: string;
 };
 
 export default function DiscoverPage() {
   const [users, setUsers] = useState<DiscoverUser[]>([]);
   const [matchUser, setMatchUser] = useState<DiscoverUser | null>(null);
 
+  const [location, setLocation] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
+
   useEffect(() => {
     loadUsers();
+
+    navigator.geolocation.getCurrentPosition((pos) => {
+      setLocation({
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+      });
+    });
   }, []);
 
   async function loadUsers() {
@@ -24,6 +41,34 @@ export default function DiscoverPage() {
 
     const data = await res.json();
     setUsers(data);
+  }
+
+  function calculateAge(birthdate?: string) {
+    if (!birthdate) return null;
+
+    const birth = new Date(birthdate);
+    const today = new Date();
+
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birth.getDate())
+    ) {
+      age--;
+    }
+
+    return age;
+  }
+
+  function isOnline(lastActive?: string) {
+    if (!lastActive) return false;
+
+    const last = new Date(lastActive).getTime();
+    const now = Date.now();
+
+    return now - last < 5 * 60 * 1000; // active within 5 minutes
   }
 
   async function swipe(direction: "left" | "right", user: DiscoverUser) {
@@ -54,6 +99,7 @@ export default function DiscoverPage() {
   }
 
   const currentUser = users[0];
+  const age = calculateAge(currentUser?.birthdate);
 
   return (
     <div className="flex justify-center mt-10">
@@ -83,15 +129,40 @@ export default function DiscoverPage() {
                 className="w-full h-full object-cover"
               />
 
+              {/* ONLINE DOT */}
+              {isOnline(currentUser.lastActive) && (
+                <div className="absolute top-4 right-4 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></div>
+              )}
+
               <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
 
                 <h2 className="text-xl font-bold">
                   {currentUser.name}
+                  {age && `, ${age}`}
                 </h2>
+
+                {isOnline(currentUser.lastActive) && (
+                  <p className="text-green-400 text-sm">
+                    Online now
+                  </p>
+                )}
 
                 <p className="text-sm opacity-80">
                   {currentUser.gender}
                 </p>
+
+                {location &&
+                  currentUser.latitude &&
+                  currentUser.longitude && (
+                    <p className="text-sm opacity-80">
+                      {calculateDistance(
+                        location.lat,
+                        location.lon,
+                        currentUser.latitude,
+                        currentUser.longitude
+                      ).toFixed(1)} miles away
+                    </p>
+                  )}
 
               </div>
 
@@ -102,8 +173,6 @@ export default function DiscoverPage() {
         </AnimatePresence>
 
       </div>
-
-      {/* MATCH MODAL */}
 
       {matchUser && (
 
