@@ -7,6 +7,7 @@ export default function MobileNav() {
 
   const base =
     "flex flex-col items-center justify-center flex-1 py-2 text-xs transition font-medium";
+
   const inactive = "text-white/60";
   const active = "text-yellow-400";
 
@@ -28,15 +29,16 @@ export default function MobileNav() {
           {userNav.matches.label}
         </NavLink>
 
-        {/* Center Swipe Button */}
-        <div className="flex justify-center items-center flex-1 -mt-8">
-          <NavLink
-            to={userNav.discover.path}
-            className="bg-yellow-500 text-black w-16 h-16 rounded-full flex items-center justify-center shadow-xl border border-yellow-300 hover:scale-110 transition"
-          >
-            <Flame size={32} />
-          </NavLink>
-        </div>
+        {/* Discover */}
+        <NavLink
+          to={userNav.discover.path}
+          className={`${base} ${
+            isActive(userNav.discover.path) ? active : inactive
+          }`}
+        >
+          <Flame size={22} />
+          {userNav.discover.label}
+        </NavLink>
 
         {/* Messages */}
         <NavLink
@@ -50,27 +52,26 @@ export default function MobileNav() {
         </NavLink>
 
         {/* Profile */}
-        <div className="flex flex-col items-center justify-center flex-1 relative">
+        <NavLink
+          to={userNav.profile.path}
+          className={`${base} ${
+            isActive(userNav.profile.path) ? active : inactive
+          }`}
+        >
+          <User size={22} />
+          {userNav.profile.label}
+        </NavLink>
 
-          <NavLink
-            to={userNav.profile.path}
-            className={`${base} ${
-              isActive(userNav.profile.path) ? active : inactive
-            }`}
-          >
-            <User size={22} />
-            {userNav.profile.label}
-          </NavLink>
-
-          {/* Settings shortcut */}
-          <NavLink
-            to={userNav.settings.path}
-            className="absolute top-0 right-4 text-white/50 hover:text-yellow-400 transition"
-          >
-            <Settings size={14} />
-          </NavLink>
-
-        </div>
+        {/* Settings */}
+        <NavLink
+          to="/user/settings"
+          className={`${base} ${
+            isActive("/user/settings") ? active : inactive
+          }`}
+        >
+          <Settings size={22} />
+          Settings
+        </NavLink>
 
       </div>
     </div>
