@@ -3,14 +3,27 @@ import { useUserAuth } from "./context/UserAuthContext";
 import { useEffect, useState } from "react";
 import apiClient from "../services/apiClient";
 
+interface InviteStats {
+  sent: number;
+  joined: number;
+}
+
+interface LeaderboardUser {
+  userId: string;
+  name: string;
+  invites: number;
+}
+
 export default function DashboardPage() {
   const { authUser } = useUserAuth();
   const navigate = useNavigate();
 
-  const [inviteStats, setInviteStats] = useState({
+  const [inviteStats, setInviteStats] = useState<InviteStats>({
     sent: 0,
     joined: 0,
   });
+
+  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
 
   useEffect(() => {
     const loadStats = async () => {
@@ -22,7 +35,17 @@ export default function DashboardPage() {
       }
     };
 
+    const loadLeaderboard = async () => {
+      try {
+        const res = await apiClient.get("/api/invite/leaderboard");
+        setLeaderboard(res.data.leaderboard || []);
+      } catch (err) {
+        console.error("Leaderboard load failed", err);
+      }
+    };
+
     loadStats();
+    loadLeaderboard();
   }, []);
 
   if (!authUser) {
@@ -107,6 +130,50 @@ export default function DashboardPage() {
 
       </section>
 
+      {/* INVITE LEADERBOARD */}
+      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
+
+        <h2 className="text-xl font-semibold mb-6">
+          Top Inviters
+        </h2>
+
+        {leaderboard.length === 0 ? (
+          <p className="text-gray-400 text-sm">
+            No invite activity yet.
+          </p>
+        ) : (
+          <div className="space-y-3">
+
+            {leaderboard.map((user, index) => (
+              <div
+                key={user.userId}
+                className="flex justify-between items-center bg-white/5 p-3 rounded-lg"
+              >
+
+                <div className="flex items-center gap-3">
+
+                  <span className="text-yellow-400 font-bold w-6">
+                    {index + 1}
+                  </span>
+
+                  <span className="font-medium">
+                    {user.name}
+                  </span>
+
+                </div>
+
+                <span className="text-sm text-gray-400">
+                  {user.invites} joined
+                </span>
+
+              </div>
+            ))}
+
+          </div>
+        )}
+
+      </section>
+
       {/* INVITE FRIENDS */}
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
 
@@ -126,123 +193,6 @@ export default function DashboardPage() {
         <p className="text-gray-400">
           Invite friends to Lynq and grow your network.
         </p>
-
-      </section>
-
-      {/* PROFILE SUMMARY */}
-      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-
-        <h2 className="text-xl font-semibold mb-6">Profile Overview</h2>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-
-          <div>
-            <p className="text-2xl font-bold text-yellow-400">
-              {authUser.photos?.length ?? 0}
-            </p>
-            <p className="text-xs text-gray-400 uppercase">
-              Photos
-            </p>
-          </div>
-
-          <div>
-            <p className="text-2xl font-bold text-yellow-400">
-              {authUser.bio ? "1" : "0"}
-            </p>
-            <p className="text-xs text-gray-400 uppercase">
-              Bio
-            </p>
-          </div>
-
-          <div>
-            <p className="text-2xl font-bold text-yellow-400">
-              {prefs ? "1" : "0"}
-            </p>
-            <p className="text-xs text-gray-400 uppercase">
-              Preferences
-            </p>
-          </div>
-
-          <div>
-            <p className="text-2xl font-bold text-yellow-400">
-              {authUser.prompts?.length ?? 0}
-            </p>
-            <p className="text-xs text-gray-400 uppercase">
-              Prompts
-            </p>
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* PREFERENCES */}
-      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Your Preferences</h2>
-
-          <button
-            onClick={() => navigate("/user/settings")}
-            className="px-4 py-2 bg-yellow-500 text-black rounded-lg font-semibold hover:opacity-90 transition"
-          >
-            Edit
-          </button>
-        </div>
-
-        {prefs ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
-
-            <div>
-              <p className="text-gray-400 text-xs uppercase tracking-wide">
-                Interested In
-              </p>
-              <p className="font-medium mt-1">
-                {prefs.interestedIn || "Not set"}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-gray-400 text-xs uppercase tracking-wide">
-                Age Range
-              </p>
-              <p className="font-medium mt-1">
-                {prefs.minAge ?? "?"} – {prefs.maxAge ?? "?"}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-gray-400 text-xs uppercase tracking-wide">
-                Race Preference
-              </p>
-              <p className="font-medium mt-1">
-                {prefs.racePreference || "No preference"}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-gray-400 text-xs uppercase tracking-wide">
-                Distance
-              </p>
-              <p className="font-medium mt-1">
-                {prefs.locationRadius == null
-                  ? "Any distance"
-                  : `${prefs.locationRadius} miles`}
-              </p>
-            </div>
-
-          </div>
-        ) : (
-          <div className="text-gray-400 text-sm">
-            You haven’t set preferences yet.
-            <button
-              onClick={() => navigate("/user/settings")}
-              className="ml-2 text-yellow-400 hover:underline"
-            >
-              Set them now
-            </button>
-          </div>
-        )}
 
       </section>
 
