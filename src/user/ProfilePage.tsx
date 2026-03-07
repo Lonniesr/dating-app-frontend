@@ -108,7 +108,7 @@ export default function ProfilePage() {
       <div className="flex gap-3 mb-6 flex-wrap">
 
         <Link
-          to="/user/settings"
+          to="/user/edit-profile"
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 transition rounded-lg font-semibold"
         >
           Edit Profile
@@ -273,6 +273,7 @@ export default function ProfilePage() {
 
         </div>
       )}
+
     </div>
   );
 }
