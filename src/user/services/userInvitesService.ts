@@ -16,10 +16,10 @@ export interface UserInvite {
   invitedById?: string | null;
   usedById?: string | null;
   usedBy?: UserInviteUser | null;
-  inviteLink?: string; // ✅ FIXED
+  inviteLink?: string;
 }
 
-const BASE = "/api/user/invites";
+const BASE = "/api/invite"; // ✅ FIXED
 
 export const userInvitesService = {
   async list(): Promise<UserInvite[]> {
@@ -30,13 +30,12 @@ export const userInvitesService = {
   async create(): Promise<UserInvite> {
     const res = await apiClient.post(BASE);
 
-    // Normalize backend response
     return {
       id: res.data.id,
       code: res.data.code,
       inviteLink: res.data.inviteLink,
-      used: false,
-      usedAt: null,
+      used: res.data.used ?? false,
+      usedAt: res.data.usedAt ?? null,
     };
   },
 
@@ -45,6 +44,7 @@ export const userInvitesService = {
       inviteId,
       userId,
     });
+
     return res.data as UserInvite;
   },
 };
