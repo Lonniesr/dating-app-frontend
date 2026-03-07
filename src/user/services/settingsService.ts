@@ -3,6 +3,10 @@ export const API = import.meta.env.VITE_API_URL;
 async function request<T>(path: string, options: RequestInit): Promise<T> {
   const res = await fetch(`${API}${path}`, {
     credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
     ...options,
   });
 
@@ -11,6 +15,7 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   try {
     json = await res.json();
   } catch {
+    // handles empty responses (204 etc)
     json = null;
   }
 
@@ -21,51 +26,51 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   return json as T;
 }
 
+/* ---------------- PROFILE ---------------- */
+
 export function updateProfile(data: { name: string; bio: string }) {
   return request("/api/settings/profile", {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 }
 
-export function changePassword(data: { oldPassword: string; newPassword: string }) {
+/* ---------------- PASSWORD ---------------- */
+
+export function changePassword(data: { currentPassword: string; newPassword: string }) {
   return request("/api/settings/password", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 }
+
+/* ---------------- NOTIFICATIONS ---------------- */
 
 export function updateNotifications(data: { push: boolean; email: boolean }) {
   return request("/api/settings/notifications", {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 }
 
-export function updatePrivacy(data: { showAge: boolean; showLocation: boolean }) {
-  return request("/api/settings/privacy", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-}
+/* ---------------- THEME ---------------- */
 
 export function updateTheme(data: { theme: "dark" | "light" }) {
   return request("/api/settings/theme", {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 }
+
+/* ---------------- ACCOUNT ---------------- */
 
 export function deleteAccount() {
   return request("/api/settings/delete", {
     method: "DELETE",
   });
 }
+
+/* ---------------- LOGOUT ---------------- */
 
 export function logout() {
   return request("/api/settings/logout", {

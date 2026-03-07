@@ -38,7 +38,7 @@ export default function PreferencesSection() {
     setMessage(null);
 
     try {
-      const res = await fetch(`${API}/api/user/preferences`, {
+      const res = await fetch(`${API}/api/settings/preferences`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -47,8 +47,7 @@ export default function PreferencesSection() {
           minAge,
           maxAge,
           racePreference: racePreference || null,
-          locationRadius:
-            locationRadius === "any" ? null : locationRadius,
+          locationRadius: locationRadius === "any" ? null : locationRadius,
         }),
       });
 

@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 import { useEditProfile } from "../hooks/useEditProfile";
+import { useUserAuth } from "../context/UserAuthContext";
 
 type EditProfileForm = {
   name: string;
+  bio: string;
   gender: string;
   preferences: string;
 };
 
 export default function EditProfilePage() {
   const { data, isLoading } = useEditProfile();
+  const { refreshUser } = useUserAuth();
+
   const [form, setForm] = useState<EditProfileForm | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -17,6 +21,7 @@ export default function EditProfilePage() {
     if (data && !form) {
       setForm({
         name: data.name || "",
+        bio: data.bio || "",
         gender: data.gender || "",
         preferences: data.preferences || "",
       });
@@ -27,6 +32,7 @@ export default function EditProfilePage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+
     setForm((prev) =>
       prev
         ? {
@@ -43,12 +49,34 @@ export default function EditProfilePage() {
     try {
       setSaving(true);
 
-      await fetch(`${import.meta.env.VITE_API_URL}/api/user/update`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/settings/profile`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.name,
+            bio: form.bio,
+          }),
+        }
+      );
+
+      const json = await res.json();
+
+      if (json?.user) {
+        setForm((prev) =>
+          prev
+            ? {
+                ...prev,
+                name: json.user.name ?? "",
+                bio: json.user.bio ?? "",
+              }
+            : prev
+        );
+      }
+
+      await refreshUser();
 
       alert("Profile updated");
     } catch (err) {
@@ -68,6 +96,7 @@ export default function EditProfilePage() {
       <h1 className="text-3xl font-bold text-yellow-400">Edit Profile</h1>
 
       <div className="space-y-4">
+
         {/* Name */}
         <div>
           <label className="block mb-1 text-white/60">Name</label>
@@ -76,6 +105,17 @@ export default function EditProfilePage() {
             value={form.name}
             onChange={handleChange}
             className="w-full p-3 rounded-lg bg-black border border-white/20 focus:border-yellow-500 outline-none transition"
+          />
+        </div>
+
+        {/* Bio */}
+        <div>
+          <label className="block mb-1 text-white/60">Bio</label>
+          <textarea
+            name="bio"
+            value={form.bio}
+            onChange={handleChange}
+            className="w-full p-3 rounded-lg bg-black border border-white/20 min-h-[120px] focus:border-yellow-500 outline-none transition"
           />
         </div>
 
@@ -109,6 +149,7 @@ export default function EditProfilePage() {
         >
           {saving ? "Saving…" : "Save Changes"}
         </button>
+
       </div>
     </div>
   );

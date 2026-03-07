@@ -22,7 +22,7 @@ export default function ChangePasswordSection() {
     }
 
     changePassword.mutate(
-      { oldPassword: oldPass, newPassword: newPass },
+      { currentPassword: oldPass, newPassword: newPass },
       {
         onSuccess: () => {
           toast.success("Password updated");

@@ -1,74 +1,39 @@
-import { supabase } from "@/lib/supabaseClient";
+const API = import.meta.env.VITE_API_URL;
 
 export async function fetchAllProfiles() {
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  try {
+    const res = await fetch(`${API}/api/discover`, {
+      credentials: "include",
+    });
 
-  if (authError) {
-    console.error("Error getting current user:", authError);
+    if (!res.ok) {
+      console.error("Error fetching profiles:", res.status);
+      return [];
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error("Error fetching profiles:", err);
     return [];
   }
-
-  if (!user) return [];
-
-  const { data: profiles, error } = await supabase
-    .from("profiles")
-    .select("id, name, age, bio")
-    .neq("id", user.id);
-
-  if (error) {
-    console.error("Error fetching profiles:", error);
-    return [];
-  }
-
-  const { data: photos, error: photosError } = await supabase
-    .from("profile_photos")
-    .select("user_id, url, position");
-
-  if (photosError) {
-    console.error("Error fetching photos:", photosError);
-  }
-
-  const enriched = profiles.map((p) => ({
-    ...p,
-    photos:
-      photos
-        ?.filter((ph) => ph.user_id === p.id)
-        .sort((a, b) => a.position - b.position)
-        .map((ph) => ph.url) || [],
-  }));
-
-  return enriched;
 }
 
 export async function getProfileWithPhotos(userId: string) {
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("id, name, age, bio")
-    .eq("id", userId)
-    .single();
+  try {
+    const res = await fetch(`${API}/api/user/${userId}`, {
+      credentials: "include",
+    });
 
-  if (error) {
-    console.error("Error fetching profile:", error);
+    if (!res.ok) {
+      console.error("Error fetching profile:", res.status);
+      return null;
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error("Error fetching profile:", err);
     return null;
   }
-
-  const { data: photos, error: photosError } = await supabase
-    .from("profile_photos")
-    .select("url, position")
-    .eq("user_id", userId);
-
-  if (photosError) {
-    console.error("Error fetching profile photos:", photosError);
-  }
-
-  return {
-    ...profile,
-    photos:
-      photos
-        ?.sort((a, b) => a.position - b.position)
-        .map((p) => p.url) || [],
-  };
 }

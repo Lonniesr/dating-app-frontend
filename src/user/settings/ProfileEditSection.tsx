@@ -5,14 +5,13 @@ import toast from "react-hot-toast";
 
 export default function ProfileEditSection() {
   const { updateProfile } = useSettings();
-  const { authUser } = useUserAuth();
+  const { authUser, refreshUser } = useUserAuth();
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
 
   const isLoading = updateProfile.isPending;
 
-  // Load existing profile data
   useEffect(() => {
     if (authUser) {
       setName(authUser.name || "");
@@ -41,7 +40,12 @@ export default function ProfileEditSection() {
     updateProfile.mutate(
       { name: trimmed, bio },
       {
-        onSuccess: () => toast.success("Profile updated"),
+        onSuccess: async () => {
+          toast.success("Profile updated");
+
+          // refresh the logged-in user
+          await refreshUser();
+        },
         onError: () => toast.error("Failed to update profile"),
       }
     );

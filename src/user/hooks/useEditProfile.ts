@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 
 type EditProfileResponse = {
-  name: string;
-  gender: string;
-  preferences: string;
+  name?: string;
+  bio?: string | null;
+  gender?: string;
+  preferences?: string;
 };
 
 export function useEditProfile() {
@@ -19,6 +20,6 @@ export function useEditProfile() {
       if (!res.ok) throw new Error(data.error);
 
       return data;
-    }
+    },
   });
 }
