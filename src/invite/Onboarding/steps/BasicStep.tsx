@@ -32,6 +32,19 @@ export default function BasicStep({ next }: BasicStepProps) {
     return age;
   };
 
+  const getLocation = () =>
+    new Promise<{ lat: number; lon: number }>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          resolve({
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+          });
+        },
+        reject
+      );
+    });
+
   const submit = async () => {
     setError(null);
 
@@ -50,6 +63,8 @@ export default function BasicStep({ next }: BasicStepProps) {
     setLoading(true);
 
     try {
+      const location = await getLocation();
+
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/onboarding/basic`,
         {
@@ -63,6 +78,8 @@ export default function BasicStep({ next }: BasicStepProps) {
             birthdate,
             gender,
             race,
+            latitude: location.lat,
+            longitude: location.lon,
           }),
         }
       );
@@ -82,7 +99,7 @@ export default function BasicStep({ next }: BasicStepProps) {
       next();
     } catch (err) {
       console.error("Basic step error:", err);
-      setError("Server error. Please try again.");
+      setError("Location permission is required.");
     }
 
     setLoading(false);
@@ -98,7 +115,6 @@ export default function BasicStep({ next }: BasicStepProps) {
         </div>
       )}
 
-      {/* Name */}
       <input
         type="text"
         placeholder="Full Name"
@@ -107,7 +123,6 @@ export default function BasicStep({ next }: BasicStepProps) {
         onChange={(e) => setName(e.target.value)}
       />
 
-      {/* Birthdate */}
       <input
         type="date"
         className="w-full p-3 mb-4 rounded bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
@@ -115,7 +130,6 @@ export default function BasicStep({ next }: BasicStepProps) {
         onChange={(e) => setBirthdate(e.target.value)}
       />
 
-      {/* Gender */}
       <select
         className="w-full p-3 mb-4 rounded bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
         value={gender}
@@ -124,26 +138,17 @@ export default function BasicStep({ next }: BasicStepProps) {
         <option value="" className="text-black">
           Select gender
         </option>
-        <option value="male" className="text-black">
-          ♂ Male
-        </option>
-        <option value="female" className="text-black">
-          ♀ Female
-        </option>
-        <option value="other" className="text-black">
-          ⚧ Other
-        </option>
+        <option value="male" className="text-black">♂ Male</option>
+        <option value="female" className="text-black">♀ Female</option>
+        <option value="other" className="text-black">⚧ Other</option>
       </select>
 
-      {/* Race */}
       <select
         className="w-full p-3 mb-6 rounded bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
         value={race}
         onChange={(e) => setRace(e.target.value)}
       >
-        <option value="" className="text-black">
-          Select race
-        </option>
+        <option value="" className="text-black">Select race</option>
         <option value="Black" className="text-black">Black</option>
         <option value="White" className="text-black">White</option>
         <option value="Asian" className="text-black">Asian</option>
