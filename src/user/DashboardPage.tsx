@@ -8,12 +8,6 @@ interface InviteStats {
   joined: number;
 }
 
-interface LeaderboardUser {
-  userId: string;
-  name: string;
-  invites: number;
-}
-
 export default function DashboardPage() {
   const { authUser } = useUserAuth();
   const navigate = useNavigate();
@@ -22,8 +16,6 @@ export default function DashboardPage() {
     sent: 0,
     joined: 0,
   });
-
-  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
 
   useEffect(() => {
     const loadStats = async () => {
@@ -35,17 +27,7 @@ export default function DashboardPage() {
       }
     };
 
-    const loadLeaderboard = async () => {
-      try {
-        const res = await apiClient.get("/api/invite/leaderboard");
-        setLeaderboard(res.data.leaderboard || []);
-      } catch (err) {
-        console.error("Leaderboard load failed", err);
-      }
-    };
-
     loadStats();
-    loadLeaderboard();
   }, []);
 
   if (!authUser) {
@@ -55,8 +37,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-
-  const prefs = authUser.preferences;
 
   const completionItems = [
     (authUser.photos?.length ?? 0) > 0,
@@ -70,17 +50,20 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 p-4">
 
-      <h1 className="text-3xl font-bold text-yellow-400">
+      {/* HEADER */}
+
+      <h1 className="text-2xl font-bold text-yellow-400">
         Welcome, {authUser.name || "User"}
       </h1>
 
       {/* PROFILE COMPLETION */}
-      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
 
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Profile Strength</h2>
+      <section className="bg-white/5 p-5 rounded-xl border border-white/10">
+
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="font-semibold">Profile Strength</h2>
           <span className="text-yellow-400 font-bold">
             {completionScore}%
           </span>
@@ -88,171 +71,103 @@ export default function DashboardPage() {
 
         <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
           <div
-            className="bg-yellow-400 h-full transition-all"
+            className="bg-yellow-400 h-full"
             style={{ width: `${completionScore}%` }}
           />
         </div>
 
-        <p className="text-sm text-gray-400 mt-3">
-          Profiles with photos and bios get more matches.
-        </p>
+        <button
+          onClick={() => navigate("/user/edit-profile")}
+          className="mt-4 text-sm text-yellow-400 hover:underline"
+        >
+          Improve Profile
+        </button>
 
       </section>
 
-      {/* INVITE IMPACT */}
-      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
+      {/* QUICK ACTIONS */}
 
-        <h2 className="text-xl font-semibold mb-6">
+      <section className="grid grid-cols-2 gap-4">
+
+        <button
+          onClick={() => navigate("/user/discover")}
+          className="bg-white/5 border border-white/10 p-5 rounded-xl text-left hover:bg-white/10 transition"
+        >
+          <h3 className="font-semibold mb-1">
+            Discover
+          </h3>
+          <p className="text-sm text-gray-400">
+            Start swiping
+          </p>
+        </button>
+
+        <button
+          onClick={() => navigate("/user/matches")}
+          className="bg-white/5 border border-white/10 p-5 rounded-xl text-left hover:bg-white/10 transition"
+        >
+          <h3 className="font-semibold mb-1">
+            Matches
+          </h3>
+          <p className="text-sm text-gray-400">
+            View your matches
+          </p>
+        </button>
+
+        <button
+          onClick={() => navigate("/user/messages")}
+          className="bg-white/5 border border-white/10 p-5 rounded-xl text-left hover:bg-white/10 transition"
+        >
+          <h3 className="font-semibold mb-1">
+            Messages
+          </h3>
+          <p className="text-sm text-gray-400">
+            Open conversations
+          </p>
+        </button>
+
+        <button
+          onClick={() => navigate("/user/profile")}
+          className="bg-white/5 border border-white/10 p-5 rounded-xl text-left hover:bg-white/10 transition"
+        >
+          <h3 className="font-semibold mb-1">
+            Invite Friends
+          </h3>
+          <p className="text-sm text-gray-400">
+            Grow your network
+          </p>
+        </button>
+
+      </section>
+
+      {/* INVITE STATS */}
+
+      <section className="bg-white/5 p-5 rounded-xl border border-white/10">
+
+        <h2 className="font-semibold mb-4">
           Invite Impact
         </h2>
 
-        <div className="grid grid-cols-2 gap-6 text-center">
+        <div className="grid grid-cols-2 text-center gap-4">
 
           <div>
-            <p className="text-3xl font-bold text-yellow-400">
+            <p className="text-2xl font-bold text-yellow-400">
               {inviteStats.sent}
             </p>
             <p className="text-xs text-gray-400 uppercase">
-              Invites Sent
+              Sent
             </p>
           </div>
 
           <div>
-            <p className="text-3xl font-bold text-yellow-400">
+            <p className="text-2xl font-bold text-yellow-400">
               {inviteStats.joined}
             </p>
             <p className="text-xs text-gray-400 uppercase">
-              Friends Joined
+              Joined
             </p>
           </div>
 
         </div>
-
-      </section>
-
-      {/* INVITE LEADERBOARD */}
-      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-
-        <h2 className="text-xl font-semibold mb-6">
-          Top Inviters
-        </h2>
-
-        {leaderboard.length === 0 ? (
-          <p className="text-gray-400 text-sm">
-            No invite activity yet.
-          </p>
-        ) : (
-          <div className="space-y-3">
-
-            {leaderboard.map((user, index) => (
-              <div
-                key={user.userId}
-                className="flex justify-between items-center bg-white/5 p-3 rounded-lg"
-              >
-
-                <div className="flex items-center gap-3">
-
-                  <span className="text-yellow-400 font-bold w-6">
-                    {index + 1}
-                  </span>
-
-                  <span className="font-medium">
-                    {user.name}
-                  </span>
-
-                </div>
-
-                <span className="text-sm text-gray-400">
-                  {user.invites} joined
-                </span>
-
-              </div>
-            ))}
-
-          </div>
-        )}
-
-      </section>
-
-      {/* INVITE FRIENDS */}
-      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-semibold">
-            Invite Friends
-          </h2>
-
-          <button
-            onClick={() => navigate("/user/profile")}
-            className="text-yellow-400 hover:underline text-sm"
-          >
-            Generate Invite
-          </button>
-        </div>
-
-        <p className="text-gray-400">
-          Invite friends to Lynq and grow your network.
-        </p>
-
-      </section>
-
-      {/* DISCOVER */}
-      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-semibold">Discover</h2>
-
-          <button
-            onClick={() => navigate("/user/discover")}
-            className="text-yellow-400 hover:underline text-sm"
-          >
-            Start swiping
-          </button>
-        </div>
-
-        <p className="text-gray-400">
-          Find new people who match your preferences.
-        </p>
-
-      </section>
-
-      {/* MATCHES */}
-      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-semibold">Your Matches</h2>
-
-          <button
-            onClick={() => navigate("/user/matches")}
-            className="text-yellow-400 hover:underline text-sm"
-          >
-            View matches
-          </button>
-        </div>
-
-        <p className="text-gray-400">
-          When you and someone like each other, they'll appear here.
-        </p>
-
-      </section>
-
-      {/* MESSAGES */}
-      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-semibold">Messages</h2>
-
-          <button
-            onClick={() => navigate("/user/messages")}
-            className="text-yellow-400 hover:underline text-sm"
-          >
-            Open inbox
-          </button>
-        </div>
-
-        <p className="text-gray-400">
-          Start conversations with your matches.
-        </p>
 
       </section>
 
