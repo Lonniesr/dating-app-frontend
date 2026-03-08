@@ -1,72 +1,60 @@
 import { useState } from "react";
-import { useSettings } from "../hooks/useSettings";
-import toast from "react-hot-toast";
+import { supabase } from "../../lib/supabaseClient";
 
 export default function ChangePasswordSection() {
-  const { changePassword } = useSettings();
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const [oldPass, setOldPass] = useState("");
-  const [newPass, setNewPass] = useState("");
+  const updatePassword = async () => {
+    if (!password) return;
 
-  const isLoading = changePassword.isPending;
+    setLoading(true);
+    setMessage("");
 
-  const handleUpdate = () => {
-    if (!oldPass || !newPass) {
-      toast.error("Please fill out both fields");
-      return;
+    const { error } = await supabase.auth.updateUser({
+      password,
+    });
+
+    if (error) {
+      setMessage(error.message);
+    } else {
+      setMessage("Password updated successfully");
+      setPassword("");
     }
 
-    if (newPass.length < 6) {
-      toast.error("New password must be at least 6 characters");
-      return;
-    }
-
-    changePassword.mutate(
-      { currentPassword: oldPass, newPassword: newPass },
-      {
-        onSuccess: () => {
-          toast.success("Password updated");
-          setOldPass("");
-          setNewPass("");
-        },
-        onError: () => toast.error("Incorrect password"),
-      }
-    );
+    setLoading(false);
   };
 
   return (
-    <section className="bg-[#111] p-6 rounded-2xl border border-white/10 space-y-4">
+    <div className="bg-white/5 border border-white/10 p-5 rounded-xl mb-6">
 
-      <h2 className="text-2xl font-semibold">Change Password</h2>
-
-      <input
-        type="password"
-        placeholder="Current Password"
-        value={oldPass}
-        onChange={(e) => setOldPass(e.target.value)}
-        className="w-full p-3 bg-black border border-white/20 rounded-lg focus:border-yellow-500 outline-none transition"
-      />
+      <h2 className="text-xl font-bold mb-4">
+        Change Password
+      </h2>
 
       <input
         type="password"
         placeholder="New Password"
-        value={newPass}
-        onChange={(e) => setNewPass(e.target.value)}
-        className="w-full p-3 bg-black border border-white/20 rounded-lg focus:border-yellow-500 outline-none transition"
+        className="w-full p-3 mb-3 rounded bg-white/10 border border-white/20"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
       />
 
       <button
-        onClick={handleUpdate}
-        disabled={isLoading}
-        className={`w-full py-3 rounded-lg font-semibold transition ${
-          isLoading
-            ? "bg-gray-600 cursor-not-allowed text-gray-300"
-            : "bg-yellow-500 hover:bg-yellow-600 text-black"
-        }`}
+        onClick={updatePassword}
+        disabled={loading}
+        className="px-4 py-2 bg-yellow-600 rounded-lg"
       >
-        {isLoading ? "Updating..." : "Update Password"}
+        {loading ? "Updating..." : "Update Password"}
       </button>
 
-    </section>
+      {message && (
+        <p className="mt-3 text-sm text-white/70">
+          {message}
+        </p>
+      )}
+
+    </div>
   );
 }
