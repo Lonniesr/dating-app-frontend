@@ -1,9 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { userInvitesService } from "./services/userInvitesService";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUserAuth } from "./context/UserAuthContext";
 import { supabase } from "../lib/supabaseClient";
 import { QRCodeCanvas } from "qrcode.react";
+import apiClient from "../services/apiClient";
 
 import logo from "../assets/lynqlogo.png";
 
@@ -24,9 +25,19 @@ function resolvePhotoUrl(photo: string) {
   return data.publicUrl;
 }
 
+interface InviteStats {
+  sent: number;
+  joined: number;
+}
+
 export default function ProfilePage() {
   const { authUser, isLoading } = useUserAuth();
   const [newInvite, setNewInvite] = useState<any | null>(null);
+
+  const [inviteStats, setInviteStats] = useState<InviteStats>({
+    sent: 0,
+    joined: 0,
+  });
 
   const createInviteMutation = useMutation({
     mutationFn: () => userInvitesService.create(),
@@ -37,6 +48,19 @@ export default function ProfilePage() {
       console.error("Invite creation failed:", err);
     },
   });
+
+  useEffect(() => {
+    const loadInviteStats = async () => {
+      try {
+        const res = await apiClient.get("/api/invite/stats");
+        setInviteStats(res.data);
+      } catch (err) {
+        console.error("Invite stats failed", err);
+      }
+    };
+
+    loadInviteStats();
+  }, []);
 
   const downloadQR = () => {
     const canvas = document.getElementById("invite-qr") as HTMLCanvasElement;
@@ -98,6 +122,30 @@ export default function ProfilePage() {
         My Profile
       </h1>
 
+      {/* GENERATE INVITE (TOP) */}
+
+      <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+
+        <div className="flex justify-between items-center">
+
+          <h2 className="text-lg font-semibold">
+            Invite Friends
+          </h2>
+
+          <button
+            onClick={() => createInviteMutation.mutate()}
+            disabled={createInviteMutation.isPending}
+            className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-semibold disabled:opacity-50"
+          >
+            {createInviteMutation.isPending
+              ? "Creating..."
+              : "Generate Invite"}
+          </button>
+
+        </div>
+
+      </div>
+
       {/* PROFILE CARD */}
 
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
@@ -145,7 +193,39 @@ export default function ProfilePage() {
 
       </div>
 
-      {/* STATS */}
+      {/* INVITE STATS */}
+
+      <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+
+        <h2 className="text-xl font-bold mb-4">
+          Invite Impact
+        </h2>
+
+        <div className="grid grid-cols-2 gap-6 text-center">
+
+          <div>
+            <p className="text-2xl font-bold text-yellow-400">
+              {inviteStats.sent}
+            </p>
+            <p className="text-xs text-gray-400 uppercase">
+              Invites Sent
+            </p>
+          </div>
+
+          <div>
+            <p className="text-2xl font-bold text-yellow-400">
+              {inviteStats.joined}
+            </p>
+            <p className="text-xs text-gray-400 uppercase">
+              Friends Joined
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* MATCH + SWIPE STATS */}
 
       <SwipeStatsSection />
       <MatchCountSection />
@@ -171,56 +251,9 @@ export default function ProfilePage() {
 
       </div>
 
-      {/* PHOTOS */}
-
-      <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
-
-        <h2 className="text-xl font-bold mb-4">
-          Your Photos
-        </h2>
-
-        {photos.length ? (
-          <div className="grid grid-cols-3 gap-3">
-            {photos.map((photo, index) => (
-              <img
-                key={index}
-                src={resolvePhotoUrl(photo)}
-                alt="User photo"
-                className="rounded-lg object-cover h-32 w-full"
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-white/50 text-sm">
-            No photos uploaded yet.
-          </p>
-        )}
-
-      </div>
-
       {/* PHOTO MANAGER */}
 
       <PhotoManagerSection />
-
-      {/* INVITE */}
-
-      <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
-
-        <h2 className="text-xl font-bold mb-4">
-          Invite Friends
-        </h2>
-
-        <button
-          onClick={() => createInviteMutation.mutate()}
-          disabled={createInviteMutation.isPending}
-          className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 transition rounded-lg font-semibold disabled:opacity-50"
-        >
-          {createInviteMutation.isPending
-            ? "Creating…"
-            : "Generate Invite"}
-        </button>
-
-      </div>
 
       {/* INVITE MODAL */}
 
@@ -283,10 +316,7 @@ export default function ProfilePage() {
 
               <button
                 onClick={() =>
-                  newInvite.inviteLink &&
-                  navigator.clipboard.writeText(
-                    newInvite.inviteLink
-                  )
+                  navigator.clipboard.writeText(newInvite.inviteLink)
                 }
                 className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg"
               >
