@@ -1,5 +1,10 @@
-import { useState, useMemo } from "react";
-import { motion, useMotionValue, useTransform } from "framer-motion";
+import { useState, useMemo, useEffect } from "react";
+import {
+  motion,
+  useMotionValue,
+  useTransform,
+  AnimatePresence,
+} from "framer-motion";
 import { useDiscover } from "../hooks/useDiscover";
 
 const SWIPE_THRESHOLD = 120;
@@ -9,6 +14,8 @@ type DiscoverUser = {
   name: string;
   birthdate?: string;
   location?: string;
+  latitude?: number;
+  longitude?: number;
   photos?: string[];
 };
 
@@ -28,19 +35,92 @@ function calculateAge(birthdate?: string) {
   return age;
 }
 
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) {
+  const R = 3958.8;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
 export default function DiscoverFeed() {
   const { data, isLoading, refetch } = useDiscover();
 
   const [index, setIndex] = useState(0);
   const [matchUser, setMatchUser] = useState<null | { name: string }>(null);
 
+  const [location, setLocation] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
+
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+
+        setLocation({ lat, lon });
+
+        try {
+          const token = localStorage.getItem("token");
+
+          await fetch(
+            `${import.meta.env.VITE_API_URL}/api/profile/location`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                latitude: lat,
+                longitude: lon,
+              }),
+            }
+          );
+        } catch (err) {
+          console.error("Failed to save location", err);
+        }
+      },
+      () => {
+        console.log("Location permission denied");
+      }
+    );
+  }, []);
+
   const users: DiscoverUser[] = data || [];
+
   const current = users[index];
+  const next = users[index + 1];
+
   const age = calculateAge(current?.birthdate);
+
+  const distance =
+    location &&
+    current?.latitude &&
+    current?.longitude
+      ? calculateDistance(
+          location.lat,
+          location.lon,
+          current.latitude,
+          current.longitude
+        ).toFixed(1)
+      : null;
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 0, 200], [-15, 0, 15]);
-  const opacity = useTransform(x, [-200, 0, 200], [0.5, 1, 0.5]);
 
   const likeSound = useMemo(
     () => (typeof Audio !== "undefined" ? new Audio("/sounds/like.mp3") : null),
@@ -69,7 +149,7 @@ export default function DiscoverFeed() {
     x.set(0);
   };
 
-  const sendSwipe = async (liked: boolean) => {
+  const sendSwipe = async (liked: boolean, superLike = false) => {
     if (!current) return;
 
     const token = localStorage.getItem("token");
@@ -83,6 +163,7 @@ export default function DiscoverFeed() {
       body: JSON.stringify({
         targetId: current.id,
         liked,
+        superLike,
       }),
     });
 
@@ -96,7 +177,7 @@ export default function DiscoverFeed() {
       vibrate([10, 40, 10]);
     }
 
-    if (json.isMatch) {
+    if (json?.isMatch) {
       setMatchUser({ name: current.name });
     }
 
@@ -117,7 +198,7 @@ export default function DiscoverFeed() {
 
   if (isLoading) {
     return (
-      <div className="bg-white/5 rounded-xl p-5 border border-white/10 h-[500px] flex items-center justify-center">
+      <div className="h-[520px] flex items-center justify-center">
         <p className="text-white/60">Loading people…</p>
       </div>
     );
@@ -125,76 +206,117 @@ export default function DiscoverFeed() {
 
   if (!current) {
     return (
-      <div className="bg-white/5 rounded-xl p-5 border border-white/10 h-[500px] flex items-center justify-center">
+      <div className="h-[520px] flex items-center justify-center">
         <p className="text-white/60">No more people right now.</p>
       </div>
     );
   }
 
+  const photo =
+    current.photos && current.photos.length > 0
+      ? current.photos[0]
+      : "https://picsum.photos/600";
+
+  const nextPhoto =
+    next?.photos && next.photos.length > 0
+      ? next.photos[0]
+      : "https://picsum.photos/600";
+
   return (
-    <div className="relative bg-white/5 rounded-xl p-5 border border-white/10 h-[500px] flex flex-col overflow-hidden">
-      <motion.div
-        className="flex-1 rounded-xl overflow-hidden border border-white/10 shadow-xl"
-        style={{ x, rotate, opacity }}
-        drag="x"
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.2}
-        onDragEnd={handleDragEnd}
-      >
-        <img
-          src={current.photos?.[0]}
-          alt={current.name}
-          className="w-full h-full object-cover"
-        />
-      </motion.div>
+    <div className="flex flex-col items-center">
 
-      <div className="mt-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">
-            {current.name}
-            {age && `, ${age}`}
-          </h2>
+      <div className="relative w-[380px] h-[520px]">
 
-          <p className="text-white/60">{current.location}</p>
-        </div>
+        {next && (
+          <img
+            src={nextPhoto}
+            className="absolute w-full h-full object-cover rounded-2xl scale-95 opacity-50"
+          />
+        )}
 
-        <div className="flex gap-3">
-          <button
-            onClick={() => sendSwipe(false)}
-            className="px-4 py-2 rounded-full bg-white/10 text-white/80 hover:bg-white/20"
+        <AnimatePresence>
+          <motion.div
+            key={current.id}
+            className="absolute w-full h-full rounded-2xl overflow-hidden shadow-xl"
+            style={{ x, rotate }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={handleDragEnd}
           >
-            Pass
-          </button>
 
-          <button
-            onClick={() => sendSwipe(true)}
-            className="px-4 py-2 rounded-full bg-yellow-500 text-black font-semibold hover:bg-yellow-400"
-          >
-            Like
-          </button>
-        </div>
+            <img
+              src={photo}
+              className="w-full h-full object-cover"
+            />
+
+            <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
+
+              <h2 className="text-xl font-bold">
+                {current.name}
+                {age !== null && `, ${age}`}
+              </h2>
+
+              <p className="text-sm opacity-80">
+                {current.location || "Unknown location"}
+                {distance && ` • ${distance} miles away`}
+              </p>
+
+            </div>
+
+          </motion.div>
+        </AnimatePresence>
+
+      </div>
+
+      <div className="flex gap-6 mt-6">
+
+        <button
+          onClick={() => sendSwipe(false)}
+          className="w-14 h-14 rounded-full bg-white/10 text-white text-xl hover:bg-white/20"
+        >
+          ✕
+        </button>
+
+        <button
+          onClick={() => sendSwipe(true, true)}
+          className="w-14 h-14 rounded-full bg-blue-500 text-white text-xl hover:bg-blue-400"
+        >
+          ⭐
+        </button>
+
+        <button
+          onClick={() => sendSwipe(true)}
+          className="w-14 h-14 rounded-full bg-yellow-500 text-black text-xl hover:bg-yellow-400"
+        >
+          ♥
+        </button>
+
       </div>
 
       {matchUser && (
-        <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-6 text-center backdrop-blur-xl">
-            <h3 className="text-2xl font-bold text-yellow-400 mb-2">
-              It's a match!
-            </h3>
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-2xl p-8 text-center w-[320px]">
 
-            <p className="text-white/80 mb-4">
-              You and {matchUser.name} like each other.
+            <h2 className="text-3xl font-bold mb-4">
+              🎉 It's a Match!
+            </h2>
+
+            <p className="mb-6">
+              You and <strong>{matchUser.name}</strong> liked each other.
             </p>
 
             <button
               onClick={() => setMatchUser(null)}
-              className="px-4 py-2 rounded-full bg-yellow-500 text-black font-semibold hover:bg-yellow-400"
+              className="px-4 py-2 bg-yellow-500 rounded-lg"
             >
               Nice
             </button>
+
           </div>
         </div>
       )}
+
     </div>
   );
 }
