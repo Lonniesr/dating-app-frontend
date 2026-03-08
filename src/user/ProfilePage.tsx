@@ -1,7 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { userInvitesService } from "./services/userInvitesService";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { useUserAuth } from "./context/UserAuthContext";
 import { supabase } from "../lib/supabaseClient";
 import { QRCodeCanvas } from "qrcode.react";
@@ -12,9 +11,7 @@ import GenderIcon from "./components/GenderIcon";
 import SwipeStatsSection from "./components/SwipeStatsSection";
 import MatchCountSection from "./components/MatchCountSection";
 import SwipeActivityChart from "./components/SwipeActivityChart";
-import ProfileCompletionSection from "./components/ProfileCompletionSection";
 import PhotoManagerSection from "./components/PhotoManagerSection";
-import type { Preferences } from "./context/UserAuthContext";
 
 function resolvePhotoUrl(photo: string) {
   if (!photo) return "";
@@ -40,10 +37,6 @@ export default function ProfilePage() {
       console.error("Invite creation failed:", err);
     },
   });
-
-  const formatPreferences = (prefs: Preferences) => {
-    return `${prefs.interestedIn} • Ages ${prefs.minAge}-${prefs.maxAge} • Radius ${prefs.locationRadius}mi`;
-  };
 
   const downloadQR = () => {
     const canvas = document.getElementById("invite-qr") as HTMLCanvasElement;
@@ -99,33 +92,17 @@ export default function ProfilePage() {
   const photos = authUser.photos ?? [];
 
   return (
-    <div className="p-6 text-white">
+    <div className="p-6 text-white pb-28">
 
-      <div className="flex items-center gap-3 mb-6">
-        <h1 className="text-2xl font-bold">My Profile</h1>
-      </div>
+      <h1 className="text-2xl font-bold mb-6">
+        My Profile
+      </h1>
 
-      <div className="flex gap-3 mb-6 flex-wrap">
-
-        <Link
-          to="/user/edit-profile"
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 transition rounded-lg font-semibold"
-        >
-          Edit Profile
-        </Link>
-
-        <Link
-          to="/user/settings"
-          className="px-4 py-2 bg-white/10 hover:bg-white/20 transition rounded-lg font-semibold"
-        >
-          Settings
-        </Link>
-
-      </div>
+      {/* PROFILE CARD */}
 
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
 
-        <div className="flex items-center gap-5 mb-4">
+        <div className="flex items-center gap-5">
 
           <div className="w-24 h-24 rounded-full overflow-hidden border border-white/20 bg-white/10">
             {photos.length ? (
@@ -142,7 +119,9 @@ export default function ProfilePage() {
           <div>
 
             <div className="flex items-center gap-2">
-              <p className="font-bold text-xl">{authUser.name}</p>
+              <p className="font-bold text-xl">
+                {authUser.name}
+              </p>
 
               {authUser.verified && (
                 <span className="text-blue-400 text-sm font-semibold">
@@ -150,41 +129,100 @@ export default function ProfilePage() {
                 </span>
               )}
 
-              {authUser.gender && <GenderIcon gender={authUser.gender} />}
+              {authUser.gender && (
+                <GenderIcon gender={authUser.gender} />
+              )}
+
             </div>
 
-            <p className="text-white/60">{authUser.email}</p>
+            <p className="text-white/60">
+              {authUser.email}
+            </p>
 
           </div>
 
         </div>
 
-        <div className="space-y-2 text-white/70">
-          <p>
-            <strong>Preferences:</strong>{" "}
-            {authUser.preferences
-              ? formatPreferences(authUser.preferences)
-              : "—"}
-          </p>
-        </div>
-
-        <div className="mt-6">
-          <button
-            onClick={() => createInviteMutation.mutate()}
-            disabled={createInviteMutation.isPending}
-            className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 transition rounded-lg font-semibold disabled:opacity-50"
-          >
-            {createInviteMutation.isPending ? "Creating…" : "Generate Invite"}
-          </button>
-        </div>
-
       </div>
 
-      <PhotoManagerSection />
-      <ProfileCompletionSection />
+      {/* STATS */}
+
       <SwipeStatsSection />
       <MatchCountSection />
       <SwipeActivityChart />
+
+      {/* BIO */}
+
+      <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+
+        <h2 className="text-xl font-bold mb-2">
+          Bio
+        </h2>
+
+        {authUser.bio ? (
+          <p className="text-white/70">
+            {authUser.bio}
+          </p>
+        ) : (
+          <p className="text-white/50 text-sm">
+            No bio added yet.
+          </p>
+        )}
+
+      </div>
+
+      {/* PHOTOS */}
+
+      <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+
+        <h2 className="text-xl font-bold mb-4">
+          Your Photos
+        </h2>
+
+        {photos.length ? (
+          <div className="grid grid-cols-3 gap-3">
+            {photos.map((photo, index) => (
+              <img
+                key={index}
+                src={resolvePhotoUrl(photo)}
+                alt="User photo"
+                className="rounded-lg object-cover h-32 w-full"
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-white/50 text-sm">
+            No photos uploaded yet.
+          </p>
+        )}
+
+      </div>
+
+      {/* PHOTO MANAGER */}
+
+      <PhotoManagerSection />
+
+      {/* INVITE */}
+
+      <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+
+        <h2 className="text-xl font-bold mb-4">
+          Invite Friends
+        </h2>
+
+        <button
+          onClick={() => createInviteMutation.mutate()}
+          disabled={createInviteMutation.isPending}
+          className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 transition rounded-lg font-semibold disabled:opacity-50"
+        >
+          {createInviteMutation.isPending
+            ? "Creating…"
+            : "Generate Invite"}
+        </button>
+
+      </div>
+
+      {/* INVITE MODAL */}
 
       {newInvite && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
@@ -227,7 +265,7 @@ export default function ProfilePage() {
                     src: logo,
                     height: 36,
                     width: 36,
-                    excavate: true
+                    excavate: true,
                   }}
                 />
               </div>
@@ -246,7 +284,9 @@ export default function ProfilePage() {
               <button
                 onClick={() =>
                   newInvite.inviteLink &&
-                  navigator.clipboard.writeText(newInvite.inviteLink)
+                  navigator.clipboard.writeText(
+                    newInvite.inviteLink
+                  )
                 }
                 className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg"
               >
