@@ -30,6 +30,7 @@ export default function AdminVerificationPage() {
 
   return (
     <div className="fade-in">
+
       <h1
         className="admin-gold-shimmer"
         style={{ fontSize: "2rem", marginBottom: "1.5rem" }}
@@ -40,6 +41,7 @@ export default function AdminVerificationPage() {
       <DataTable
         searchable
         columns={[
+          { key: "selfie", label: "Selfie" },
           { key: "name", label: "Name" },
           { key: "email", label: "Email" },
           { key: "createdAt", label: "Joined" },
@@ -47,6 +49,22 @@ export default function AdminVerificationPage() {
         data={
           users?.map((u) => ({
             id: u.id,
+
+            selfie: u.verification_selfie ? (
+              <img
+                src={u.verification_selfie}
+                alt="selfie"
+                style={{
+                  width: 60,
+                  height: 60,
+                  objectFit: "cover",
+                  borderRadius: "8px",
+                }}
+              />
+            ) : (
+              "No selfie"
+            ),
+
             name: u.name ?? "Unknown",
             email: u.email,
             createdAt: new Date(u.createdAt).toLocaleDateString(),
@@ -65,6 +83,7 @@ export default function AdminVerificationPage() {
           },
         ]}
       />
+
     </div>
   );
 }

@@ -35,6 +35,7 @@ export type AuthUser = {
   bio?: string | null;               // ✅ FIXED
   preferences?: Preferences | null;
   verified?: boolean;
+  verification_status?: string;
   prompts?: PromptItem[] | null;     // ✅ FIXED (was string)
 };
 

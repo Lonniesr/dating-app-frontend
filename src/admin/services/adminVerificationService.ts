@@ -6,6 +6,9 @@ export interface VerificationUser {
   role: string;
   verified: boolean;
   createdAt: string;
+  name?: string;
+  verification_selfie?: string;
+  verification_status?: string;
 }
 
 const service = new BaseService("/api/admin/verification");

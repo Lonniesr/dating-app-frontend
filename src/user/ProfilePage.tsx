@@ -5,6 +5,7 @@ import { useUserAuth } from "./context/UserAuthContext";
 import { supabase } from "../lib/supabaseClient";
 import { QRCodeCanvas } from "qrcode.react";
 import apiClient from "../services/apiClient";
+import { useNavigate } from "react-router-dom";
 
 import logo from "../assets/lynqlogo.png";
 
@@ -32,6 +33,8 @@ interface InviteStats {
 
 export default function ProfilePage() {
   const { authUser, isLoading } = useUserAuth();
+  const navigate = useNavigate();
+
   const [newInvite, setNewInvite] = useState<any | null>(null);
 
   const [inviteStats, setInviteStats] = useState<InviteStats>({
@@ -122,7 +125,7 @@ export default function ProfilePage() {
         My Profile
       </h1>
 
-      {/* GENERATE INVITE (TOP) */}
+      {/* INVITE SECTION */}
 
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
 
@@ -187,6 +190,32 @@ export default function ProfilePage() {
               {authUser.email}
             </p>
 
+            {/* Verification Status */}
+
+            {!authUser.verified && authUser.verification_status === "none" && (
+              <button
+                onClick={() => navigate("/user/verify-selfie")}
+                className="mt-2 text-sm text-yellow-400 hover:underline"
+              >
+                Verify your profile
+              </button>
+            )}
+
+            {authUser.verification_status === "pending" && (
+              <p className="text-sm text-yellow-400 mt-2">
+                Verification pending review
+              </p>
+            )}
+
+            {authUser.verification_status === "rejected" && (
+              <button
+                onClick={() => navigate("/user/verify-selfie")}
+                className="text-sm text-red-400 hover:underline mt-2"
+              >
+                Verification rejected — try again
+              </button>
+            )}
+
           </div>
 
         </div>
@@ -225,8 +254,6 @@ export default function ProfilePage() {
 
       </div>
 
-      {/* MATCH + SWIPE STATS */}
-
       <SwipeStatsSection />
       <MatchCountSection />
       <SwipeActivityChart />
@@ -251,9 +278,9 @@ export default function ProfilePage() {
 
       </div>
 
-      {/* PHOTO MANAGER */}
+      <PhotoManagerSection>
 
-      <PhotoManagerSection />
+      </PhotoManagerSection>
 
       {/* INVITE MODAL */}
 
