@@ -1,139 +1,94 @@
-import {
-  createContext,
-  useEffect,
-  useState,
-  useContext,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
-const API = import.meta.env.VITE_API_URL;
-console.log("VITE_API_URL =", API);
-
-export type Preferences = {
-  interestedIn: string;
-  racePreference: string | null;
-  minAge: number;
-  maxAge: number;
-  locationRadius: number | null;
+type Preferences = {
+  interestedIn?: string;
+  minAge?: number;
+  maxAge?: number;
+  locationRadius?: number;
 };
 
-export type PromptItem = {
-  question: string;
-  answer: string;
-};
-
-export type AuthUser = {
+type AuthUser = {
   id: string;
   email: string;
+  role: string;
+
   name?: string;
-  role?: string;
-  onboardingComplete?: boolean;
-  photos?: string[];
+  bio?: string;
   gender?: string;
-  location?: string;
-  birthdate?: string;
-  bio?: string | null;               // ✅ FIXED
-  preferences?: Preferences | null;
+
   verified?: boolean;
-  verification_status?: string;
-  prompts?: PromptItem[] | null;     // ✅ FIXED (was string)
+  verification_status?: "none" | "pending" | "approved" | "rejected";
+
+  photos?: string[];
+
+  preferences?: Preferences;
 };
 
-export type UserAuthContextValue = {
+type AuthContextType = {
   authUser: AuthUser | null;
   isLoading: boolean;
-  refreshUser: () => Promise<AuthUser | null>;
-  logout: () => Promise<void>;
+  logout: () => void;
+  refreshUser: () => Promise<void>;
 };
 
-export const UserAuthContext =
-  createContext<UserAuthContextValue | undefined>(undefined);
+const UserAuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function UserAuthProvider({ children }: { children: ReactNode }) {
+export function UserAuthProvider({ children }: { children: React.ReactNode }) {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const parsePreferences = (raw: unknown): Preferences | null => {
-    if (!raw) return null;
+  async function loadProfile() {
+    const token = localStorage.getItem("token");
 
-    if (typeof raw === "string") {
-      try {
-        return JSON.parse(raw);
-      } catch {
-        return null;
-      }
+    if (!token) {
+      setAuthUser(null);
+      setIsLoading(false);
+      return;
     }
 
-    if (typeof raw === "object") {
-      return raw as Preferences;
-    }
-
-    return null;
-  };
-
-  const fetchMe = async (): Promise<AuthUser | null> => {
     try {
-      // ✅ CORRECT ENDPOINT
-      const res = await fetch(`${API}/api/auth/me`, {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/profile`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!res.ok) {
-        setAuthUser(null);
-        return null;
+        throw new Error("Auth failed");
       }
 
-      const rawUser = await res.json();
+      const data = await res.json();
 
-      if (!rawUser) {
-        setAuthUser(null);
-        return null;
-      }
-
-      const parsedUser: AuthUser = {
-        ...rawUser,
-        preferences: parsePreferences(rawUser.preferences),
-      };
-
-      setAuthUser(parsedUser);
-      return parsedUser;
+      setAuthUser(data);
     } catch (err) {
-      console.error("Error fetching /api/auth/me:", err);
+      console.error("Auth load failed:", err);
+
+      localStorage.removeItem("token");
       setAuthUser(null);
-      return null;
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }
 
   useEffect(() => {
-    (async () => {
-      setIsLoading(true);
-      await fetchMe();
-      setIsLoading(false);
-    })();
+    loadProfile();
   }, []);
 
-  const refreshUser = async () => {
-    return await fetchMe();
-  };
-
-  const logout = async () => {
-    try {
-      await fetch(`${API}/api/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-    } finally {
-      setAuthUser(null);
-    }
-  };
+  function logout() {
+    localStorage.removeItem("token");
+    setAuthUser(null);
+  }
 
   return (
     <UserAuthContext.Provider
       value={{
         authUser,
         isLoading,
-        refreshUser,
         logout,
+        refreshUser: loadProfile,
       }}
     >
       {children}
@@ -141,11 +96,11 @@ export function UserAuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useUserAuth(): UserAuthContextValue {
+export function useUserAuth() {
   const context = useContext(UserAuthContext);
 
   if (!context) {
-    throw new Error("useUserAuth must be used within UserAuthProvider");
+    throw new Error("useUserAuth must be used inside UserAuthProvider");
   }
 
   return context;

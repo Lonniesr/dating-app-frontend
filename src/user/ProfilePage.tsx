@@ -31,11 +31,16 @@ interface InviteStats {
   joined: number;
 }
 
+interface Invite {
+  code: string;
+  inviteLink: string;
+}
+
 export default function ProfilePage() {
   const { authUser, isLoading } = useUserAuth();
   const navigate = useNavigate();
 
-  const [newInvite, setNewInvite] = useState<any | null>(null);
+  const [newInvite, setNewInvite] = useState<Invite | null>(null);
 
   const [inviteStats, setInviteStats] = useState<InviteStats>({
     sent: 0,
@@ -44,7 +49,7 @@ export default function ProfilePage() {
 
   const createInviteMutation = useMutation({
     mutationFn: () => userInvitesService.create(),
-    onSuccess: (invite) => {
+    onSuccess: (invite: Invite) => {
       setNewInvite(invite);
     },
     onError: (err) => {
@@ -75,7 +80,7 @@ export default function ProfilePage() {
 
     const downloadLink = document.createElement("a");
     downloadLink.href = pngUrl;
-    downloadLink.download = `invite-${newInvite.code}.png`;
+    downloadLink.download = `invite-${newInvite?.code}.png`;
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
@@ -120,20 +125,13 @@ export default function ProfilePage() {
 
   return (
     <div className="p-6 text-white pb-28">
-
-      <h1 className="text-2xl font-bold mb-6">
-        My Profile
-      </h1>
+      <h1 className="text-2xl font-bold mb-6">My Profile</h1>
 
       {/* INVITE SECTION */}
 
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
-
         <div className="flex justify-between items-center">
-
-          <h2 className="text-lg font-semibold">
-            Invite Friends
-          </h2>
+          <h2 className="text-lg font-semibold">Invite Friends</h2>
 
           <button
             onClick={() => createInviteMutation.mutate()}
@@ -144,17 +142,13 @@ export default function ProfilePage() {
               ? "Creating..."
               : "Generate Invite"}
           </button>
-
         </div>
-
       </div>
 
       {/* PROFILE CARD */}
 
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
-
         <div className="flex items-center gap-5">
-
           <div className="w-24 h-24 rounded-full overflow-hidden border border-white/20 bg-white/10">
             {photos.length ? (
               <img
@@ -168,11 +162,8 @@ export default function ProfilePage() {
           </div>
 
           <div>
-
             <div className="flex items-center gap-2">
-              <p className="font-bold text-xl">
-                {authUser.name}
-              </p>
+              <p className="font-bold text-xl">{authUser.name}</p>
 
               {authUser.verified && (
                 <span className="text-blue-400 text-sm font-semibold">
@@ -180,26 +171,22 @@ export default function ProfilePage() {
                 </span>
               )}
 
-              {authUser.gender && (
-                <GenderIcon gender={authUser.gender} />
-              )}
-
+              {authUser.gender && <GenderIcon gender={authUser.gender} />}
             </div>
 
-            <p className="text-white/60">
-              {authUser.email}
-            </p>
+            <p className="text-white/60">{authUser.email}</p>
 
             {/* Verification Status */}
 
-            {!authUser.verified && authUser.verification_status === "none" && (
-              <button
-                onClick={() => navigate("/user/verify-selfie")}
-                className="mt-2 text-sm text-yellow-400 hover:underline"
-              >
-                Verify your profile
-              </button>
-            )}
+            {!authUser.verified &&
+              authUser.verification_status === "none" && (
+                <button
+                  onClick={() => navigate("/user/verify-selfie")}
+                  className="mt-2 text-sm text-yellow-400 hover:underline"
+                >
+                  Verify your profile
+                </button>
+              )}
 
             {authUser.verification_status === "pending" && (
               <p className="text-sm text-yellow-400 mt-2">
@@ -215,23 +202,16 @@ export default function ProfilePage() {
                 Verification rejected — try again
               </button>
             )}
-
           </div>
-
         </div>
-
       </div>
 
       {/* INVITE STATS */}
 
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
-
-        <h2 className="text-xl font-bold mb-4">
-          Invite Impact
-        </h2>
+        <h2 className="text-xl font-bold mb-4">Invite Impact</h2>
 
         <div className="grid grid-cols-2 gap-6 text-center">
-
           <div>
             <p className="text-2xl font-bold text-yellow-400">
               {inviteStats.sent}
@@ -249,9 +229,7 @@ export default function ProfilePage() {
               Friends Joined
             </p>
           </div>
-
         </div>
-
       </div>
 
       <SwipeStatsSection />
@@ -261,37 +239,23 @@ export default function ProfilePage() {
       {/* BIO */}
 
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
-
-        <h2 className="text-xl font-bold mb-2">
-          Bio
-        </h2>
+        <h2 className="text-xl font-bold mb-2">Bio</h2>
 
         {authUser.bio ? (
-          <p className="text-white/70">
-            {authUser.bio}
-          </p>
+          <p className="text-white/70">{authUser.bio}</p>
         ) : (
-          <p className="text-white/50 text-sm">
-            No bio added yet.
-          </p>
+          <p className="text-white/50 text-sm">No bio added yet.</p>
         )}
-
       </div>
 
-      <PhotoManagerSection>
-
-      </PhotoManagerSection>
+      <PhotoManagerSection />
 
       {/* INVITE MODAL */}
 
       {newInvite && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-
           <div className="bg-white/10 backdrop-blur-lg p-6 rounded-xl border border-white/20 w-full max-w-md">
-
-            <h2 className="text-xl font-bold mb-3">
-              Invite Created
-            </h2>
+            <h2 className="text-xl font-bold mb-3">Invite Created</h2>
 
             <p className="mb-2">
               <strong>Code:</strong> {newInvite.code}
@@ -311,7 +275,6 @@ export default function ProfilePage() {
             </p>
 
             <div className="flex flex-col items-center gap-4 mb-4">
-
               <div className="bg-white p-4 rounded-lg border border-[#d4af37]">
                 <QRCodeCanvas
                   id="invite-qr"
@@ -336,11 +299,9 @@ export default function ProfilePage() {
               >
                 Download QR Code
               </button>
-
             </div>
 
             <div className="flex gap-3 flex-wrap">
-
               <button
                 onClick={() =>
                   navigator.clipboard.writeText(newInvite.inviteLink)
@@ -363,14 +324,10 @@ export default function ProfilePage() {
               >
                 Close
               </button>
-
             </div>
-
           </div>
-
         </div>
       )}
-
     </div>
   );
 }

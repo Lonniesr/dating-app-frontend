@@ -42,6 +42,7 @@ function calculateDistance(
   lon2: number
 ) {
   const R = 3958.8;
+
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
 
@@ -65,7 +66,13 @@ export default function DiscoverFeed() {
     lon: number;
   } | null>(null);
 
+  /* ===============================
+     LOAD USER LOCATION
+  =============================== */
+
   useEffect(() => {
+    if (!navigator.geolocation) return;
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lat = pos.coords.latitude;
@@ -91,7 +98,7 @@ export default function DiscoverFeed() {
             }
           );
         } catch (err) {
-          console.error("Failed to save location", err);
+          console.error("Location save failed", err);
         }
       },
       () => {
@@ -136,14 +143,18 @@ export default function DiscoverFeed() {
     if (navigator.vibrate) navigator.vibrate(pattern);
   };
 
+  /* ===============================
+     INFINITE CARD FEED
+  =============================== */
+
   const advance = async () => {
     const nextIndex = index + 1;
 
     if (nextIndex < users.length) {
       setIndex(nextIndex);
     } else {
-      await refetch();
       setIndex(0);
+      refetch();
     }
 
     x.set(0);
@@ -152,48 +163,48 @@ export default function DiscoverFeed() {
   const sendSwipe = async (liked: boolean, superLike = false) => {
     if (!current) return;
 
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/swipe`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        targetId: current.id,
-        liked,
-        superLike,
-      }),
-    });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/swipe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          targetId: current.id,
+          liked,
+          superLike,
+        }),
+      });
 
-    const json = await res.json();
+      const json = await res.json();
 
-    if (liked) {
-      likeSound?.play();
-      vibrate(30);
-    } else {
-      passSound?.play();
-      vibrate([10, 40, 10]);
+      if (liked) {
+        likeSound?.play();
+        vibrate(30);
+      } else {
+        passSound?.play();
+        vibrate([10, 40, 10]);
+      }
+
+      if (json?.isMatch) {
+        setMatchUser({ name: current.name });
+      }
+
+      await advance();
+    } catch (err) {
+      console.error("Swipe failed", err);
     }
-
-    if (json?.isMatch) {
-      setMatchUser({ name: current.name });
-    }
-
-    await advance();
   };
 
   const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
     const offsetX = info.offset.x;
 
-    if (offsetX > SWIPE_THRESHOLD) {
-      sendSwipe(true);
-    } else if (offsetX < -SWIPE_THRESHOLD) {
-      sendSwipe(false);
-    } else {
-      x.set(0);
-    }
+    if (offsetX > SWIPE_THRESHOLD) sendSwipe(true);
+    else if (offsetX < -SWIPE_THRESHOLD) sendSwipe(false);
+    else x.set(0);
   };
 
   if (isLoading) {
@@ -204,16 +215,16 @@ export default function DiscoverFeed() {
     );
   }
 
-  if (!current) {
+  if (!current && users.length === 0) {
     return (
       <div className="h-[520px] flex items-center justify-center">
-        <p className="text-white/60">No more people right now.</p>
+        <p className="text-white/60">Finding people near you…</p>
       </div>
     );
   }
 
   const photo =
-    current.photos && current.photos.length > 0
+    current?.photos && current.photos.length > 0
       ? current.photos[0]
       : "https://picsum.photos/600";
 
@@ -225,6 +236,8 @@ export default function DiscoverFeed() {
   return (
     <div className="flex flex-col items-center">
 
+      {/* CARD STACK */}
+
       <div className="relative w-[380px] h-[520px]">
 
         {next && (
@@ -235,39 +248,43 @@ export default function DiscoverFeed() {
         )}
 
         <AnimatePresence>
-          <motion.div
-            key={current.id}
-            className="absolute w-full h-full rounded-2xl overflow-hidden shadow-xl"
-            style={{ x, rotate }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.2}
-            onDragEnd={handleDragEnd}
-          >
+          {current && (
+            <motion.div
+              key={current.id}
+              className="absolute w-full h-full rounded-2xl overflow-hidden shadow-xl"
+              style={{ x, rotate }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={handleDragEnd}
+            >
 
-            <img
-              src={photo}
-              className="w-full h-full object-cover"
-            />
+              <img
+                src={photo}
+                className="w-full h-full object-cover"
+              />
 
-            <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
+              <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
 
-              <h2 className="text-xl font-bold">
-                {current.name}
-                {age !== null && `, ${age}`}
-              </h2>
+                <h2 className="text-xl font-bold">
+                  {current.name}
+                  {age !== null && `, ${age}`}
+                </h2>
 
-              <p className="text-sm opacity-80">
-                {current.location || "Unknown location"}
-                {distance && ` • ${distance} miles away`}
-              </p>
+                <p className="text-sm opacity-80">
+                  {current.location || "Unknown location"}
+                  {distance && ` • ${distance} miles away`}
+                </p>
 
-            </div>
+              </div>
 
-          </motion.div>
+            </motion.div>
+          )}
         </AnimatePresence>
 
       </div>
+
+      {/* ACTION BUTTONS */}
 
       <div className="flex gap-6 mt-6">
 
@@ -293,6 +310,8 @@ export default function DiscoverFeed() {
         </button>
 
       </div>
+
+      {/* MATCH POPUP */}
 
       {matchUser && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">

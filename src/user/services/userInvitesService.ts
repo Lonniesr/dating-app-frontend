@@ -16,14 +16,17 @@ export interface UserInvite {
   invitedById?: string | null;
   usedById?: string | null;
   usedBy?: UserInviteUser | null;
-  inviteLink?: string;
+
+  // ✅ FIX — inviteLink must exist
+  inviteLink: string;
 }
 
-const BASE = "/api/invite"; // ✅ FIXED
+const BASE = "/api/invite";
 
 export const userInvitesService = {
   async list(): Promise<UserInvite[]> {
     const res = await apiClient.get(BASE);
+
     return res.data.invites as UserInvite[];
   },
 
@@ -33,7 +36,7 @@ export const userInvitesService = {
     return {
       id: res.data.id,
       code: res.data.code,
-      inviteLink: res.data.inviteLink,
+      inviteLink: res.data.inviteLink, // guaranteed
       used: res.data.used ?? false,
       usedAt: res.data.usedAt ?? null,
     };
