@@ -31,12 +31,12 @@ import LoginPage from "./user/LoginPage";
 
 // USER PAGES
 import DashboardPage from "./user/DashboardPage";
-import DiscoverPage from "./user/DiscoverPage";
 import ProfilePage from "./user/ProfilePage";
 import SettingsPage from "./user/SettingsPage";
 import MessagesPage from "./user/MessagesPage";
 import MatchesPage from "./user/MatchesPage";
-import EditProfilePage from "./user/EditProfilePage"; // ✅ ADDED
+import EditProfilePage from "./user/EditProfilePage";
+import DiscoverFeed from "./user/components/DiscoverFeed"; // ⭐ ADDED
 
 // USER LAYOUT + GUARD
 import UserLayout from "./user/layout/UserLayout";
@@ -70,11 +70,13 @@ export default function App() {
         {/* Default page */}
         <Route index element={<Navigate to="discover" replace />} />
 
+        {/* ⭐ DISCOVER / SWIPE FEED */}
+        <Route path="discover" element={<DiscoverFeed />} />
+
         {/* Main app */}
-        <Route path="discover" element={<DiscoverPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="profile" element={<ProfilePage />} />
-        <Route path="edit-profile" element={<EditProfilePage />} /> {/* ✅ ADDED */}
+        <Route path="edit-profile" element={<EditProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="messages" element={<MessagesPage />} />
         <Route path="matches" element={<MatchesPage />} />

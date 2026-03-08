@@ -7,10 +7,26 @@ const SWIPE_THRESHOLD = 120;
 type DiscoverUser = {
   id: string;
   name: string;
-  age: number;
+  birthdate?: string;
   location?: string;
   photos?: string[];
 };
+
+function calculateAge(birthdate?: string) {
+  if (!birthdate) return null;
+
+  const birth = new Date(birthdate);
+  const today = new Date();
+
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+
+  return age;
+}
 
 export default function DiscoverFeed() {
   const { data, isLoading, refetch } = useDiscover();
@@ -20,6 +36,7 @@ export default function DiscoverFeed() {
 
   const users: DiscoverUser[] = data || [];
   const current = users[index];
+  const age = calculateAge(current?.birthdate);
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 0, 200], [-15, 0, 15]);
@@ -133,10 +150,12 @@ export default function DiscoverFeed() {
 
       <div className="mt-4 flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">{current.name}</h2>
-          <p className="text-white/60">
-            {current.age} • {current.location}
-          </p>
+          <h2 className="text-xl font-semibold">
+            {current.name}
+            {age && `, ${age}`}
+          </h2>
+
+          <p className="text-white/60">{current.location}</p>
         </div>
 
         <div className="flex gap-3">
@@ -160,7 +179,7 @@ export default function DiscoverFeed() {
         <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
           <div className="bg-white/10 border border-white/20 rounded-2xl p-6 text-center backdrop-blur-xl">
             <h3 className="text-2xl font-bold text-yellow-400 mb-2">
-              It&apos;s a match!
+              It's a match!
             </h3>
 
             <p className="text-white/80 mb-4">
