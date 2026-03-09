@@ -42,15 +42,14 @@ export function UserAuthProvider({ children }: { children: React.ReactNode }) {
   async function loadProfile(): Promise<AuthUser | null> {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/user`,
+        `${import.meta.env.VITE_API_URL}/api/profile`,
         {
           credentials: "include",
         }
       );
 
       if (!res.ok) {
-        setAuthUser(null);
-        return null;
+        throw new Error("Auth failed");
       }
 
       const data = await res.json();

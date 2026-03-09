@@ -81,15 +81,13 @@ export default function DiscoverFeed() {
         setLocation({ lat, lon });
 
         try {
-          const token = localStorage.getItem("token");
-
           await fetch(
             `${import.meta.env.VITE_API_URL}/api/profile/location`,
             {
               method: "POST",
+              credentials: "include",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify({
                 latitude: lat,
@@ -164,13 +162,11 @@ export default function DiscoverFeed() {
     if (!current) return;
 
     try {
-      const token = localStorage.getItem("token");
-
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/swipe`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           targetId: current.id,
@@ -235,11 +231,9 @@ export default function DiscoverFeed() {
 
   return (
     <div className="flex flex-col items-center">
-
       {/* CARD STACK */}
 
       <div className="relative w-[380px] h-[520px]">
-
         {next && (
           <img
             src={nextPhoto}
@@ -258,14 +252,9 @@ export default function DiscoverFeed() {
               dragElastic={0.2}
               onDragEnd={handleDragEnd}
             >
-
-              <img
-                src={photo}
-                className="w-full h-full object-cover"
-              />
+              <img src={photo} className="w-full h-full object-cover" />
 
               <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
-
                 <h2 className="text-xl font-bold">
                   {current.name}
                   {age !== null && `, ${age}`}
@@ -275,19 +264,15 @@ export default function DiscoverFeed() {
                   {current.location || "Unknown location"}
                   {distance && ` • ${distance} miles away`}
                 </p>
-
               </div>
-
             </motion.div>
           )}
         </AnimatePresence>
-
       </div>
 
       {/* ACTION BUTTONS */}
 
       <div className="flex gap-6 mt-6">
-
         <button
           onClick={() => sendSwipe(false)}
           className="w-14 h-14 rounded-full bg-white/10 text-white text-xl hover:bg-white/20"
@@ -308,7 +293,6 @@ export default function DiscoverFeed() {
         >
           ♥
         </button>
-
       </div>
 
       {/* MATCH POPUP */}
@@ -316,10 +300,7 @@ export default function DiscoverFeed() {
       {matchUser && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
           <div className="bg-white text-black rounded-2xl p-8 text-center w-[320px]">
-
-            <h2 className="text-3xl font-bold mb-4">
-              🎉 It's a Match!
-            </h2>
+            <h2 className="text-3xl font-bold mb-4">🎉 It's a Match!</h2>
 
             <p className="mb-6">
               You and <strong>{matchUser.name}</strong> liked each other.
@@ -331,11 +312,9 @@ export default function DiscoverFeed() {
             >
               Nice
             </button>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }
