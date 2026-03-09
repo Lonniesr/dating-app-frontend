@@ -12,6 +12,9 @@ export default function BasicStep({ next }: BasicStepProps) {
   const [birthdate, setBirthdate] = useState("");
   const [gender, setGender] = useState("");
   const [race, setRace] = useState("");
+  const [bio, setBio] = useState("");
+  const [birthplace, setBirthplace] = useState("");
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -49,7 +52,7 @@ export default function BasicStep({ next }: BasicStepProps) {
     setError(null);
 
     if (!name || !birthdate || !gender || !race) {
-      setError("All fields are required.");
+      setError("All required fields must be filled.");
       return;
     }
 
@@ -78,6 +81,8 @@ export default function BasicStep({ next }: BasicStepProps) {
             birthdate,
             gender,
             race,
+            bio: bio.trim(),
+            birthplace: birthplace.trim(),
             latitude: location.lat,
             longitude: location.lon,
           }),
@@ -115,6 +120,8 @@ export default function BasicStep({ next }: BasicStepProps) {
         </div>
       )}
 
+      {/* Name */}
+
       <input
         type="text"
         placeholder="Full Name"
@@ -123,12 +130,17 @@ export default function BasicStep({ next }: BasicStepProps) {
         onChange={(e) => setName(e.target.value)}
       />
 
+      {/* Birthday */}
+
       <input
         type="date"
+        style={{ colorScheme: "dark" }}
         className="w-full p-3 mb-4 rounded bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
         value={birthdate}
         onChange={(e) => setBirthdate(e.target.value)}
       />
+
+      {/* Gender */}
 
       <select
         className="w-full p-3 mb-4 rounded bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
@@ -143,8 +155,10 @@ export default function BasicStep({ next }: BasicStepProps) {
         <option value="other" className="text-black">⚧ Other</option>
       </select>
 
+      {/* Race */}
+
       <select
-        className="w-full p-3 mb-6 rounded bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
+        className="w-full p-3 mb-4 rounded bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
         value={race}
         onChange={(e) => setRace(e.target.value)}
       >
@@ -157,6 +171,32 @@ export default function BasicStep({ next }: BasicStepProps) {
         <option value="Mixed" className="text-black">Mixed</option>
         <option value="Other" className="text-black">Other</option>
       </select>
+
+      {/* Birthplace */}
+
+      <input
+        type="text"
+        placeholder="Where are you from?"
+        className="w-full p-3 mb-4 rounded bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
+        value={birthplace}
+        onChange={(e) => setBirthplace(e.target.value)}
+      />
+
+      {/* Bio */}
+
+      <textarea
+        placeholder="Tell people a little about yourself..."
+        maxLength={300}
+        className="w-full p-3 mb-2 rounded bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none h-28 resize-none"
+        value={bio}
+        onChange={(e) => setBio(e.target.value)}
+      />
+
+      <div className="text-right text-xs text-white/40 mb-6">
+        {bio.length} / 300
+      </div>
+
+      {/* Submit */}
 
       <button
         onClick={submit}

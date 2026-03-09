@@ -94,25 +94,6 @@ export default function PhotoManagerSection() {
     }
   }, [authUser]);
 
-  const makeMainPhoto = async (index: number) => {
-    if (index === 0) return;
-
-    const newOrder = [...items];
-    const [selected] = newOrder.splice(index, 1);
-    newOrder.unshift(selected);
-
-    setItems(newOrder);
-
-    await fetch(`${import.meta.env.VITE_API_URL}/api/user/photos/reorder`, {
-      method: "PUT",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ order: newOrder }),
-    });
-
-    refreshUser();
-  };
-
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -149,11 +130,19 @@ export default function PhotoManagerSection() {
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+
+    if (!files.length) return;
 
     if (items.length >= MAX_PHOTOS) {
-      alert("Maximum 6 photos allowed");
+      alert(`Maximum ${MAX_PHOTOS} photos allowed`);
+      return;
+    }
+
+    const file = files[0];
+
+    if (!file.type.startsWith("image/")) {
+      alert("Only image files allowed");
       return;
     }
 
@@ -195,11 +184,11 @@ export default function PhotoManagerSection() {
     );
 
     canvas.toBlob(async (blob) => {
-      const croppedFile = new File([blob!], "photo.jpg", {
-        type: "image/jpeg",
-      });
-
       try {
+        const croppedFile = new File([blob!], "photo.jpg", {
+          type: "image/jpeg",
+        });
+
         const compressed = await compressImage(croppedFile);
 
         const filePath = `user-photos/${crypto.randomUUID()}.jpg`;
@@ -216,7 +205,9 @@ export default function PhotoManagerSection() {
 
         const url = data.publicUrl;
 
-        setItems((prev) => [...prev, url]);
+        const newPhotos = [...items, url];
+
+        setItems(newPhotos);
 
         await fetch(`${import.meta.env.VITE_API_URL}/api/user/photos/upload`, {
           method: "POST",
@@ -251,8 +242,28 @@ export default function PhotoManagerSection() {
     refreshUser();
   };
 
+  const makeMainPhoto = async (index: number) => {
+    if (index === 0) return;
+
+    const newOrder = [...items];
+    const [selected] = newOrder.splice(index, 1);
+    newOrder.unshift(selected);
+
+    setItems(newOrder);
+
+    await fetch(`${import.meta.env.VITE_API_URL}/api/user/photos/reorder`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order: newOrder }),
+    });
+
+    refreshUser();
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+
     if (!over || active.id === over.id) return;
 
     const oldIndex = items.findIndex((i) => i === active.id);
@@ -277,9 +288,21 @@ export default function PhotoManagerSection() {
 
       <h2 className="text-xl font-bold mb-4">Your Photos</h2>
 
-      <label className="inline-block mb-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 transition rounded-lg font-semibold cursor-pointer">
+      <label
+        className={`inline-block mb-4 px-4 py-2 rounded-lg font-semibold cursor-pointer transition ${
+          items.length >= MAX_PHOTOS
+            ? "bg-gray-500 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-700"
+        }`}
+      >
         {isUploading ? "Uploading…" : "Upload Photo"}
-        <input type="file" className="hidden" onChange={handleUpload} />
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleUpload}
+          disabled={items.length >= MAX_PHOTOS}
+        />
       </label>
 
       <p className="text-white/50 text-sm mb-3">
@@ -325,7 +348,10 @@ export default function PhotoManagerSection() {
 
             <div className="flex justify-between mt-4">
               <button
-                onClick={() => setCropImage(null)}
+                onClick={() => {
+                  setCropImage(null);
+                  setCropFile(null);
+                }}
                 className="px-3 py-1 bg-gray-500 rounded"
               >
                 Cancel
