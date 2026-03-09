@@ -12,10 +12,10 @@ export default function PreferencesStep({
 }: PreferencesStepProps) {
   const queryClient = useQueryClient();
 
-  const [interestedIn, setInterestedIn] = useState<string>("");
-  const [racePreference, setRacePreference] = useState<string>("");
-  const [minAge, setMinAge] = useState<number>(18);
-  const [maxAge, setMaxAge] = useState<number>(35);
+  const [interestedIn, setInterestedIn] = useState("");
+  const [racePreference, setRacePreference] = useState("");
+  const [minAge, setMinAge] = useState(18);
+  const [maxAge, setMaxAge] = useState(35);
   const [locationRadius, setLocationRadius] = useState<number | null>(25);
 
   const [error, setError] = useState<string | null>(null);
@@ -34,11 +34,6 @@ export default function PreferencesStep({
       return;
     }
 
-    if (maxAge > 100) {
-      setError("Maximum age cannot exceed 100.");
-      return;
-    }
-
     if (minAge >= maxAge) {
       setError("Minimum age must be less than maximum age.");
       return;
@@ -48,21 +43,19 @@ export default function PreferencesStep({
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/onboarding/preferences`,
+        `${import.meta.env.VITE_API_URL}/api/settings/preferences`,
         {
-          method: "POST",
+          method: "PUT",
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            preferences: {
-              interestedIn,
-              racePreference: racePreference || null,
-              minAge,
-              maxAge,
-              locationRadius, // null = unlimited
-            },
+            interestedIn,
+            racePreference: racePreference || null,
+            minAge,
+            maxAge,
+            locationRadius,
           }),
         }
       );
@@ -70,7 +63,7 @@ export default function PreferencesStep({
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to save.");
+        setError(data.error || "Failed to save preferences.");
         setLoading(false);
         return;
       }
@@ -126,6 +119,7 @@ export default function PreferencesStep({
         <label className="block mb-2 font-medium">
           Race Preference (optional)
         </label>
+
         <select
           value={racePreference}
           onChange={(e) => setRacePreference(e.target.value)}
@@ -134,33 +128,21 @@ export default function PreferencesStep({
           <option value="" className="text-black">
             No Preference
           </option>
-          <option value="White" className="text-black">
-            White
-          </option>
-          <option value="Black" className="text-black">
-            Black
-          </option>
-          <option value="Asian" className="text-black">
-            Asian
-          </option>
-          <option value="Latino" className="text-black">
-            Latino
-          </option>
-          <option value="Middle Eastern" className="text-black">
-            Middle Eastern
-          </option>
-          <option value="Mixed" className="text-black">
-            Mixed
-          </option>
-          <option value="Other" className="text-black">
-            Other
-          </option>
+
+          <option value="White" className="text-black">White</option>
+          <option value="Black" className="text-black">Black</option>
+          <option value="Asian" className="text-black">Asian</option>
+          <option value="Latino" className="text-black">Latino</option>
+          <option value="Middle Eastern" className="text-black">Middle Eastern</option>
+          <option value="Mixed" className="text-black">Mixed</option>
+          <option value="Other" className="text-black">Other</option>
         </select>
       </div>
 
       {/* Age Range */}
       <div className="mb-4">
         <label className="block mb-2 font-medium">Age Range</label>
+
         <div className="flex gap-3">
           <input
             type="number"
@@ -168,24 +150,23 @@ export default function PreferencesStep({
             max={100}
             value={minAge}
             onChange={(e) => setMinAge(Number(e.target.value))}
-            className="w-1/2 p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            className="w-1/2 p-3 rounded-lg bg-white/10 text-white border border-white/20"
           />
+
           <input
             type="number"
             min={18}
             max={100}
             value={maxAge}
             onChange={(e) => setMaxAge(Number(e.target.value))}
-            className="w-1/2 p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            className="w-1/2 p-3 rounded-lg bg-white/10 text-white border border-white/20"
           />
         </div>
       </div>
 
       {/* Location Radius */}
       <div className="mb-6">
-        <label className="block mb-2 font-medium">
-          Location Radius
-        </label>
+        <label className="block mb-2 font-medium">Location Radius</label>
 
         <div className="flex items-center gap-2 mb-3">
           <input
@@ -194,8 +175,8 @@ export default function PreferencesStep({
             onChange={(e) =>
               setLocationRadius(e.target.checked ? null : 25)
             }
-            className="w-4 h-4"
           />
+
           <span className="text-sm text-white/80">
             No location limit
           </span>
@@ -207,23 +188,13 @@ export default function PreferencesStep({
             onChange={(e) =>
               setLocationRadius(Number(e.target.value))
             }
-            className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20"
           >
-            <option value={5} className="text-black">
-              5 miles
-            </option>
-            <option value={10} className="text-black">
-              10 miles
-            </option>
-            <option value={25} className="text-black">
-              25 miles
-            </option>
-            <option value={50} className="text-black">
-              50 miles
-            </option>
-            <option value={100} className="text-black">
-              100 miles
-            </option>
+            <option value={5} className="text-black">5 miles</option>
+            <option value={10} className="text-black">10 miles</option>
+            <option value={25} className="text-black">25 miles</option>
+            <option value={50} className="text-black">50 miles</option>
+            <option value={100} className="text-black">100 miles</option>
           </select>
         )}
       </div>
