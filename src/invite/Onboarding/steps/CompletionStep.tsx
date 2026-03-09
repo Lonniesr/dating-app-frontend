@@ -24,11 +24,13 @@ export default function CompletionStep() {
         credentials: "include",
       });
 
-      // Refresh auth user so profile data immediately appears
+      // ensure latest user data
       await refreshUser();
 
-      // Optional: clear cached queries
-      await queryClient.invalidateQueries();
+      // force React Query refresh
+      await queryClient.refetchQueries({
+        queryKey: ["authUser"],
+      });
 
       navigate("/dashboard");
     } catch (err) {
