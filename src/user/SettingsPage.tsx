@@ -1,16 +1,49 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import apiClient from "../services/apiClient";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
 
-  const [messageNotifications, setMessageNotifications] = useState(true);
-  const [matchNotifications, setMatchNotifications] = useState(true);
+  const [messageNotifications, setMessageNotifications] = useState(false);
+  const [matchNotifications, setMatchNotifications] = useState(false);
   const [marketingNotifications, setMarketingNotifications] = useState(false);
+
+  const [savingNotifications, setSavingNotifications] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [password, setPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
+
+  /* ===============================
+     LOAD CURRENT SETTINGS
+  =============================== */
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const res = await apiClient.get("/api/profile");
+        const user = res.data;
+
+        const prefs = user.preferences || {};
+
+        setMessageNotifications(prefs.messageNotifications ?? true);
+        setMatchNotifications(prefs.matchNotifications ?? true);
+        setMarketingNotifications(prefs.marketingNotifications ?? false);
+
+      } catch (err) {
+        console.error("Failed to load settings", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
+  /* ===============================
+     LOGOUT
+  =============================== */
 
   const handleLogout = async () => {
     try {
@@ -21,6 +54,10 @@ export default function SettingsPage() {
     }
   };
 
+  /* ===============================
+     PASSWORD
+  =============================== */
+
   const changePassword = async () => {
     if (!password) {
       setPasswordMessage("Enter a new password.");
@@ -28,9 +65,7 @@ export default function SettingsPage() {
     }
 
     try {
-      await apiClient.post("/api/auth/change-password", {
-        password,
-      });
+      await apiClient.post("/api/auth/change-password", { password });
 
       setPassword("");
       setPasswordMessage("Password updated successfully.");
@@ -39,6 +74,35 @@ export default function SettingsPage() {
       setPasswordMessage("Password update failed.");
     }
   };
+
+  /* ===============================
+     SAVE NOTIFICATIONS
+  =============================== */
+
+  const saveNotifications = async () => {
+    try {
+      setSavingNotifications(true);
+
+      await apiClient.put("/api/settings/notifications", {
+        messageNotifications,
+        matchNotifications,
+        marketingNotifications,
+      });
+
+    } catch (err) {
+      console.error("Failed to update notifications", err);
+    } finally {
+      setSavingNotifications(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 text-white">
+        Loading settings…
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 text-white max-w-xl mx-auto">
@@ -84,7 +148,6 @@ export default function SettingsPage() {
 
         </div>
 
-
         {/* NOTIFICATIONS */}
 
         <div className="bg-white/5 border border-white/10 rounded-xl p-4">
@@ -100,9 +163,7 @@ export default function SettingsPage() {
               <input
                 type="checkbox"
                 checked={messageNotifications}
-                onChange={() =>
-                  setMessageNotifications(!messageNotifications)
-                }
+                onChange={() => setMessageNotifications(!messageNotifications)}
               />
             </label>
 
@@ -111,9 +172,7 @@ export default function SettingsPage() {
               <input
                 type="checkbox"
                 checked={matchNotifications}
-                onChange={() =>
-                  setMatchNotifications(!matchNotifications)
-                }
+                onChange={() => setMatchNotifications(!matchNotifications)}
               />
             </label>
 
@@ -130,8 +189,15 @@ export default function SettingsPage() {
 
           </div>
 
-        </div>
+          <button
+            onClick={saveNotifications}
+            disabled={savingNotifications}
+            className="mt-4 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg"
+          >
+            {savingNotifications ? "Saving..." : "Save Notification Settings"}
+          </button>
 
+        </div>
 
         {/* CHANGE PASSWORD */}
 
@@ -163,7 +229,6 @@ export default function SettingsPage() {
           )}
 
         </div>
-
 
         {/* LOGOUT */}
 

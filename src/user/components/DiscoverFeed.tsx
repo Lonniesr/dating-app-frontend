@@ -66,6 +66,16 @@ export default function DiscoverFeed() {
     lon: number;
   } | null>(null);
 
+  const users: DiscoverUser[] = data || [];
+
+  /* ===============================
+     RESET INDEX WHEN NEW DATA LOADS
+  =============================== */
+
+  useEffect(() => {
+    setIndex(0);
+  }, [users.length]);
+
   /* ===============================
      LOAD USER LOCATION
   =============================== */
@@ -105,8 +115,6 @@ export default function DiscoverFeed() {
     );
   }, []);
 
-  const users: DiscoverUser[] = data || [];
-
   const current = users[index];
   const next = users[index + 1];
 
@@ -142,7 +150,7 @@ export default function DiscoverFeed() {
   };
 
   /* ===============================
-     INFINITE CARD FEED
+     CARD ADVANCE
   =============================== */
 
   const advance = async () => {
@@ -151,12 +159,16 @@ export default function DiscoverFeed() {
     if (nextIndex < users.length) {
       setIndex(nextIndex);
     } else {
+      await refetch();
       setIndex(0);
-      refetch();
     }
 
     x.set(0);
   };
+
+  /* ===============================
+     SEND SWIPE
+  =============================== */
 
   const sendSwipe = async (liked: boolean, superLike = false) => {
     if (!current) return;
@@ -203,6 +215,10 @@ export default function DiscoverFeed() {
     else x.set(0);
   };
 
+  /* ===============================
+     LOADING STATES
+  =============================== */
+
   if (isLoading) {
     return (
       <div className="h-[520px] flex items-center justify-center">
@@ -211,7 +227,7 @@ export default function DiscoverFeed() {
     );
   }
 
-  if (!current && users.length === 0) {
+  if (!users.length) {
     return (
       <div className="h-[520px] flex items-center justify-center">
         <p className="text-white/60">Finding people near you…</p>
@@ -220,19 +236,13 @@ export default function DiscoverFeed() {
   }
 
   const photo =
-    current?.photos && current.photos.length > 0
-      ? current.photos[0]
-      : "https://picsum.photos/600";
+    current?.photos?.length ? current.photos[0] : "https://picsum.photos/600";
 
   const nextPhoto =
-    next?.photos && next.photos.length > 0
-      ? next.photos[0]
-      : "https://picsum.photos/600";
+    next?.photos?.length ? next.photos[0] : "https://picsum.photos/600";
 
   return (
     <div className="flex flex-col items-center">
-      {/* CARD STACK */}
-
       <div className="relative w-[380px] h-[520px]">
         {next && (
           <img
