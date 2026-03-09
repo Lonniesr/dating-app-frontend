@@ -22,13 +22,15 @@ type AuthUser = {
   photos?: string[];
 
   preferences?: Preferences;
+
+  onboardingComplete?: boolean;
 };
 
 type AuthContextType = {
   authUser: AuthUser | null;
   isLoading: boolean;
   logout: () => void;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<AuthUser | null>;
 };
 
 const UserAuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,37 +39,28 @@ export function UserAuthProvider({ children }: { children: React.ReactNode }) {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  async function loadProfile() {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setAuthUser(null);
-      setIsLoading(false);
-      return;
-    }
-
+  async function loadProfile(): Promise<AuthUser | null> {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/profile`,
+        `${import.meta.env.VITE_API_URL}/api/user`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         }
       );
 
       if (!res.ok) {
-        throw new Error("Auth failed");
+        setAuthUser(null);
+        return null;
       }
 
       const data = await res.json();
 
       setAuthUser(data);
+      return data;
     } catch (err) {
       console.error("Auth load failed:", err);
-
-      localStorage.removeItem("token");
       setAuthUser(null);
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +71,11 @@ export function UserAuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   function logout() {
-    localStorage.removeItem("token");
+    fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => {});
+
     setAuthUser(null);
   }
 
