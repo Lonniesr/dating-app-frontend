@@ -7,7 +7,6 @@ export default function CompletionStep() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { refreshUser } = useUserAuth();
-
   const [loading, setLoading] = useState(false);
 
   const finish = async () => {
@@ -31,18 +30,13 @@ export default function CompletionStep() {
         throw new Error("Onboarding completion failed");
       }
 
-      // refresh user context
       await refreshUser();
 
-      // refetch React Query user cache
-      await queryClient.refetchQueries({
+      await queryClient.invalidateQueries({
         queryKey: ["authUser"],
       });
 
-      // allow React state to update before navigating
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 150);
+      navigate("/dashboard");
 
     } catch (err) {
       console.error("Onboarding completion failed:", err);
