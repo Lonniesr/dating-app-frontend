@@ -13,17 +13,32 @@ type AuthUser = {
   role: string;
 
   name?: string;
+  username?: string;
+
   bio?: string;
   gender?: string;
+  race?: string;
+
+  birthdate?: string;
+  age?: number;
+
+  birthplace?: string;
+  location?: string;
+
+  latitude?: number;
+  longitude?: number;
+
+  photos?: string[];
+
+  prompts?: Record<string, any>;
+
+  preferences?: Preferences;
 
   verified?: boolean;
   verification_status?: "none" | "pending" | "approved" | "rejected";
 
-  photos?: string[];
-
-  preferences?: Preferences;
-
   onboardingComplete?: boolean;
+  lastActiveAt?: string;
 };
 
 type AuthContextType = {
@@ -55,6 +70,7 @@ export function UserAuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
 
       setAuthUser(data);
+
       return data;
     } catch (err) {
       console.error("Auth load failed:", err);
@@ -78,13 +94,18 @@ export function UserAuthProvider({ children }: { children: React.ReactNode }) {
     setAuthUser(null);
   }
 
+  async function refreshUser() {
+    setIsLoading(true);
+    return loadProfile();
+  }
+
   return (
     <UserAuthContext.Provider
       value={{
         authUser,
         isLoading,
         logout,
-        refreshUser: loadProfile,
+        refreshUser,
       }}
     >
       {children}
