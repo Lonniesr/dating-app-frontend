@@ -16,25 +16,37 @@ export default function CompletionStep() {
 
       const token = localStorage.getItem("token");
 
-      await fetch(`${import.meta.env.VITE_API_URL}/api/onboarding/complete`, {
-        method: "POST",
-        headers: {
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/onboarding/complete`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+          credentials: "include",
+        }
+      );
 
-      // ensure latest user data
+      if (!res.ok) {
+        throw new Error("Onboarding completion failed");
+      }
+
+      // refresh user context
       await refreshUser();
 
-      // force React Query refresh
+      // refetch React Query user cache
       await queryClient.refetchQueries({
         queryKey: ["authUser"],
       });
 
-      navigate("/dashboard");
+      // allow React state to update before navigating
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 150);
+
     } catch (err) {
       console.error("Onboarding completion failed:", err);
+      alert("Something went wrong finishing onboarding.");
     } finally {
       setLoading(false);
     }
@@ -50,7 +62,8 @@ export default function CompletionStep() {
 
       <button
         onClick={finish}
-        className="w-full py-3 bg-yellow-500 text-black rounded-lg font-semibold text-lg"
+        disabled={loading}
+        className="w-full py-3 bg-yellow-500 text-black rounded-lg font-semibold text-lg disabled:opacity-50"
       >
         {loading ? "Finishing..." : "Go to Dashboard"}
       </button>
