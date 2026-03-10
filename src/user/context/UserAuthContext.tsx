@@ -1,4 +1,14 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+
+/* =========================
+   USER TYPES
+========================= */
 
 type Preferences = {
   interestedIn?: string;
@@ -7,7 +17,7 @@ type Preferences = {
   locationRadius?: number;
 };
 
-type AuthUser = {
+export type AuthUser = {
   id: string;
   email: string;
   role: string;
@@ -41,38 +51,57 @@ type AuthUser = {
   lastActiveAt?: string;
 };
 
+/* =========================
+   CONTEXT TYPES
+========================= */
+
 type AuthContextType = {
   authUser: AuthUser | null;
   isLoading: boolean;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<AuthUser | null>;
 };
 
-const UserAuthContext = createContext<AuthContextType | undefined>(undefined);
+/* =========================
+   CONTEXT
+========================= */
 
-export function UserAuthProvider({ children }: { children: React.ReactNode }) {
+const UserAuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
+
+/* =========================
+   PROVIDER
+========================= */
+
+export function UserAuthProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  /* =========================
+     LOAD PROFILE
+  ========================= */
+
   async function loadProfile(): Promise<AuthUser | null> {
     try {
-      const token = localStorage.getItem("token");
-
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/profile`,
         {
+          method: "GET",
           credentials: "include",
-          headers: {
-            Authorization: token ? `Bearer ${token}` : "",
-          },
         }
       );
 
       if (!res.ok) {
-        throw new Error("Auth failed");
+        setAuthUser(null);
+        return null;
       }
 
-      const data = await res.json();
+      const data: AuthUser = await res.json();
 
       setAuthUser(data);
 
@@ -86,25 +115,46 @@ export function UserAuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  /* =========================
+     INITIAL LOAD
+  ========================= */
+
   useEffect(() => {
     loadProfile();
   }, []);
 
-  function logout() {
-    fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    }).catch(() => {});
+  /* =========================
+     LOGOUT
+  ========================= */
 
-    localStorage.removeItem("token");
+  async function logout(): Promise<void> {
+    try {
+      await fetch(
+        `${import.meta.env.VITE_API_URL}/api/auth/logout`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+    } catch {
+      // ignore logout errors
+    }
 
     setAuthUser(null);
   }
 
-  async function refreshUser() {
+  /* =========================
+     REFRESH USER
+  ========================= */
+
+  async function refreshUser(): Promise<AuthUser | null> {
     setIsLoading(true);
     return loadProfile();
   }
+
+  /* =========================
+     CONTEXT PROVIDER
+  ========================= */
 
   return (
     <UserAuthContext.Provider
@@ -120,11 +170,17 @@ export function UserAuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+/* =========================
+   HOOK
+========================= */
+
 export function useUserAuth() {
   const context = useContext(UserAuthContext);
 
   if (!context) {
-    throw new Error("useUserAuth must be used inside UserAuthProvider");
+    throw new Error(
+      "useUserAuth must be used inside UserAuthProvider"
+    );
   }
 
   return context;
