@@ -1,5 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 
+type DiscoverUser = {
+  id: string;
+  name: string;
+  birthdate?: string | null;
+  photos?: string[];
+};
+
+type DiscoverCard = {
+  id: string;
+  name: string;
+  age: number | null;
+  photo: string;
+};
+
 function calculateAge(birthdate: string) {
   const today = new Date();
   const birth = new Date(birthdate);
@@ -15,8 +29,9 @@ function calculateAge(birthdate: string) {
 }
 
 export function useDiscover() {
-  return useQuery({
+  return useQuery<DiscoverCard[]>({
     queryKey: ["discover"],
+
     queryFn: async () => {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/discover`,
@@ -26,17 +41,22 @@ export function useDiscover() {
       );
 
       if (!res.ok) {
-        throw new Error("Failed to fetch discover feed");
+        throw new Error(`Discover API failed: ${res.status}`);
       }
 
-      const users = await res.json();
+      const users: DiscoverUser[] = await res.json();
 
-      return users.map((u: any) => ({
+      return users.map((u) => ({
         id: u.id,
         name: u.name,
-        age: u.birthdate ? calculateAge(u.birthdate) : 0,
-        photo: u.photos?.[0] || "",
+        age: u.birthdate ? calculateAge(u.birthdate) : null,
+        photo:
+          u.photos && u.photos.length > 0
+            ? u.photos[0]
+            : "https://picsum.photos/600",
       }));
     },
+
+    staleTime: 1000 * 30,
   });
 }

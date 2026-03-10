@@ -56,10 +56,15 @@ export function UserAuthProvider({ children }: { children: React.ReactNode }) {
 
   async function loadProfile(): Promise<AuthUser | null> {
     try {
+      const token = localStorage.getItem("token");
+
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/profile`,
         {
           credentials: "include",
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+          },
         }
       );
 
@@ -90,6 +95,8 @@ export function UserAuthProvider({ children }: { children: React.ReactNode }) {
       method: "POST",
       credentials: "include",
     }).catch(() => {});
+
+    localStorage.removeItem("token");
 
     setAuthUser(null);
   }
