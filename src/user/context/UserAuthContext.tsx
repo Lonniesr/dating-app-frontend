@@ -12,9 +12,10 @@ import {
 
 type Preferences = {
   interestedIn?: string;
+  racePreference?: string | null;
   minAge?: number;
   maxAge?: number;
-  locationRadius?: number;
+  locationRadius?: number | null;
 };
 
 export type AuthUser = {

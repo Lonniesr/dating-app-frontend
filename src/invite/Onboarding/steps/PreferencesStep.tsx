@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useUserAuth } from "../../../user/context/UserAuthContext";
 
 interface PreferencesStepProps {
   next: () => void;
@@ -10,7 +11,9 @@ export default function PreferencesStep({
   next,
   back,
 }: PreferencesStepProps) {
+
   const queryClient = useQueryClient();
+  const { authUser } = useUserAuth();
 
   const [interestedIn, setInterestedIn] = useState("");
   const [racePreference, setRacePreference] = useState("");
@@ -21,7 +24,35 @@ export default function PreferencesStep({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  /* =========================
+     LOAD EXISTING PREFERENCES
+  ========================= */
+
+  useEffect(() => {
+
+    if (!authUser?.preferences) return;
+
+    const prefs = authUser.preferences;
+
+    if (prefs.interestedIn) setInterestedIn(prefs.interestedIn);
+    if (prefs.racePreference) setRacePreference(prefs.racePreference);
+    if (prefs.minAge) setMinAge(prefs.minAge);
+    if (prefs.maxAge) setMaxAge(prefs.maxAge);
+
+    if (prefs.locationRadius === null) {
+      setLocationRadius(null);
+    } else if (prefs.locationRadius) {
+      setLocationRadius(prefs.locationRadius);
+    }
+
+  }, [authUser]);
+
+  /* =========================
+     SUBMIT
+  ========================= */
+
   const submit = async () => {
+
     setError(null);
 
     if (!interestedIn) {
@@ -42,6 +73,7 @@ export default function PreferencesStep({
     setLoading(true);
 
     try {
+
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/settings/preferences`,
         {
@@ -68,21 +100,31 @@ export default function PreferencesStep({
         return;
       }
 
+      /* refresh profile cache */
+
       await queryClient.invalidateQueries({
         queryKey: ["authUser"],
       });
 
       next();
+
     } catch (err) {
+
       console.error("Preferences error:", err);
+
       setError("Something went wrong. Please try again.");
+
+    } finally {
+
+      setLoading(false);
+
     }
 
-    setLoading(false);
   };
 
   return (
     <div className="bg-[#111] p-8 rounded-2xl border border-white/10 shadow-xl text-white">
+
       <h1 className="text-2xl font-bold mb-6">Dating Preferences</h1>
 
       {error && (
@@ -92,29 +134,24 @@ export default function PreferencesStep({
       )}
 
       {/* Interested In */}
+
       <div className="mb-4">
         <label className="block mb-2 font-medium">Interested In</label>
+
         <select
           value={interestedIn}
           onChange={(e) => setInterestedIn(e.target.value)}
-          className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20"
         >
-          <option value="" className="text-black">
-            Select...
-          </option>
-          <option value="Men" className="text-black">
-            Men
-          </option>
-          <option value="Women" className="text-black">
-            Women
-          </option>
-          <option value="Everyone" className="text-black">
-            Everyone
-          </option>
+          <option value="" className="text-black">Select...</option>
+          <option value="Men" className="text-black">Men</option>
+          <option value="Women" className="text-black">Women</option>
+          <option value="Everyone" className="text-black">Everyone</option>
         </select>
       </div>
 
       {/* Race Preference */}
+
       <div className="mb-4">
         <label className="block mb-2 font-medium">
           Race Preference (optional)
@@ -123,12 +160,9 @@ export default function PreferencesStep({
         <select
           value={racePreference}
           onChange={(e) => setRacePreference(e.target.value)}
-          className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20"
         >
-          <option value="" className="text-black">
-            No Preference
-          </option>
-
+          <option value="" className="text-black">No Preference</option>
           <option value="White" className="text-black">White</option>
           <option value="Black" className="text-black">Black</option>
           <option value="Asian" className="text-black">Asian</option>
@@ -140,17 +174,19 @@ export default function PreferencesStep({
       </div>
 
       {/* Age Range */}
+
       <div className="mb-4">
         <label className="block mb-2 font-medium">Age Range</label>
 
         <div className="flex gap-3">
+
           <input
             type="number"
             min={18}
             max={100}
             value={minAge}
             onChange={(e) => setMinAge(Number(e.target.value))}
-            className="w-1/2 p-3 rounded-lg bg-white/10 text-white border border-white/20"
+            className="w-1/2 p-3 rounded-lg bg-white/10 border border-white/20"
           />
 
           <input
@@ -159,16 +195,20 @@ export default function PreferencesStep({
             max={100}
             value={maxAge}
             onChange={(e) => setMaxAge(Number(e.target.value))}
-            className="w-1/2 p-3 rounded-lg bg-white/10 text-white border border-white/20"
+            className="w-1/2 p-3 rounded-lg bg-white/10 border border-white/20"
           />
+
         </div>
       </div>
 
       {/* Location Radius */}
+
       <div className="mb-6">
+
         <label className="block mb-2 font-medium">Location Radius</label>
 
         <div className="flex items-center gap-2 mb-3">
+
           <input
             type="checkbox"
             checked={locationRadius === null}
@@ -180,6 +220,7 @@ export default function PreferencesStep({
           <span className="text-sm text-white/80">
             No location limit
           </span>
+
         </div>
 
         {locationRadius !== null && (
@@ -188,7 +229,7 @@ export default function PreferencesStep({
             onChange={(e) =>
               setLocationRadius(Number(e.target.value))
             }
-            className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20"
+            className="w-full p-3 rounded-lg bg-white/10 border border-white/20"
           >
             <option value={5} className="text-black">5 miles</option>
             <option value={10} className="text-black">10 miles</option>
@@ -197,12 +238,14 @@ export default function PreferencesStep({
             <option value={100} className="text-black">100 miles</option>
           </select>
         )}
+
       </div>
 
       <div className="flex gap-3">
+
         <button
           onClick={back}
-          className="flex-1 py-3 bg-white/10 rounded-lg hover:bg-white/20 transition"
+          className="flex-1 py-3 bg-white/10 rounded-lg hover:bg-white/20"
         >
           Back
         </button>
@@ -214,7 +257,9 @@ export default function PreferencesStep({
         >
           {loading ? "Saving..." : "Continue"}
         </button>
+
       </div>
+
     </div>
   );
 }

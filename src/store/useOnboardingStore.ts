@@ -1,69 +1,139 @@
 import { create } from "zustand";
+import { onboardingClient } from "../api/onboardingClient";
 
-interface OnboardingState {
-  step: number;
-
-  age: number | null;
-  gender: string | null;
-  interests: string[];
-  photos: string[];
-  profile: {
-    name: string;
-    bio: string;
-  } | null;
-  prompts: string[];
-
-  setStep: (step: number) => void;
-
-  setAge: (age: number) => void;
-  setGender: (gender: string) => void;
-  setInterests: (list: string[]) => void;
-  addPhoto: (url: string) => void;
-  removePhoto: (index: number) => void;
-  setProfile: (data: { name: string; bio: string }) => void;
-  setPrompts: (list: string[]) => void;
-
-  reset: () => void;
+interface Prompt {
+  question: string;
+  answer: string;
 }
 
-export const useOnboardingStore = create<OnboardingState>((set) => ({
-  step: 1,
+interface OnboardingState {
+  name: string;
+  age: number | null;
+  bio: string;
+  location: string;
+  interests: string[];
+  prompts: Prompt[];
+  photos: string[];
 
+  loading: boolean;
+
+  setBasic: (data: {
+    name?: string;
+    age?: number;
+    bio?: string;
+    location?: string;
+  }) => void;
+
+  setInterests: (interests: string[]) => void;
+  setPrompts: (prompts: Prompt[]) => void;
+  setPhotos: (photos: string[]) => void;
+
+  saveBasic: () => Promise<void>;
+  savePreferences: () => Promise<void>;
+  savePersonality: () => Promise<void>;
+  savePhotos: () => Promise<void>;
+  completeOnboarding: () => Promise<void>;
+}
+
+export const useOnboardingStore = create<OnboardingState>((set, get) => ({
+  name: "",
   age: null,
-  gender: null,
+  bio: "",
+  location: "",
   interests: [],
+  prompts: [],
   photos: [],
-  profile: null,
-  prompts: ["", "", ""],
 
-  setStep: (step) => set({ step }),
+  loading: false,
 
-  setAge: (age) => set({ age }),
-  setGender: (gender) => set({ gender }),
-  setInterests: (list) => set({ interests: list }),
-
-  addPhoto: (url) =>
+  setBasic: (data) =>
     set((state) => ({
-      photos: [...state.photos, url],
+      ...state,
+      ...data,
     })),
 
-  removePhoto: (index) =>
+  setInterests: (interests) =>
     set((state) => ({
-      photos: state.photos.filter((_, i) => i !== index),
+      ...state,
+      interests,
     })),
 
-  setProfile: (data) => set({ profile: data }),
+  setPrompts: (prompts) =>
+    set((state) => ({
+      ...state,
+      prompts,
+    })),
 
-  setPrompts: (list) => set({ prompts: list }),
+  setPhotos: (photos) =>
+    set((state) => ({
+      ...state,
+      photos,
+    })),
 
-  reset: () =>
-    set({
-      step: 1,
-      age: null,
-      gender: null,
-      interests: [],
-      photos: [],
-      profile: null,
-      prompts: ["", "", ""],
-    }),
+  async saveBasic() {
+    const { name, age, bio, location } = get();
+
+    set({ loading: true });
+
+    try {
+      await onboardingClient.saveBasic({
+        name,
+        age: age ?? undefined,
+        bio,
+        location,
+      });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  async savePreferences() {
+    const { interests } = get();
+
+    set({ loading: true });
+
+    try {
+      await onboardingClient.savePreferences({
+        interests,
+      });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  async savePersonality() {
+    const { prompts } = get();
+
+    set({ loading: true });
+
+    try {
+      await onboardingClient.savePersonality({
+        prompts,
+      });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  async savePhotos() {
+    const { photos } = get();
+
+    set({ loading: true });
+
+    try {
+      await onboardingClient.savePhotos(photos);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  async completeOnboarding() {
+    set({ loading: true });
+
+    try {
+      await onboardingClient.complete();
+    } finally {
+      set({ loading: false });
+    }
+  },
 }));

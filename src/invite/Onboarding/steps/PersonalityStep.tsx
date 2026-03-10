@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useUserAuth } from "../../../user/context/UserAuthContext";
 
 interface PersonalityStepProps {
   back: () => void;
@@ -27,6 +28,7 @@ export default function PersonalityStep({
   next,
 }: PersonalityStepProps) {
   const queryClient = useQueryClient();
+  const { refreshUser } = useUserAuth();
 
   const [prompts, setPrompts] = useState<PromptItem[]>([
     { question: "", answer: "" },
@@ -95,6 +97,10 @@ export default function PersonalityStep({
         return;
       }
 
+      /* refresh auth user so dashboard gets updated prompts */
+      await refreshUser();
+
+      /* optional react-query cache invalidation */
       await queryClient.invalidateQueries({
         queryKey: ["authUser"],
       });
@@ -130,7 +136,6 @@ export default function PersonalityStep({
             key={i}
             className="mb-6 p-4 rounded-xl bg-white/5 border border-white/10"
           >
-            {/* Prompt Selector */}
             <select
               value={prompt.question}
               onChange={(e) =>
@@ -153,7 +158,6 @@ export default function PersonalityStep({
               ))}
             </select>
 
-            {/* Answer */}
             <textarea
               value={prompt.answer}
               onChange={(e) =>
