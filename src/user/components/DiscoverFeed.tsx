@@ -5,7 +5,7 @@ import {
   useTransform,
   AnimatePresence,
 } from "framer-motion";
-import { useDiscover } from "../hooks/useDiscover";
+import { useDiscover } from "../../hooks/useDiscover";
 
 const SWIPE_THRESHOLD = 120;
 
@@ -66,7 +66,7 @@ export default function DiscoverFeed() {
     lon: number;
   } | null>(null);
 
-  const users: DiscoverUser[] = data || [];
+  const users: DiscoverUser[] = data ?? [];
 
   /* ===============================
      RESET INDEX WHEN NEW DATA LOADS
@@ -122,8 +122,8 @@ export default function DiscoverFeed() {
 
   const distance =
     location &&
-    current?.latitude &&
-    current?.longitude
+    current?.latitude !== undefined &&
+    current?.longitude !== undefined
       ? calculateDistance(
           location.lat,
           location.lon,
@@ -216,6 +216,16 @@ export default function DiscoverFeed() {
   };
 
   /* ===============================
+     PREFETCH NEXT DISCOVER BATCH
+  =============================== */
+
+  useEffect(() => {
+    if (users.length - index < 4) {
+      refetch();
+    }
+  }, [index]);
+
+  /* ===============================
      LOADING STATES
   =============================== */
 
@@ -244,10 +254,13 @@ export default function DiscoverFeed() {
   return (
     <div className="flex flex-col items-center">
       <div className="relative w-[380px] h-[520px]">
+
         {next && (
-          <img
+          <motion.img
             src={nextPhoto}
-            className="absolute w-full h-full object-cover rounded-2xl scale-95 opacity-50"
+            className="absolute w-full h-full object-cover rounded-2xl"
+            initial={{ scale: 0.95, opacity: 0.6 }}
+            animate={{ scale: 0.95, opacity: 0.6 }}
           />
         )}
 
