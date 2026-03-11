@@ -11,11 +11,19 @@ import {
 ========================= */
 
 type Preferences = {
+  /* Dating preferences */
+
   interestedIn?: string;
   racePreference?: string | null;
   minAge?: number;
   maxAge?: number;
   locationRadius?: number | null;
+
+  /* Notification settings */
+
+  messageNotifications?: boolean;
+  matchNotifications?: boolean;
+  marketingNotifications?: boolean;
 };
 
 export type AuthUser = {
@@ -41,7 +49,7 @@ export type AuthUser = {
 
   photos?: string[];
 
-  prompts?: Record<string, any>;
+  prompts?: Record<string, unknown>;
 
   preferences?: Preferences;
 
@@ -49,6 +57,7 @@ export type AuthUser = {
   verification_status?: "none" | "pending" | "approved" | "rejected";
 
   onboardingComplete?: boolean;
+
   lastActiveAt?: string;
 };
 
@@ -61,11 +70,8 @@ type AuthContextType = {
   isLoading: boolean;
   logout: () => Promise<void>;
   refreshUser: () => Promise<AuthUser | null>;
+  getOnboardingStep: (user: AuthUser) => string | null;
 };
-
-/* =========================
-   CONTEXT
-========================= */
 
 const UserAuthContext = createContext<AuthContextType | undefined>(
   undefined
@@ -80,56 +86,47 @@ export function UserAuthProvider({
 }: {
   children: ReactNode;
 }) {
+
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   /* =========================
-     ONBOARDING STEP DETECTION
+     DETERMINE ONBOARDING STEP
   ========================= */
 
-  function redirectToOnboardingStep(user: AuthUser) {
-    if (user.role === "admin") return;
+  function getOnboardingStep(user: AuthUser): string | null {
 
-    if (user.onboardingComplete) return;
+    if (user.role === "admin") return null;
 
     const hasBasic =
-      !!user.name &&
-      !!user.birthdate &&
-      !!user.gender;
+      Boolean(user.name?.trim()) &&
+      Boolean(user.birthdate);
 
-    const hasPreferences =
-      !!user.preferences &&
-      Object.keys(user.preferences).length > 0;
+    const hasIdentity =
+      Boolean(user.gender?.trim()) &&
+      Boolean(user.race?.trim());
 
     const hasPhotos =
       Array.isArray(user.photos) &&
       user.photos.length > 0;
 
+    const hasPreferences =
+      !!user.preferences &&
+      Boolean(user.preferences.interestedIn) &&
+      Boolean(user.preferences.minAge) &&
+      Boolean(user.preferences.maxAge);
+
     const hasPrompts =
       !!user.prompts &&
       Object.keys(user.prompts).length > 0;
 
-    if (!hasBasic) {
-      window.location.replace("/invite/onboarding/basic");
-      return;
-    }
+    if (!hasBasic) return "/invite/onboarding";
+    if (!hasIdentity) return "/invite/onboarding";
+    if (!hasPhotos) return "/invite/onboarding";
+    if (!hasPreferences) return "/invite/onboarding";
+    if (!hasPrompts) return "/invite/onboarding";
 
-    if (!hasPreferences) {
-      window.location.replace("/invite/onboarding/preferences");
-      return;
-    }
-
-    if (!hasPhotos) {
-      window.location.replace("/invite/onboarding/photos");
-      return;
-    }
-
-    if (!hasPrompts) {
-      window.location.replace("/invite/onboarding/personality");
-      return;
-    }
-
-    window.location.replace("/invite/onboarding/complete");
+    return null;
   }
 
   /* =========================
@@ -137,7 +134,9 @@ export function UserAuthProvider({
   ========================= */
 
   async function loadProfile(): Promise<AuthUser | null> {
+
     try {
+
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/profile`,
         {
@@ -155,15 +154,18 @@ export function UserAuthProvider({
 
       setAuthUser(data);
 
-      redirectToOnboardingStep(data);
-
       return data;
+
     } catch (err) {
+
       console.error("Auth load failed:", err);
       setAuthUser(null);
       return null;
+
     } finally {
+
       setIsLoading(false);
+
     }
   }
 
@@ -180,7 +182,9 @@ export function UserAuthProvider({
   ========================= */
 
   async function logout(): Promise<void> {
+
     try {
+
       await fetch(
         `${import.meta.env.VITE_API_URL}/api/auth/logout`,
         {
@@ -188,9 +192,8 @@ export function UserAuthProvider({
           credentials: "include",
         }
       );
-    } catch {
-      // ignore logout errors
-    }
+
+    } catch {}
 
     setAuthUser(null);
   }
@@ -200,13 +203,11 @@ export function UserAuthProvider({
   ========================= */
 
   async function refreshUser(): Promise<AuthUser | null> {
+
     setIsLoading(true);
+
     return loadProfile();
   }
-
-  /* =========================
-     CONTEXT PROVIDER
-  ========================= */
 
   return (
     <UserAuthContext.Provider
@@ -215,6 +216,7 @@ export function UserAuthProvider({
         isLoading,
         logout,
         refreshUser,
+        getOnboardingStep,
       }}
     >
       {children}
@@ -227,6 +229,7 @@ export function UserAuthProvider({
 ========================= */
 
 export function useUserAuth() {
+
   const context = useContext(UserAuthContext);
 
   if (!context) {

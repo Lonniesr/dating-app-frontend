@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useUserAuth } from "../user/context/UserAuthContext";
 import apiClient from "../services/apiClient";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const { authUser } = useUserAuth();
 
   const [messageNotifications, setMessageNotifications] = useState(false);
   const [matchNotifications, setMatchNotifications] = useState(false);
@@ -16,30 +18,21 @@ export default function SettingsPage() {
   const [passwordMessage, setPasswordMessage] = useState("");
 
   /* ===============================
-     LOAD CURRENT SETTINGS
+     LOAD SETTINGS FROM AUTH USER
   =============================== */
 
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const res = await apiClient.get("/api/profile");
-        const user = res.data;
+    if (!authUser) return;
 
-        const prefs = user.preferences || {};
+    const prefs = authUser.preferences || {};
 
-        setMessageNotifications(prefs.messageNotifications ?? true);
-        setMatchNotifications(prefs.matchNotifications ?? true);
-        setMarketingNotifications(prefs.marketingNotifications ?? false);
+    setMessageNotifications(prefs.messageNotifications ?? true);
+    setMatchNotifications(prefs.matchNotifications ?? true);
+    setMarketingNotifications(prefs.marketingNotifications ?? false);
 
-      } catch (err) {
-        console.error("Failed to load settings", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    setLoading(false);
 
-    loadSettings();
-  }, []);
+  }, [authUser]);
 
   /* ===============================
      LOGOUT
@@ -125,21 +118,21 @@ export default function SettingsPage() {
 
             <button
               onClick={() => navigate("/user/edit-profile")}
-              className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 transition rounded-lg text-left"
+              className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg text-left"
             >
               Edit Profile
             </button>
 
             <button
               onClick={() => navigate("/user/profile")}
-              className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 transition rounded-lg text-left"
+              className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg text-left"
             >
               Invite Friends
             </button>
 
             <button
               onClick={() => navigate("/user/verify")}
-              className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 transition rounded-lg text-left"
+              className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg text-left"
             >
               Profile Verification
             </button>
@@ -234,7 +227,7 @@ export default function SettingsPage() {
 
         <button
           onClick={handleLogout}
-          className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 transition rounded-lg font-semibold"
+          className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold"
         >
           Logout
         </button>

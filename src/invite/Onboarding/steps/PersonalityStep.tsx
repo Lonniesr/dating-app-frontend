@@ -27,6 +27,7 @@ export default function PersonalityStep({
   back,
   next,
 }: PersonalityStepProps) {
+
   const queryClient = useQueryClient();
   const { refreshUser } = useUserAuth();
 
@@ -58,6 +59,7 @@ export default function PersonalityStep({
   };
 
   const submit = async () => {
+
     setError(null);
 
     const cleanedPrompts = prompts
@@ -75,6 +77,7 @@ export default function PersonalityStep({
     setLoading(true);
 
     try {
+
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/onboarding/personality`,
         {
@@ -97,29 +100,35 @@ export default function PersonalityStep({
         return;
       }
 
-      /* refresh auth user so dashboard gets updated prompts */
       await refreshUser();
 
-      /* optional react-query cache invalidation */
       await queryClient.invalidateQueries({
         queryKey: ["authUser"],
       });
 
       next();
+
     } catch (err) {
+
       console.error("Personality error:", err);
       setError("Something went wrong. Please try again.");
-    }
 
-    setLoading(false);
+    } finally {
+
+      setLoading(false);
+
+    }
   };
 
   return (
     <div className="bg-[#111] p-8 rounded-2xl border border-white/10 shadow-xl">
-      <h1 className="text-2xl font-bold mb-2">Personality Prompts</h1>
+
+      <h1 className="text-2xl font-bold mb-2">
+        Personality Prompts
+      </h1>
 
       <p className="text-white/60 mb-6 text-sm">
-        Choose up to 3 prompts and answer them. This helps others get to know you.
+        Choose up to 3 prompts and answer them.
       </p>
 
       {error && (
@@ -129,22 +138,30 @@ export default function PersonalityStep({
       )}
 
       {prompts.map((prompt, i) => {
+
         const selectedQuestions = prompts.map((p) => p.question);
 
         return (
+
           <div
             key={i}
             className="mb-6 p-4 rounded-xl bg-white/5 border border-white/10"
           >
+
             <select
               value={prompt.question}
               onChange={(e) =>
                 updatePrompt(i, "question", e.target.value)
               }
-              className="w-full p-3 mb-3 rounded-lg bg-white/10 text-white border border-white/20 outline-none"
+              className="w-full p-3 mb-3 rounded-lg bg-white/10 text-white border border-white/20"
             >
-              <option value="">Select a prompt...</option>
+
+              <option value="">
+                Select a prompt...
+              </option>
+
               {PROMPT_OPTIONS.map((option) => (
+
                 <option
                   key={option}
                   value={option}
@@ -155,7 +172,9 @@ export default function PersonalityStep({
                 >
                   {option}
                 </option>
+
               ))}
+
             </select>
 
             <textarea
@@ -169,13 +188,15 @@ export default function PersonalityStep({
               }
               placeholder="Your answer..."
               rows={3}
-              className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 resize-none outline-none"
+              className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 resize-none"
             />
 
             <div className="flex justify-between mt-2 text-xs text-white/50">
+
               <span>{prompt.answer.length}/250</span>
 
               {prompts.length > 1 && (
+
                 <button
                   type="button"
                   onClick={() => removePrompt(i)}
@@ -183,22 +204,29 @@ export default function PersonalityStep({
                 >
                   Remove
                 </button>
+
               )}
+
             </div>
+
           </div>
+
         );
       })}
 
       {prompts.length < 3 && (
+
         <button
           onClick={addPrompt}
           className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-lg mb-6"
         >
           Add Another Prompt
         </button>
+
       )}
 
       <div className="flex gap-3">
+
         <button
           onClick={back}
           className="flex-1 py-3 bg-white/10 rounded-lg"
@@ -213,7 +241,9 @@ export default function PersonalityStep({
         >
           {loading ? "Saving..." : "Finish"}
         </button>
+
       </div>
+
     </div>
   );
 }

@@ -14,7 +14,7 @@ export default function OnboardingPage() {
 
   const [step, setStep] = useState(0);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
-  const [initialized, setInitialized] = useState(false); // ✅ prevents remount resets
+  const [initialized, setInitialized] = useState(false);
 
   const totalSteps = 4;
   const progressPercent = ((step + 1) / totalSteps) * 100;
@@ -22,6 +22,7 @@ export default function OnboardingPage() {
   /* ================================
      Grab invite code from URL
   ================================= */
+
   useEffect(() => {
     const code = searchParams.get("invite");
     if (code) {
@@ -30,35 +31,63 @@ export default function OnboardingPage() {
   }, [searchParams]);
 
   /* ================================
-     Smart Resume Logic (RUNS ONCE)
+     Smart Resume Logic
   ================================= */
+
   useEffect(() => {
     if (!authUser || initialized) return;
 
-    if (!authUser.birthdate) {
+    const hasBasic =
+      Boolean(authUser.name?.trim()) &&
+      Boolean(authUser.birthdate) &&
+      Boolean(authUser.gender) &&
+      Boolean(authUser.race);
+
+    const hasPhotos =
+      Array.isArray(authUser.photos) &&
+      authUser.photos.length > 0;
+
+    const hasPreferences =
+      authUser.preferences &&
+      authUser.preferences.interestedIn &&
+      authUser.preferences.minAge &&
+      authUser.preferences.maxAge;
+
+    const hasPrompts =
+      authUser.prompts &&
+      Object.keys(authUser.prompts).length > 0;
+
+    if (!hasBasic) {
       setStep(0);
-    } else if (!authUser.photos || authUser.photos.length === 0) {
+    }
+    else if (!hasPhotos) {
       setStep(1);
-    } else if (!authUser.preferences) {
+    }
+    else if (!hasPreferences) {
       setStep(2);
-    } else if (!authUser.prompts) {
+    }
+    else if (!hasPrompts) {
       setStep(3);
-    } else {
+    }
+    else {
       navigate("/user/dashboard");
     }
 
     setInitialized(true);
+
   }, [authUser, initialized, navigate]);
 
   /* ================================
      Navigation Helpers
   ================================= */
+
   const goNext = () => setStep((prev) => prev + 1);
   const goBack = () => setStep((prev) => prev - 1);
 
   /* ================================
      Finish Onboarding
   ================================= */
+
   const finish = async () => {
     try {
       await fetch(
@@ -80,10 +109,12 @@ export default function OnboardingPage() {
   /* ================================
      Render
   ================================= */
+
   return (
     <div className="max-w-xl mx-auto py-10 text-white px-4">
 
-      {/* ===== Progress Bar ===== */}
+      {/* Progress Bar */}
+
       <div className="mb-8">
         <div className="flex justify-between text-sm text-white/60 mb-2">
           <span>
@@ -100,7 +131,8 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* ===== Step Content ===== */}
+      {/* Step Content */}
+
       <div className="transition-all duration-300">
         {step === 0 && <BasicStep next={goNext} />}
 
@@ -116,6 +148,7 @@ export default function OnboardingPage() {
           <PersonalityStep next={finish} back={goBack} />
         )}
       </div>
+
     </div>
   );
 }

@@ -1,30 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserAuth } from "./context/UserAuthContext";
 import apiClient from "../services/apiClient";
 
+type PromptItem = {
+  question: string;
+  answer: string;
+};
+
 export default function EditProfilePage() {
   const navigate = useNavigate();
-  const { authUser } = useUserAuth();
+  const { authUser, refreshUser } = useUserAuth();
 
-  const [name, setName] = useState(authUser?.name || "");
-  const [bio, setBio] = useState(authUser?.bio || "");
-  const [gender, setGender] = useState(authUser?.gender || "");
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+  const [gender, setGender] = useState("");
 
-  const [interestedIn, setInterestedIn] = useState(
-    authUser?.preferences?.interestedIn || ""
-  );
-  const [minAge, setMinAge] = useState(
-    authUser?.preferences?.minAge || 18
-  );
-  const [maxAge, setMaxAge] = useState(
-    authUser?.preferences?.maxAge || 40
-  );
-  const [locationRadius, setLocationRadius] = useState(
-    authUser?.preferences?.locationRadius || 50
-  );
+  const [interestedIn, setInterestedIn] = useState("");
+  const [minAge, setMinAge] = useState(18);
+  const [maxAge, setMaxAge] = useState(40);
+  const [locationRadius, setLocationRadius] = useState(50);
 
   const [loading, setLoading] = useState(false);
+
+  /* ===============================
+     LOAD USER DATA
+  =============================== */
+
+  useEffect(() => {
+    if (!authUser) return;
+
+    setName(authUser.name || "");
+    setBio(authUser.bio || "");
+    setGender(authUser.gender || "");
+
+    setInterestedIn(authUser.preferences?.interestedIn || "");
+    setMinAge(authUser.preferences?.minAge || 18);
+    setMaxAge(authUser.preferences?.maxAge || 40);
+    setLocationRadius(authUser.preferences?.locationRadius || 50);
+  }, [authUser]);
+
+  /* ===============================
+     SAVE PROFILE
+  =============================== */
 
   const saveProfile = async () => {
     try {
@@ -35,21 +53,37 @@ export default function EditProfilePage() {
         bio,
         gender,
         preferences: {
+          ...(authUser?.preferences || {}),
           interestedIn,
           minAge,
           maxAge,
-          locationRadius
-        }
+          locationRadius,
+        },
       });
 
-      navigate("/user/profile");
+      await refreshUser();
 
+      navigate("/user/profile");
     } catch (err) {
       console.error("Profile update failed", err);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
+
+  /* ===============================
+     NORMALIZE PROMPTS
+  =============================== */
+
+  let prompts: PromptItem[] = [];
+
+  if (authUser?.prompts) {
+    if (Array.isArray(authUser.prompts)) {
+      prompts = authUser.prompts as PromptItem[];
+    } else {
+      prompts = Object.values(authUser.prompts) as PromptItem[];
+    }
+  }
 
   return (
     <div className="p-6 text-white max-w-xl mx-auto pb-28">
@@ -74,7 +108,6 @@ export default function EditProfilePage() {
           />
         </div>
 
-
         {/* BIO */}
 
         <div>
@@ -89,7 +122,6 @@ export default function EditProfilePage() {
             onChange={(e) => setBio(e.target.value)}
           />
         </div>
-
 
         {/* GENDER */}
 
@@ -110,8 +142,7 @@ export default function EditProfilePage() {
           </select>
         </div>
 
-
-        {/* PREFERENCES */}
+        {/* DATING PREFERENCES */}
 
         <div className="bg-white/5 border border-white/10 rounded-xl p-4">
 
@@ -132,12 +163,11 @@ export default function EditProfilePage() {
                 onChange={(e) => setInterestedIn(e.target.value)}
               >
                 <option value="">Select</option>
-                <option value="male">Men</option>
-                <option value="female">Women</option>
-                <option value="everyone">Everyone</option>
+                <option value="Men">Men</option>
+                <option value="Women">Women</option>
+                <option value="Everyone">Everyone</option>
               </select>
             </div>
-
 
             <div>
               <label className="text-sm text-white/70">
@@ -167,7 +197,6 @@ export default function EditProfilePage() {
               </div>
             </div>
 
-
             <div>
               <label className="text-sm text-white/70">
                 Distance Radius (miles)
@@ -187,6 +216,42 @@ export default function EditProfilePage() {
 
         </div>
 
+        {/* PROMPTS */}
+
+        {prompts.length > 0 && (
+
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+
+            <h2 className="font-semibold mb-4">
+              Personality Prompts
+            </h2>
+
+            <div className="space-y-4">
+
+              {prompts.map((prompt, i) => (
+
+                <div
+                  key={i}
+                  className="bg-white/10 p-4 rounded-lg"
+                >
+
+                  <div className="text-xs text-white/50 mb-1">
+                    {prompt.question}
+                  </div>
+
+                  <div className="text-sm">
+                    {prompt.answer}
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          </div>
+
+        )}
 
         {/* SAVE BUTTON */}
 

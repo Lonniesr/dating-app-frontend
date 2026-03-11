@@ -11,9 +11,8 @@ export default function PreferencesStep({
   next,
   back,
 }: PreferencesStepProps) {
-
   const queryClient = useQueryClient();
-  const { authUser } = useUserAuth();
+  const { authUser, refreshUser } = useUserAuth();
 
   const [interestedIn, setInterestedIn] = useState("");
   const [racePreference, setRacePreference] = useState("");
@@ -29,7 +28,6 @@ export default function PreferencesStep({
   ========================= */
 
   useEffect(() => {
-
     if (!authUser?.preferences) return;
 
     const prefs = authUser.preferences;
@@ -44,7 +42,6 @@ export default function PreferencesStep({
     } else if (prefs.locationRadius) {
       setLocationRadius(prefs.locationRadius);
     }
-
   }, [authUser]);
 
   /* =========================
@@ -52,7 +49,6 @@ export default function PreferencesStep({
   ========================= */
 
   const submit = async () => {
-
     setError(null);
 
     if (!interestedIn) {
@@ -73,21 +69,22 @@ export default function PreferencesStep({
     setLoading(true);
 
     try {
-
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/settings/preferences`,
+        `${import.meta.env.VITE_API_URL}/api/onboarding/preferences`,
         {
-          method: "PUT",
+          method: "POST",
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            interestedIn,
-            racePreference: racePreference || null,
-            minAge,
-            maxAge,
-            locationRadius,
+            preferences: {
+              interestedIn,
+              racePreference: racePreference || null,
+              minAge,
+              maxAge,
+              locationRadius,
+            },
           }),
         }
       );
@@ -96,30 +93,26 @@ export default function PreferencesStep({
 
       if (!res.ok) {
         setError(data.error || "Failed to save preferences.");
-        setLoading(false);
         return;
       }
 
-      /* refresh profile cache */
+      /* Refresh auth user */
+
+      await refreshUser();
+
+      /* Refresh other cached data */
 
       await queryClient.invalidateQueries({
         queryKey: ["authUser"],
       });
 
       next();
-
     } catch (err) {
-
       console.error("Preferences error:", err);
-
       setError("Something went wrong. Please try again.");
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
   return (
@@ -179,7 +172,6 @@ export default function PreferencesStep({
         <label className="block mb-2 font-medium">Age Range</label>
 
         <div className="flex gap-3">
-
           <input
             type="number"
             min={18}
@@ -197,7 +189,6 @@ export default function PreferencesStep({
             onChange={(e) => setMaxAge(Number(e.target.value))}
             className="w-1/2 p-3 rounded-lg bg-white/10 border border-white/20"
           />
-
         </div>
       </div>
 
@@ -208,7 +199,6 @@ export default function PreferencesStep({
         <label className="block mb-2 font-medium">Location Radius</label>
 
         <div className="flex items-center gap-2 mb-3">
-
           <input
             type="checkbox"
             checked={locationRadius === null}
@@ -220,7 +210,6 @@ export default function PreferencesStep({
           <span className="text-sm text-white/80">
             No location limit
           </span>
-
         </div>
 
         {locationRadius !== null && (

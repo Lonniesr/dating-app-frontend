@@ -55,8 +55,8 @@ export default function BasicStep({ next }: BasicStepProps) {
   const submit = async () => {
     setError(null);
 
-    if (!name || !birthdate || !gender || !race) {
-      setError("All required fields must be filled.");
+    if (!name || !birthdate) {
+      setError("Please enter your name and birthdate.");
       return;
     }
 
@@ -64,6 +64,11 @@ export default function BasicStep({ next }: BasicStepProps) {
 
     if (age < 18) {
       setError("You must be at least 18 years old.");
+      return;
+    }
+
+    if (!gender || !race) {
+      setError("Please select your gender and race.");
       return;
     }
 
@@ -154,8 +159,6 @@ export default function BasicStep({ next }: BasicStepProps) {
         </div>
       )}
 
-      {/* STEP 1 */}
-
       {step === 1 && (
         <>
           <input
@@ -183,8 +186,6 @@ export default function BasicStep({ next }: BasicStepProps) {
           </div>
         </>
       )}
-
-      {/* STEP 2 */}
 
       {step === 2 && (
         <>
@@ -218,8 +219,6 @@ export default function BasicStep({ next }: BasicStepProps) {
         </>
       )}
 
-      {/* STEP 3 */}
-
       {step === 3 && (
         <>
           <input
@@ -243,8 +242,6 @@ export default function BasicStep({ next }: BasicStepProps) {
           </div>
         </>
       )}
-
-      {/* NAVIGATION BUTTONS */}
 
       <div className="flex gap-3">
 

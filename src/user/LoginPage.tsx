@@ -13,6 +13,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (loading) return;
+
     if (!email || !password) {
       setError("Please enter email and password");
       return;
@@ -27,8 +29,13 @@ export default function LoginPage() {
         {
           method: "POST",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email.trim(),
+            password,
+          }),
         }
       );
 
@@ -39,6 +46,8 @@ export default function LoginPage() {
         return;
       }
 
+      /* Refresh authenticated user profile */
+
       const user = await refreshUser();
 
       if (!user) {
@@ -46,13 +55,14 @@ export default function LoginPage() {
         return;
       }
 
-      if (user.role === "admin") {
-        navigate("/admin/dashboard", { replace: true });
-      } else if (!user.onboardingComplete) {
-        navigate("/invite/onboarding", { replace: true });
-      } else {
-        navigate("/dashboard", { replace: true });
-      }
+      /*
+        IMPORTANT:
+        Always send user to onboarding first.
+        Onboarding page will decide whether to resume
+        onboarding or redirect to dashboard.
+      */
+
+      navigate("/invite/onboarding", { replace: true });
 
     } catch (err) {
       console.error("LOGIN ERROR:", err);
@@ -85,10 +95,13 @@ export default function LoginPage() {
         </h1>
 
         {error && (
-          <div className="mb-4 text-red-400 text-center">{error}</div>
+          <div className="mb-4 text-red-400 text-center">
+            {error}
+          </div>
         )}
 
         <div className="space-y-4">
+
           <input
             type="email"
             placeholder="Email"
@@ -115,8 +128,10 @@ export default function LoginPage() {
             {loading && (
               <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
             )}
+
             {loading ? "Logging in…" : "Login"}
           </button>
+
         </div>
 
       </div>

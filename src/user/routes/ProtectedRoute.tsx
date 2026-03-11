@@ -1,24 +1,33 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useUserAuth } from "../context/UserAuthContext";
-import type { ReactNode } from "react";
 
-export default function ProtectedRoute({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function ProtectedRoute() {
   const { authUser, isLoading } = useUserAuth();
+  const location = useLocation();
 
-  // ⏳ Wait for auth state to resolve
+  /* WAIT FOR AUTH */
+
   if (isLoading) {
-    return null; // prevent flicker / unwanted redirects
+    return null;
   }
 
-  // 🔐 Not logged in
+  /* NOT LOGGED IN */
+
   if (!authUser) {
     return <Navigate to="/login" replace />;
   }
 
-  // ✅ Logged in
-  return <>{children}</>;
+  /* ADMIN */
+
+  if (authUser.role === "admin") {
+    if (!location.pathname.startsWith("/admin")) {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+
+    return <Outlet />;
+  }
+
+  /* NORMAL USER */
+
+  return <Outlet />;
 }

@@ -1,6 +1,22 @@
-import { Navigate } from "react-router-dom";
 import { useUserAuth } from "../context/UserAuthContext";
 import type { ReactNode } from "react";
+
+/*
+=====================================
+Legacy Onboarding Guard (Disabled)
+=====================================
+
+This file previously enforced onboarding redirects.
+The application now uses ProtectedRoute + getOnboardingStep()
+for onboarding logic.
+
+To prevent conflicting redirects and flickering navigation,
+this guard now simply ensures authentication is loaded
+and allows rendering.
+
+If onboarding enforcement is needed, it should happen
+in ProtectedRoute.tsx.
+*/
 
 export default function RequireOnboarding({
   children,
@@ -9,62 +25,19 @@ export default function RequireOnboarding({
 }) {
   const { authUser, isLoading } = useUserAuth();
 
-  /* =========================
-     STILL LOADING AUTH
-  ========================= */
+  /* WAIT FOR AUTH */
 
   if (isLoading) {
     return null;
   }
 
-  /* =========================
-     NOT LOGGED IN
-  ========================= */
+  /* NOT LOGGED IN */
 
   if (!authUser) {
-    return <Navigate to="/signup" replace />;
+    return null;
   }
 
-  /* =========================
-     ADMINS BYPASS ONBOARDING
-  ========================= */
-
-  if (authUser.role === "admin") {
-    return <>{children}</>;
-  }
-
-  /* =========================
-     STEP DETECTION
-  ========================= */
-
-  if (!authUser.onboardingComplete) {
-    // Step 1: Basic profile
-    if (!authUser.name || !authUser.birthdate || !authUser.gender) {
-      return <Navigate to="/invite/onboarding/basic" replace />;
-    }
-
-    // Step 2: Preferences
-    if (!authUser.preferences) {
-      return <Navigate to="/invite/onboarding/preferences" replace />;
-    }
-
-    // Step 3: Photos
-    if (!authUser.photos || authUser.photos.length === 0) {
-      return <Navigate to="/invite/onboarding/photos" replace />;
-    }
-
-    // Step 4: Personality prompts
-    if (!authUser.prompts || Object.keys(authUser.prompts).length === 0) {
-      return <Navigate to="/invite/onboarding/personality" replace />;
-    }
-
-    // Last step: Completion
-    return <Navigate to="/invite/onboarding/complete" replace />;
-  }
-
-  /* =========================
-     FULLY ONBOARDED
-  ========================= */
+  /* ALLOW RENDER */
 
   return <>{children}</>;
 }

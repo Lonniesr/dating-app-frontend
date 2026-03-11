@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import RouteGuard from "./admin/core/RouteGuard";
 import AdminLayout from "./admin/core/Layout";
 
-// ADMIN PAGES
 import AdminDashboard from "./admin/pages/AdminDashboard";
 import AdminUsers from "./admin/pages/AdminUsers";
 import AdminUserDetail from "./admin/pages/AdminUserDetail";
@@ -26,23 +25,19 @@ import AdminSupport from "./admin/pages/AdminSupport";
 import AdminAnalyticsDeepDivePage from "./admin/pages/AdminAnalyticsDeepDivePage";
 import AdminSystemLogsPage from "./admin/pages/AdminSystemLogsPage";
 
-// AUTH
 import LoginPage from "./user/LoginPage";
 
-// USER PAGES
 import DashboardPage from "./user/DashboardPage";
 import ProfilePage from "./user/ProfilePage";
 import SettingsPage from "./user/SettingsPage";
 import MessagesPage from "./user/MessagesPage";
 import MatchesPage from "./user/MatchesPage";
 import EditProfilePage from "./user/EditProfilePage";
-import DiscoverFeed from "./user/components/DiscoverFeed"; // ⭐ ADDED
+import DiscoverFeed from "./user/components/DiscoverFeed";
 
-// USER LAYOUT + GUARD
 import UserLayout from "./user/layout/UserLayout";
-import UserRouteGuard from "./user/guards/UserRouteGuard";
+import ProtectedRoute from "./user/routes/ProtectedRoute";
 
-// INVITE FLOW
 import InviteLandingPage from "./invite/InviteLandingPage";
 import OnboardingPage from "./invite/Onboarding";
 import SignupPage from "./invite/Signup";
@@ -51,49 +46,38 @@ export default function App() {
   return (
     <Routes>
 
-      {/* ---------------- PUBLIC ROUTES ---------------- */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
-      <Route path="/invite/:code" element={<InviteLandingPage />} />
-      <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/invite/:code" element={<InviteLandingPage />} />
 
-      {/* ---------------- USER AREA (PROTECTED) ---------------- */}
+      {/* PROTECTED USER AREA */}
 
-      <Route
-        path="/user"
-        element={
-          <UserRouteGuard>
-            <UserLayout />
-          </UserRouteGuard>
-        }
-      >
-        {/* Default page */}
-        <Route index element={<Navigate to="discover" replace />} />
+      <Route element={<ProtectedRoute />}>
 
-        {/* ⭐ DISCOVER / SWIPE FEED */}
-        <Route path="discover" element={<DiscoverFeed />} />
+        <Route path="/user" element={<UserLayout />}>
 
-        {/* Main app */}
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="edit-profile" element={<EditProfilePage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="messages" element={<MessagesPage />} />
-        <Route path="matches" element={<MatchesPage />} />
+          <Route index element={<Navigate to="discover" replace />} />
+
+          <Route path="discover" element={<DiscoverFeed />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="edit-profile" element={<EditProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="messages" element={<MessagesPage />} />
+          <Route path="matches" element={<MatchesPage />} />
+
+        </Route>
+
+        <Route
+          path="/invite/onboarding/*"
+          element={<OnboardingPage />}
+        />
+
       </Route>
 
-      {/* ---------------- ONBOARDING (PROTECTED) ---------------- */}
-
-      <Route
-        path="/invite/onboarding"
-        element={
-          <UserRouteGuard>
-            <OnboardingPage />
-          </UserRouteGuard>
-        }
-      />
-
-      {/* ---------------- ADMIN AREA (PROTECTED) ---------------- */}
+      {/* ADMIN AREA */}
 
       <Route
         path="/admin"
@@ -127,13 +111,10 @@ export default function App() {
         <Route path="analytics" element={<AdminAnalyticsDeepDivePage />} />
         <Route path="system-logs" element={<AdminSystemLogsPage />} />
 
-        {/* Admin fallback */}
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Route>
 
-      {/* ---------------- GLOBAL FALLBACK ---------------- */}
-
-      <Route path="*" element={<Navigate to="/user/discover" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
 
     </Routes>
   );
