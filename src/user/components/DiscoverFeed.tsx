@@ -5,6 +5,7 @@ import {
   useTransform,
   AnimatePresence,
 } from "framer-motion";
+
 import { useDiscover } from "../../hooks/useDiscover";
 import { useSwipe } from "../hooks/useSwipe";
 
@@ -80,6 +81,8 @@ export default function DiscoverFeed() {
     setIndex(0);
   }, [users.length]);
 
+  /* Load browser location */
+
   useEffect(() => {
     if (!navigator.geolocation) return;
 
@@ -129,6 +132,9 @@ export default function DiscoverFeed() {
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 0, 200], [-15, 0, 15]);
+
+  const likeOpacity = useTransform(x, [0, 150], [0, 1]);
+  const nopeOpacity = useTransform(x, [-150, 0], [1, 0]);
 
   const likeSound = useMemo(
     () => (typeof Audio !== "undefined" ? new Audio("/sounds/like.mp3") : null),
@@ -181,12 +187,22 @@ export default function DiscoverFeed() {
     }
   };
 
-  const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
+  const handleDragEnd = (
+    _: unknown,
+    info: { offset: { x: number }; velocity: { x: number } }
+  ) => {
     const offsetX = info.offset.x;
+    const velocityX = info.velocity.x;
 
-    if (offsetX > SWIPE_THRESHOLD) sendSwipe(true);
-    else if (offsetX < -SWIPE_THRESHOLD) sendSwipe(false);
-    else x.set(0);
+    const swipePower = Math.abs(offsetX) * velocityX;
+
+    if (swipePower > 5000 || offsetX > SWIPE_THRESHOLD) {
+      sendSwipe(true);
+    } else if (swipePower < -5000 || offsetX < -SWIPE_THRESHOLD) {
+      sendSwipe(false);
+    } else {
+      x.set(0);
+    }
   };
 
   useEffect(() => {
@@ -237,9 +253,27 @@ export default function DiscoverFeed() {
               style={{ x, rotate }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.2}
+              dragElastic={0.9}
+              dragMomentum
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
               onDragEnd={handleDragEnd}
             >
+              {/* LIKE LABEL */}
+              <motion.div
+                style={{ opacity: likeOpacity }}
+                className="absolute top-6 left-6 text-green-400 border-4 border-green-400 px-4 py-2 font-bold text-2xl rounded-lg rotate-[-20deg]"
+              >
+                LIKE
+              </motion.div>
+
+              {/* NOPE LABEL */}
+              <motion.div
+                style={{ opacity: nopeOpacity }}
+                className="absolute top-6 right-6 text-red-400 border-4 border-red-400 px-4 py-2 font-bold text-2xl rounded-lg rotate-[20deg]"
+              >
+                NOPE
+              </motion.div>
+
               <img src={photo} className="w-full h-full object-cover" />
 
               <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
