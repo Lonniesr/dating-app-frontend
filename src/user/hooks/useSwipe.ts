@@ -5,17 +5,31 @@ const API = import.meta.env.VITE_API_URL;
 export function useSwipe() {
   const { refreshUser } = useUserAuth();
 
-  async function swipe(targetId: string, direction: "left" | "right") {
+  async function swipe(
+    targetId: string,
+    liked: boolean,
+    superLike: boolean = false
+  ) {
     const res = await fetch(`${API}/api/swipe`, {
       method: "POST",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ targetId, direction }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        targetId,
+        liked,
+        superLike,
+      }),
     });
+
+    if (!res.ok) {
+      throw new Error("Swipe request failed");
+    }
 
     const data = await res.json();
 
-    // Refresh user in case a match was created
+    // refresh user state (matches, stats, etc.)
     await refreshUser();
 
     return data;

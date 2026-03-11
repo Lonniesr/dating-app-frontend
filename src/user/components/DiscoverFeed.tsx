@@ -6,6 +6,7 @@ import {
   AnimatePresence,
 } from "framer-motion";
 import { useDiscover } from "../../hooks/useDiscover";
+import { useSwipe } from "../hooks/useSwipe";
 
 const SWIPE_THRESHOLD = 120;
 
@@ -57,8 +58,8 @@ function calculateDistance(
 
 export default function DiscoverFeed() {
   const { data, isLoading, refetch } = useDiscover();
+  const { swipe } = useSwipe();
 
-  /* Normalize API response */
   const users: DiscoverUser[] = Array.isArray(data)
     ? data
     : (data as any)?.profiles ?? [];
@@ -71,18 +72,13 @@ export default function DiscoverFeed() {
     lon: number;
   } | null>(null);
 
-  /* Debug logging */
   useEffect(() => {
     console.log("Discover users loaded:", users.length);
   }, [users]);
 
-  /* Reset deck when new data arrives */
-
   useEffect(() => {
     setIndex(0);
   }, [users.length]);
-
-  /* Load browser location */
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -110,9 +106,7 @@ export default function DiscoverFeed() {
           console.error("Location save failed", err);
         }
       },
-      () => {
-        console.log("Location permission denied");
-      }
+      () => console.log("Location permission denied")
     );
   }, []);
 
@@ -150,15 +144,12 @@ export default function DiscoverFeed() {
     if (navigator.vibrate) navigator.vibrate(pattern);
   };
 
-  /* Advance card */
-
   const advance = async () => {
     const nextIndex = index + 1;
 
     if (nextIndex < users.length) {
       setIndex(nextIndex);
     } else {
-      console.log("Refetching discover feed...");
       await refetch();
       setIndex(0);
     }
@@ -166,26 +157,11 @@ export default function DiscoverFeed() {
     x.set(0);
   };
 
-  /* Send swipe */
-
   const sendSwipe = async (liked: boolean, superLike = false) => {
     if (!current) return;
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/swipe`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          targetId: current.id,
-          liked,
-          superLike,
-        }),
-      });
-
-      const json = await res.json();
+      const result = await swipe(current.id, liked, superLike);
 
       if (liked) {
         likeSound?.play();
@@ -195,7 +171,7 @@ export default function DiscoverFeed() {
         vibrate([10, 40, 10]);
       }
 
-      if (json?.isMatch) {
+      if (result?.isMatch) {
         setMatchUser({ name: current.name });
       }
 
@@ -213,15 +189,11 @@ export default function DiscoverFeed() {
     else x.set(0);
   };
 
-  /* Prefetch when deck low */
-
   useEffect(() => {
     if (users.length - index < 4 && users.length > 0) {
       refetch();
     }
-  }, [index]);
-
-  /* Loading */
+  }, [index, users.length, refetch]);
 
   if (isLoading) {
     return (
@@ -248,7 +220,6 @@ export default function DiscoverFeed() {
   return (
     <div className="flex flex-col items-center">
       <div className="relative w-[380px] h-[520px]">
-
         {next && (
           <motion.img
             src={nextPhoto}
@@ -287,8 +258,6 @@ export default function DiscoverFeed() {
         </AnimatePresence>
       </div>
 
-      {/* ACTION BUTTONS */}
-
       <div className="flex gap-6 mt-6">
         <button
           onClick={() => sendSwipe(false)}
@@ -311,8 +280,6 @@ export default function DiscoverFeed() {
           ♥
         </button>
       </div>
-
-      {/* MATCH POPUP */}
 
       {matchUser && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
