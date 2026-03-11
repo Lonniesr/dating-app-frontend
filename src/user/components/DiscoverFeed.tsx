@@ -58,6 +58,11 @@ function calculateDistance(
 export default function DiscoverFeed() {
   const { data, isLoading, refetch } = useDiscover();
 
+  /* Normalize API response */
+  const users: DiscoverUser[] = Array.isArray(data)
+    ? data
+    : (data as any)?.profiles ?? [];
+
   const [index, setIndex] = useState(0);
   const [matchUser, setMatchUser] = useState<null | { name: string }>(null);
 
@@ -66,19 +71,18 @@ export default function DiscoverFeed() {
     lon: number;
   } | null>(null);
 
-  const users: DiscoverUser[] = data ?? [];
+  /* Debug logging */
+  useEffect(() => {
+    console.log("Discover users loaded:", users.length);
+  }, [users]);
 
-  /* ===============================
-     RESET INDEX WHEN NEW DATA LOADS
-  =============================== */
+  /* Reset deck when new data arrives */
 
   useEffect(() => {
     setIndex(0);
   }, [users.length]);
 
-  /* ===============================
-     LOAD USER LOCATION
-  =============================== */
+  /* Load browser location */
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -91,20 +95,17 @@ export default function DiscoverFeed() {
         setLocation({ lat, lon });
 
         try {
-          await fetch(
-            `${import.meta.env.VITE_API_URL}/api/profile/location`,
-            {
-              method: "POST",
-              credentials: "include",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                latitude: lat,
-                longitude: lon,
-              }),
-            }
-          );
+          await fetch(`${import.meta.env.VITE_API_URL}/api/profile/location`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              latitude: lat,
+              longitude: lon,
+            }),
+          });
         } catch (err) {
           console.error("Location save failed", err);
         }
@@ -122,8 +123,8 @@ export default function DiscoverFeed() {
 
   const distance =
     location &&
-    current?.latitude !== undefined &&
-    current?.longitude !== undefined
+    current?.latitude != null &&
+    current?.longitude != null
       ? calculateDistance(
           location.lat,
           location.lon,
@@ -149,9 +150,7 @@ export default function DiscoverFeed() {
     if (navigator.vibrate) navigator.vibrate(pattern);
   };
 
-  /* ===============================
-     CARD ADVANCE
-  =============================== */
+  /* Advance card */
 
   const advance = async () => {
     const nextIndex = index + 1;
@@ -159,6 +158,7 @@ export default function DiscoverFeed() {
     if (nextIndex < users.length) {
       setIndex(nextIndex);
     } else {
+      console.log("Refetching discover feed...");
       await refetch();
       setIndex(0);
     }
@@ -166,9 +166,7 @@ export default function DiscoverFeed() {
     x.set(0);
   };
 
-  /* ===============================
-     SEND SWIPE
-  =============================== */
+  /* Send swipe */
 
   const sendSwipe = async (liked: boolean, superLike = false) => {
     if (!current) return;
@@ -215,19 +213,15 @@ export default function DiscoverFeed() {
     else x.set(0);
   };
 
-  /* ===============================
-     PREFETCH NEXT DISCOVER BATCH
-  =============================== */
+  /* Prefetch when deck low */
 
   useEffect(() => {
-    if (users.length - index < 4) {
+    if (users.length - index < 4 && users.length > 0) {
       refetch();
     }
   }, [index]);
 
-  /* ===============================
-     LOADING STATES
-  =============================== */
+  /* Loading */
 
   if (isLoading) {
     return (
@@ -240,7 +234,7 @@ export default function DiscoverFeed() {
   if (!users.length) {
     return (
       <div className="h-[520px] flex items-center justify-center">
-        <p className="text-white/60">Finding people near you…</p>
+        <p className="text-white/60">No people found nearby.</p>
       </div>
     );
   }
