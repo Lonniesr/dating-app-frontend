@@ -10,6 +10,8 @@ export function useSwipe() {
     liked: boolean,
     superLike: boolean = false
   ) {
+    console.log("➡️ Sending swipe", { targetId, liked, superLike });
+
     const res = await fetch(`${API}/api/swipe`, {
       method: "POST",
       credentials: "include",
@@ -23,13 +25,22 @@ export function useSwipe() {
       }),
     });
 
+    console.log("⬅️ Swipe response status:", res.status);
+
+    let data: any = {};
+
+    try {
+      data = await res.json();
+    } catch {
+      console.warn("Swipe returned no JSON body");
+    }
+
     if (!res.ok) {
+      console.error("Swipe failed:", data);
       throw new Error("Swipe request failed");
     }
 
-    const data = await res.json();
-
-    // refresh user state (matches, stats, etc.)
+    // refresh user state (matches, stats etc)
     await refreshUser();
 
     return data;

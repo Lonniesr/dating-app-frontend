@@ -73,9 +73,7 @@ export default function DiscoverFeed() {
     lon: number;
   } | null>(null);
 
-  useEffect(() => {
-    console.log("Discover users loaded:", users.length);
-  }, [users]);
+  /* Reset deck when data refreshes */
 
   useEffect(() => {
     setIndex(0);
@@ -97,9 +95,7 @@ export default function DiscoverFeed() {
           await fetch(`${import.meta.env.VITE_API_URL}/api/profile/location`, {
             method: "POST",
             credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               latitude: lat,
               longitude: lon,
@@ -115,6 +111,19 @@ export default function DiscoverFeed() {
 
   const current = users[index];
   const next = users[index + 1];
+
+  /* Preload next profile photos (smooth swipe UX) */
+
+  useEffect(() => {
+    const upcoming = users.slice(index + 1, index + 4);
+
+    upcoming.forEach((user) => {
+      if (user.photos?.length) {
+        const img = new Image();
+        img.src = user.photos[0];
+      }
+    });
+  }, [index, users]);
 
   const age = calculateAge(current?.birthdate);
 
@@ -150,6 +159,8 @@ export default function DiscoverFeed() {
     if (navigator.vibrate) navigator.vibrate(pattern);
   };
 
+  /* Move to next card */
+
   const advance = async () => {
     const nextIndex = index + 1;
 
@@ -162,6 +173,8 @@ export default function DiscoverFeed() {
 
     x.set(0);
   };
+
+  /* Send swipe */
 
   const sendSwipe = async (liked: boolean, superLike = false) => {
     if (!current) return;
@@ -180,11 +193,12 @@ export default function DiscoverFeed() {
       if (result?.isMatch) {
         setMatchUser({ name: current.name });
       }
-
-      await advance();
     } catch (err) {
       console.error("Swipe failed", err);
     }
+
+    /* Always move forward */
+    await advance();
   };
 
   const handleDragEnd = (
@@ -204,6 +218,8 @@ export default function DiscoverFeed() {
       x.set(0);
     }
   };
+
+  /* Prefetch discover feed */
 
   useEffect(() => {
     if (users.length - index < 4 && users.length > 0) {
@@ -236,6 +252,7 @@ export default function DiscoverFeed() {
   return (
     <div className="flex flex-col items-center">
       <div className="relative w-[380px] h-[520px]">
+
         {next && (
           <motion.img
             src={nextPhoto}
@@ -258,7 +275,7 @@ export default function DiscoverFeed() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               onDragEnd={handleDragEnd}
             >
-              {/* LIKE LABEL */}
+              {/* LIKE */}
               <motion.div
                 style={{ opacity: likeOpacity }}
                 className="absolute top-6 left-6 text-green-400 border-4 border-green-400 px-4 py-2 font-bold text-2xl rounded-lg rotate-[-20deg]"
@@ -266,7 +283,7 @@ export default function DiscoverFeed() {
                 LIKE
               </motion.div>
 
-              {/* NOPE LABEL */}
+              {/* NOPE */}
               <motion.div
                 style={{ opacity: nopeOpacity }}
                 className="absolute top-6 right-6 text-red-400 border-4 border-red-400 px-4 py-2 font-bold text-2xl rounded-lg rotate-[20deg]"
@@ -274,7 +291,11 @@ export default function DiscoverFeed() {
                 NOPE
               </motion.div>
 
-              <img src={photo} className="w-full h-full object-cover" />
+              <img
+                src={photo}
+                loading="eager"
+                className="w-full h-full object-cover"
+              />
 
               <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
                 <h2 className="text-xl font-bold">
@@ -291,6 +312,8 @@ export default function DiscoverFeed() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Buttons */}
 
       <div className="flex gap-6 mt-6">
         <button
@@ -314,6 +337,8 @@ export default function DiscoverFeed() {
           ♥
         </button>
       </div>
+
+      {/* Match Popup */}
 
       {matchUser && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
