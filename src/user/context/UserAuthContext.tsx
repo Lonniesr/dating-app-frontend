@@ -84,6 +84,55 @@ export function UserAuthProvider({
   const [isLoading, setIsLoading] = useState(true);
 
   /* =========================
+     ONBOARDING STEP DETECTION
+  ========================= */
+
+  function redirectToOnboardingStep(user: AuthUser) {
+    if (user.role === "admin") return;
+
+    if (user.onboardingComplete) return;
+
+    const hasBasic =
+      !!user.name &&
+      !!user.birthdate &&
+      !!user.gender;
+
+    const hasPreferences =
+      !!user.preferences &&
+      Object.keys(user.preferences).length > 0;
+
+    const hasPhotos =
+      Array.isArray(user.photos) &&
+      user.photos.length > 0;
+
+    const hasPrompts =
+      !!user.prompts &&
+      Object.keys(user.prompts).length > 0;
+
+    if (!hasBasic) {
+      window.location.replace("/invite/onboarding/basic");
+      return;
+    }
+
+    if (!hasPreferences) {
+      window.location.replace("/invite/onboarding/preferences");
+      return;
+    }
+
+    if (!hasPhotos) {
+      window.location.replace("/invite/onboarding/photos");
+      return;
+    }
+
+    if (!hasPrompts) {
+      window.location.replace("/invite/onboarding/personality");
+      return;
+    }
+
+    window.location.replace("/invite/onboarding/complete");
+  }
+
+  /* =========================
      LOAD PROFILE
   ========================= */
 
@@ -105,6 +154,8 @@ export function UserAuthProvider({
       const data: AuthUser = await res.json();
 
       setAuthUser(data);
+
+      redirectToOnboardingStep(data);
 
       return data;
     } catch (err) {

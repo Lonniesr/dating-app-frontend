@@ -2,6 +2,23 @@ import { Navigate } from "react-router-dom";
 import { useUserAuth } from "../context/UserAuthContext";
 import type { ReactNode } from "react";
 
+/*
+=====================================
+RequireOnboarding Guard
+=====================================
+
+Purpose:
+• Prevent users from accessing protected routes
+  until onboarding is complete.
+
+Behavior:
+1. Wait for auth to load
+2. Redirect unauthenticated users to signup
+3. Allow admins to bypass onboarding
+4. Redirect unfinished onboarding users to onboarding
+5. Allow fully onboarded users through
+*/
+
 export default function RequireOnboarding({
   children,
 }: {
@@ -9,52 +26,41 @@ export default function RequireOnboarding({
 }) {
   const { authUser, isLoading } = useUserAuth();
 
-  if (isLoading) return null;
+  /* =========================
+     AUTH STILL LOADING
+  ========================= */
+
+  if (isLoading) {
+    return null;
+  }
+
+  /* =========================
+     NOT AUTHENTICATED
+  ========================= */
 
   if (!authUser) {
     return <Navigate to="/signup" replace />;
   }
 
+  /* =========================
+     ADMIN BYPASS
+  ========================= */
+
   if (authUser.role === "admin") {
     return <>{children}</>;
   }
 
+  /* =========================
+     ONBOARDING REQUIRED
+  ========================= */
+
   if (!authUser.onboardingComplete) {
-    const hasBasic =
-      !!authUser.name &&
-      !!authUser.birthdate &&
-      !!authUser.gender;
-
-    const hasPreferences =
-      authUser.preferences &&
-      Object.keys(authUser.preferences).length > 0;
-
-    const hasPhotos =
-      Array.isArray(authUser.photos) &&
-      authUser.photos.length > 0;
-
-    const hasPrompts =
-      authUser.prompts &&
-      Object.keys(authUser.prompts).length > 0;
-
-    if (!hasBasic) {
-      return <Navigate to="/invite/onboarding/basic" replace />;
-    }
-
-    if (!hasPreferences) {
-      return <Navigate to="/invite/onboarding/preferences" replace />;
-    }
-
-    if (!hasPhotos) {
-      return <Navigate to="/invite/onboarding/photos" replace />;
-    }
-
-    if (!hasPrompts) {
-      return <Navigate to="/invite/onboarding/personality" replace />;
-    }
-
-    return <Navigate to="/invite/onboarding/complete" replace />;
+    return <Navigate to="/invite/onboarding" replace />;
   }
+
+  /* =========================
+     USER FULLY ONBOARDED
+  ========================= */
 
   return <>{children}</>;
 }
