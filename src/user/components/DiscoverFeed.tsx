@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   motion,
   useMotionValue,
@@ -66,20 +66,17 @@ export default function DiscoverFeed() {
     : (data as any)?.profiles ?? [];
 
   const [index, setIndex] = useState(0);
-  const [matchUser, setMatchUser] = useState<null | { name: string }>(null);
+  const [matchUser, setMatchUser] = useState<null | DiscoverUser>(null);
+  const [swiping, setSwiping] = useState(false);
 
   const [location, setLocation] = useState<{
     lat: number;
     lon: number;
   } | null>(null);
 
-  /* Reset deck when data refreshes */
-
   useEffect(() => {
     setIndex(0);
   }, [users.length]);
-
-  /* Load browser location */
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -112,8 +109,6 @@ export default function DiscoverFeed() {
   const current = users[index];
   const next = users[index + 1];
 
-  /* Preload next profile photos (smooth swipe UX) */
-
   useEffect(() => {
     const upcoming = users.slice(index + 1, index + 4);
 
@@ -145,21 +140,9 @@ export default function DiscoverFeed() {
   const likeOpacity = useTransform(x, [0, 150], [0, 1]);
   const nopeOpacity = useTransform(x, [-150, 0], [1, 0]);
 
-  const likeSound = useMemo(
-    () => (typeof Audio !== "undefined" ? new Audio("/sounds/like.mp3") : null),
-    []
-  );
-
-  const passSound = useMemo(
-    () => (typeof Audio !== "undefined" ? new Audio("/sounds/pass.mp3") : null),
-    []
-  );
-
   const vibrate = (pattern: number | number[]) => {
     if (navigator.vibrate) navigator.vibrate(pattern);
   };
-
-  /* Move to next card */
 
   const advance = async () => {
     const nextIndex = index + 1;
@@ -174,30 +157,31 @@ export default function DiscoverFeed() {
     x.set(0);
   };
 
-  /* Send swipe */
-
   const sendSwipe = async (liked: boolean, superLike = false) => {
-    if (!current) return;
+    if (!current || swiping || matchUser) return;
+
+    setSwiping(true);
 
     try {
       const result = await swipe(current.id, liked, superLike);
 
-      if (liked) {
-        likeSound?.play();
-        vibrate(30);
-      } else {
-        passSound?.play();
-        vibrate([10, 40, 10]);
-      }
+      if (liked) vibrate(30);
+      else vibrate([10, 40, 10]);
 
       if (result?.isMatch) {
-        setMatchUser({ name: current.name });
+        setMatchUser(current);
+
+        setTimeout(() => {
+          advance();
+        }, 250);
+
+        return;
       }
     } catch (err) {
       console.error("Swipe failed", err);
     }
 
-    /* Always move forward */
+    setSwiping(false);
     await advance();
   };
 
@@ -205,6 +189,8 @@ export default function DiscoverFeed() {
     _: unknown,
     info: { offset: { x: number }; velocity: { x: number } }
   ) => {
+    if (swiping || matchUser) return;
+
     const offsetX = info.offset.x;
     const velocityX = info.velocity.x;
 
@@ -218,8 +204,6 @@ export default function DiscoverFeed() {
       x.set(0);
     }
   };
-
-  /* Prefetch discover feed */
 
   useEffect(() => {
     if (users.length - index < 4 && users.length > 0) {
@@ -252,7 +236,6 @@ export default function DiscoverFeed() {
   return (
     <div className="flex flex-col items-center">
       <div className="relative w-[380px] h-[520px]">
-
         {next && (
           <motion.img
             src={nextPhoto}
@@ -275,7 +258,6 @@ export default function DiscoverFeed() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               onDragEnd={handleDragEnd}
             >
-              {/* LIKE */}
               <motion.div
                 style={{ opacity: likeOpacity }}
                 className="absolute top-6 left-6 text-green-400 border-4 border-green-400 px-4 py-2 font-bold text-2xl rounded-lg rotate-[-20deg]"
@@ -283,7 +265,6 @@ export default function DiscoverFeed() {
                 LIKE
               </motion.div>
 
-              {/* NOPE */}
               <motion.div
                 style={{ opacity: nopeOpacity }}
                 className="absolute top-6 right-6 text-red-400 border-4 border-red-400 px-4 py-2 font-bold text-2xl rounded-lg rotate-[20deg]"
@@ -313,8 +294,6 @@ export default function DiscoverFeed() {
         </AnimatePresence>
       </div>
 
-      {/* Buttons */}
-
       <div className="flex gap-6 mt-6">
         <button
           onClick={() => sendSwipe(false)}
@@ -338,23 +317,32 @@ export default function DiscoverFeed() {
         </button>
       </div>
 
-      {/* Match Popup */}
-
       {matchUser && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
           <div className="bg-white text-black rounded-2xl p-8 text-center w-[320px]">
             <h2 className="text-3xl font-bold mb-4">🎉 It's a Match!</h2>
 
-            <p className="mb-6">
+            <p className="mb-4">
               You and <strong>{matchUser.name}</strong> liked each other.
             </p>
 
-            <button
-              onClick={() => setMatchUser(null)}
-              className="px-4 py-2 bg-yellow-500 rounded-lg"
-            >
-              Nice
-            </button>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setMatchUser(null)}
+                className="px-4 py-2 bg-gray-200 rounded-lg"
+              >
+                Keep Swiping
+              </button>
+
+              <button
+                onClick={() =>
+                  (window.location.href = `/messages/${matchUser.id}`)
+                }
+                className="px-4 py-2 bg-yellow-500 rounded-lg"
+              >
+                Message
+              </button>
+            </div>
           </div>
         </div>
       )}
