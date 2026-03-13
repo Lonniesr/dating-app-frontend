@@ -1,192 +1,173 @@
-import { useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useConversations } from "./hooks/useConversations";
-import type { ConversationPreview } from "./hooks/useConversations";
-import { motion } from "framer-motion";
-import { getPhotoThumbnail } from "../utils/getPhotoThumbnail";
+import { useState, useEffect } from "react";
+import {
+  motion,
+  useMotionValue,
+  useTransform,
+  AnimatePresence,
+} from "framer-motion";
 
-function formatRelativeTime(date?: string) {
-  if (!date) return "";
+import { useDiscover } from "../hooks/useDiscover";
+import { useSwipe } from "./hooks/useSwipe";
+import { getProfilePhoto } from "../utils/getProfilePhoto";
 
-  const now = Date.now();
-  const diff = Math.floor((now - new Date(date).getTime()) / 1000);
+const SWIPE_THRESHOLD = 120;
 
-  if (diff < 60) return "now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
+type DiscoverUser = {
+  id: string;
+  name: string;
+  birthdate?: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  photos?: string[];
+};
 
-  return new Date(date).toLocaleDateString();
+function calculateAge(birthdate?: string) {
+  if (!birthdate) return null;
+
+  const birth = new Date(birthdate);
+  const today = new Date();
+
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+
+  return age;
 }
 
-export default function MessagesPage() {
-  const navigate = useNavigate();
-  const { data: conversations, isLoading } = useConversations();
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) {
+  const R = 3958.8;
 
-  const [search, setSearch] = useState("");
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
 
-  const filtered = useMemo(() => {
-    if (!conversations) return [];
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
 
-    return conversations.filter((c: ConversationPreview) =>
-      c.user.name.toLowerCase().includes(search.toLowerCase())
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+export default function DiscoverFeed() {
+  const { data, isLoading, refetch } = useDiscover();
+  const { swipe } = useSwipe();
+
+  const users: DiscoverUser[] = Array.isArray(data)
+    ? data
+    : (data as any)?.profiles ?? [];
+
+  const [index, setIndex] = useState(0);
+  const [matchUser, setMatchUser] = useState<DiscoverUser | null>(null);
+  const [swiping, setSwiping] = useState(false);
+
+  const [location, setLocation] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
+
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 0, 200], [-15, 0, 15]);
+
+  const likeOpacity = useTransform(x, [0, 150], [0, 1]);
+  const nopeOpacity = useTransform(x, [-150, 0], [1, 0]);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [users.length]);
+
+  const current = users[index];
+  const next = users[index + 1];
+
+  const photo = getProfilePhoto(current?.photos);
+  const nextPhoto = getProfilePhoto(next?.photos);
+
+  const age = calculateAge(current?.birthdate);
+
+  const distance =
+    location &&
+    current?.latitude != null &&
+    current?.longitude != null
+      ? calculateDistance(
+          location.lat,
+          location.lon,
+          current.latitude,
+          current.longitude
+        ).toFixed(1)
+      : null;
+
+  if (isLoading) {
+    return (
+      <div className="h-[520px] flex items-center justify-center">
+        <p className="text-white/60">Loading people…</p>
+      </div>
     );
-  }, [conversations, search]);
+  }
+
+  if (!users.length) {
+    return (
+      <div className="h-[520px] flex items-center justify-center">
+        <p className="text-white/60">No people found nearby.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col h-full text-white">
+    <div className="flex flex-col items-center">
+      <div className="relative w-[380px] h-[520px]">
 
-      {/* HEADER */}
-
-      <div className="p-6 pb-3 sticky top-0 bg-black/60 backdrop-blur-xl z-10 border-b border-white/10">
-
-        <h1 className="text-3xl font-bold">Messages</h1>
-
-        <div className="mt-4">
-          <input
-            type="text"
-            placeholder="Search conversations"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
+        {next && (
+          <motion.img
+            src={nextPhoto}
+            className="absolute w-full h-full object-cover rounded-2xl"
+            initial={{ scale: 0.95, opacity: 0.6 }}
+            animate={{ scale: 0.95, opacity: 0.6 }}
           />
-        </div>
-
-      </div>
-
-      {/* CONVERSATION LIST */}
-
-      <div className="flex-1 overflow-y-auto px-6 pb-10 space-y-4">
-
-        {/* LOADING STATE */}
-
-        {isLoading &&
-          Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="animate-pulse flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10"
-            >
-              <div className="w-14 h-14 rounded-full bg-white/10" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 bg-white/10 rounded w-1/3" />
-                <div className="h-3 bg-white/10 rounded w-1/2" />
-              </div>
-            </div>
-          ))}
-
-        {/* EMPTY STATE */}
-
-        {!isLoading && filtered.length === 0 && (
-          <div className="text-center mt-10">
-
-            <p className="text-white/60 mb-4">
-              No conversations yet.
-            </p>
-
-            <button
-              onClick={() => navigate("/user/discover")}
-              className="px-5 py-2 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 transition"
-            >
-              Start Matching
-            </button>
-
-          </div>
         )}
 
-        {/* CONVERSATIONS */}
+        <AnimatePresence>
+          {current && (
+            <motion.div
+              key={current.id}
+              className="absolute w-full h-full rounded-2xl overflow-hidden shadow-xl"
+              style={{ x, rotate }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.9}
+              onDragEnd={() => {}}
+            >
 
-        {!isLoading &&
-          filtered.map((c: ConversationPreview, index: number) => {
-            const last = c.lastMessage;
-            const unread = c.unreadCount > 0;
+              <img
+                src={photo}
+                className="w-full h-full object-cover"
+              />
 
-            const avatar =
-              c.user.avatar
-                ? getPhotoThumbnail(c.user.avatar)
-                : "/placeholder.jpg";
+              <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
+                <h2 className="text-xl font-bold">
+                  {current.name}
+                  {age !== null && `, ${age}`}
+                </h2>
 
-            return (
-              <motion.div
-                key={c.conversationId}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.04 }}
-              >
+                <p className="text-sm opacity-80">
+                  {current.location || "Unknown location"}
+                  {distance && ` • ${distance} miles away`}
+                </p>
+              </div>
 
-                <Link
-                  to={`${c.user.id}`}
-                  className="group flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition relative"
-                >
-
-                  {/* AVATAR */}
-
-                  <div className="relative">
-
-                    <img
-                      src={avatar}
-                      className="w-14 h-14 rounded-full object-cover border border-white/20"
-                    />
-
-                    <span
-                      className={`absolute -right-1 -bottom-1 w-4 h-4 rounded-full border border-black ${
-                        c.user.online
-                          ? "bg-green-400"
-                          : "bg-gray-500"
-                      }`}
-                    />
-
-                  </div>
-
-                  {/* MESSAGE INFO */}
-
-                  <div className="flex-1 min-w-0">
-
-                    <div className="flex items-center justify-between">
-
-                      <p className="font-semibold text-lg truncate">
-                        {c.user.name}
-                      </p>
-
-                      <p className="text-xs text-white/40">
-                        {formatRelativeTime(last?.createdAt)}
-                      </p>
-
-                    </div>
-
-                    <p className="text-white/60 text-sm truncate max-w-[250px]">
-                      {last?.text || "Sent a message"}
-                    </p>
-
-                  </div>
-
-                  {/* UNREAD BADGE */}
-
-                  {unread && (
-                    <span className="px-3 py-1 rounded-full bg-yellow-400 text-black text-sm font-semibold">
-                      {c.unreadCount}
-                    </span>
-                  )}
-
-                  {/* QUICK CHAT BUTTON */}
-
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate(`/user/messages/${c.user.id}`);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 transition text-xs bg-yellow-500 text-black px-3 py-1 rounded-lg absolute right-4"
-                  >
-                    Open
-                  </button>
-
-                </Link>
-
-              </motion.div>
-            );
-          })}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
-
     </div>
   );
 }

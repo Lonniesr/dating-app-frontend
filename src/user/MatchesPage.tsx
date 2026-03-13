@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMatches } from "../hooks/useMatches";
-import { getPhotoThumbnail } from "../utils/getPhotoThumbnail";
+import { getProfilePhoto } from "../utils/getProfilePhoto";
 
 interface MatchItem {
   id: string;
@@ -77,8 +77,6 @@ export default function MatchesPage() {
   return (
     <div className="p-6 text-white space-y-6">
 
-      {/* HEADER */}
-
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
         <h1 className="text-2xl font-bold">Your Matches</h1>
@@ -93,15 +91,10 @@ export default function MatchesPage() {
 
       </div>
 
-      {/* MATCH GRID */}
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
         {filteredMatches.map((match: MatchItem) => {
-          const primaryPhoto =
-            match.photos && match.photos.length > 0
-              ? getPhotoThumbnail(match.photos[0])
-              : "/placeholder.jpg";
+          const primaryPhoto = getProfilePhoto(match.photos);
 
           return (
             <div
@@ -109,8 +102,6 @@ export default function MatchesPage() {
               onClick={() => navigate(`/user/messages/${match.id}`)}
               className="group flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-xl hover:bg-white/10 transition cursor-pointer relative"
             >
-
-              {/* AVATAR */}
 
               <div className="relative">
 
@@ -128,8 +119,6 @@ export default function MatchesPage() {
 
               </div>
 
-              {/* INFO */}
-
               <div className="flex-1 min-w-0">
 
                 <p className="font-semibold text-lg truncate">
@@ -143,15 +132,11 @@ export default function MatchesPage() {
 
               </div>
 
-              {/* UNREAD BADGE */}
-
               {match.unreadCount && match.unreadCount > 0 && (
                 <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                   {match.unreadCount}
                 </div>
               )}
-
-              {/* CHAT BUTTON */}
 
               <button
                 onClick={(e) => {

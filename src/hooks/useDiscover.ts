@@ -1,43 +1,45 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
+
+type DiscoverProfile = {
+  id: string;
+  name: string;
+  gender?: string;
+  race?: string;
+  birthdate?: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  photos?: string[];
+};
+
+type DiscoverResponse = {
+  profiles: DiscoverProfile[];
+  nextCursor: number;
+};
 
 export function useDiscover() {
-  console.log("useDiscover hook mounted");
-
-  return useQuery({
+  return useInfiniteQuery<DiscoverResponse>({
     queryKey: ["discover"],
 
-    queryFn: async () => {
-      console.log("Discover queryFn executing");
+    initialPageParam: 0,
 
-      const url = `${import.meta.env.VITE_API_URL}/api/discover`;
-      console.log("Discover request URL:", url);
+    queryFn: async ({ pageParam }) => {
+      const url = `${import.meta.env.VITE_API_URL}/api/discover?cursor=${pageParam}`;
 
       const res = await fetch(url, {
         credentials: "include",
       });
 
-      console.log("Discover response status:", res.status);
-
       if (!res.ok) {
         throw new Error("Discover fetch failed");
       }
 
-      const json = await res.json();
-
-      console.log("Discover raw response:", json);
-
-      // Handle BOTH possible backend shapes
-      const profiles = Array.isArray(json)
-        ? json
-        : json?.profiles ?? [];
-
-      console.log("Discover profiles count:", profiles.length);
-
-      return profiles;
+      return res.json();
     },
 
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+
     staleTime: 30000,
-    retry: 2,
     refetchOnWindowFocus: false,
   });
 }

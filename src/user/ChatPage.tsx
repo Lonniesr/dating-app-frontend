@@ -64,16 +64,24 @@ export default function ChatPage() {
   useEffect(() => {
     if (!socket || !otherUserId) return;
 
-    socket.on("typing:start", (id: string) => {
-      if (id === otherUserId) setIsTyping(true);
+    socket.emit("conversation:join", { otherUserId });
+
+    socket.on("typing:start", ({ fromUserId }) => {
+      if (fromUserId === otherUserId) {
+        setIsTyping(true);
+      }
     });
 
-    socket.on("typing:stop", (id: string) => {
-      if (id === otherUserId) setIsTyping(false);
+    socket.on("typing:stop", ({ fromUserId }) => {
+      if (fromUserId === otherUserId) {
+        setIsTyping(false);
+      }
     });
 
     socket.on("user:presence", ({ userId, online }) => {
-      if (userId === otherUserId) setOnline(online);
+      if (userId === otherUserId) {
+        setOnline(online);
+      }
     });
 
     return () => {
@@ -88,35 +96,41 @@ export default function ChatPage() {
 
     if (!socket || !otherUserId) return;
 
-    socket.emit("typing:start", otherUserId);
+    socket.emit("typing:start", { toUserId: otherUserId });
 
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("typing:stop", otherUserId);
+      socket.emit("typing:stop", { toUserId: otherUserId });
     }, 1200);
   }
 
   async function sendMessage() {
     if (!text.trim() && !imagePreview && !audioPreview) return;
 
-    await axios.post(
-      `${import.meta.env.VITE_API_URL}/api/messages/${otherUserId}`,
-      {
-        text: text.trim() || undefined,
-        imageUrl: imagePreview || undefined,
-        audioUrl: audioPreview || undefined,
-        replyToId: replyTo?.id,
-      },
-      { withCredentials: true }
-    );
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/messages/${otherUserId}`,
+        {
+          text: text.trim() || undefined,
+          imageUrl: imagePreview || undefined,
+          audioUrl: audioPreview || undefined,
+          replyToId: replyTo?.id,
+        },
+        { withCredentials: true }
+      );
 
-    setText("");
-    setImagePreview(null);
-    setAudioPreview(null);
-    setReplyTo(null);
+      setText("");
+      setImagePreview(null);
+      setAudioPreview(null);
+      setReplyTo(null);
 
-    socket?.emit("typing:stop", otherUserId);
+      socket?.emit("typing:stop", { toUserId: otherUserId });
+    } catch (err) {
+      console.error("Send message failed", err);
+    }
   }
 
   function handleImage(e: ChangeEvent<HTMLInputElement>) {
@@ -161,6 +175,8 @@ export default function ChatPage() {
         )}
       </AnimatePresence>
 
+      {/* HEADER */}
+
       <div className="p-4 flex items-center gap-3 border-b border-white/10 sticky top-0 bg-black/80 backdrop-blur-xl">
 
         <div className="relative">
@@ -168,6 +184,7 @@ export default function ChatPage() {
             src="/placeholder.jpg"
             className="w-10 h-10 rounded-full object-cover"
           />
+
           <span
             className={`absolute -right-1 -bottom-1 w-3 h-3 rounded-full border border-black ${
               online ? "bg-green-400" : "bg-gray-500"
@@ -177,6 +194,7 @@ export default function ChatPage() {
 
         <div className="flex-1">
           <p className="font-semibold text-lg">Match</p>
+
           <p className="text-xs text-white/50">
             {isTyping ? "Typing…" : online ? "Online now" : "Offline"}
           </p>
@@ -197,14 +215,18 @@ export default function ChatPage() {
         </div>
       )}
 
+      {/* MESSAGES */}
+
       <div className="flex-1 overflow-y-auto px-4 py-6">
 
         {messages?.map((msg: Message) => {
           const mine = isMine(msg, meId);
 
           return (
-            <div
+            <motion.div
               key={msg.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               className={`flex mb-3 ${
                 mine ? "justify-end" : "justify-start"
               }`}
@@ -255,13 +277,21 @@ export default function ChatPage() {
 
               </div>
 
-            </div>
+            </motion.div>
           );
         })}
+
+        {isTyping && (
+          <div className="text-xs text-white/40 mt-2">
+            Typing…
+          </div>
+        )}
 
         <div ref={bottomRef} />
 
       </div>
+
+      {/* INPUT */}
 
       <div className="p-4 border-t border-white/10 flex items-center gap-3">
 

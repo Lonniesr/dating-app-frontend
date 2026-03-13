@@ -41,7 +41,10 @@ export function useMatches() {
         id: user.id,
         name: user.name,
         gender: user.gender,
-        photos: user.photos,
+        photos:
+          user.photos?.map((p: any) =>
+            typeof p === "string" ? p : p.url
+          ) ?? [],
         age: calculateAge(user.birthdate),
         location: user.location,
       }));

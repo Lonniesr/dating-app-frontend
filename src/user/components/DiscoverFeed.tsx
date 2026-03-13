@@ -66,13 +66,19 @@ export default function DiscoverFeed() {
     : (data as any)?.profiles ?? [];
 
   const [index, setIndex] = useState(0);
-  const [matchUser, setMatchUser] = useState<null | DiscoverUser>(null);
+  const [matchUser, setMatchUser] = useState<DiscoverUser | null>(null);
   const [swiping, setSwiping] = useState(false);
 
   const [location, setLocation] = useState<{
     lat: number;
     lon: number;
   } | null>(null);
+
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 0, 200], [-15, 0, 15]);
+
+  const likeOpacity = useTransform(x, [0, 150], [0, 1]);
+  const nopeOpacity = useTransform(x, [-150, 0], [1, 0]);
 
   useEffect(() => {
     setIndex(0);
@@ -133,12 +139,6 @@ export default function DiscoverFeed() {
           current.longitude
         ).toFixed(1)
       : null;
-
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 0, 200], [-15, 0, 15]);
-
-  const likeOpacity = useTransform(x, [0, 150], [0, 1]);
-  const nopeOpacity = useTransform(x, [-150, 0], [1, 0]);
 
   const vibrate = (pattern: number | number[]) => {
     if (navigator.vibrate) navigator.vibrate(pattern);
@@ -336,7 +336,7 @@ export default function DiscoverFeed() {
 
               <button
                 onClick={() =>
-                  (window.location.href = `/messages/${matchUser.id}`)
+                  (window.location.href = `/user/messages/${matchUser.id}`)
                 }
                 className="px-4 py-2 bg-yellow-500 rounded-lg"
               >
