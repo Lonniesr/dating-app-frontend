@@ -37,19 +37,14 @@ export function useMatches() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      // 🔥 Normalize backend shape → UI shape
-      return data.map((match: any) => {
-        const user = match.user;
-
-        return {
-          id: user.id,
-          name: user.name,
-          gender: user.gender,
-          photos: user.photos,
-          age: calculateAge(user.birthdate),
-          location: user.location,
-        };
-      });
+      return data.map((user: any) => ({
+        id: user.id,
+        name: user.name,
+        gender: user.gender,
+        photos: user.photos,
+        age: calculateAge(user.birthdate),
+        location: user.location,
+      }));
     },
   });
 }

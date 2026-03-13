@@ -34,6 +34,7 @@ import MessagesPage from "./user/MessagesPage";
 import MatchesPage from "./user/MatchesPage";
 import EditProfilePage from "./user/EditProfilePage";
 import DiscoverFeed from "./user/components/DiscoverFeed";
+import LikesPage from "./user/LikesPage";
 
 import UserLayout from "./user/layout/UserLayout";
 import ProtectedRoute from "./user/routes/ProtectedRoute";
@@ -61,6 +62,7 @@ export default function App() {
           <Route index element={<Navigate to="discover" replace />} />
 
           <Route path="discover" element={<DiscoverFeed />} />
+          <Route path="likes" element={<LikesPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="edit-profile" element={<EditProfilePage />} />
