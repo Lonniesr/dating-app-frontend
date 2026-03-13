@@ -35,16 +35,14 @@ export function useMatches() {
       );
 
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.error);
 
       return data.map((user: any) => ({
         id: user.id,
         name: user.name,
         gender: user.gender,
-        photos:
-          user.photos?.map((p: any) =>
-            typeof p === "string" ? p : p.url
-          ) ?? [],
+        photos: Array.isArray(user.photos) ? user.photos : [],
         age: calculateAge(user.birthdate),
         location: user.location,
       }));

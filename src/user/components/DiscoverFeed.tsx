@@ -8,6 +8,7 @@ import {
 
 import { useDiscover } from "../../hooks/useDiscover";
 import { useSwipe } from "../hooks/useSwipe";
+import { getProfilePhoto } from "../../utils/getProfilePhoto";
 
 const SWIPE_THRESHOLD = 120;
 
@@ -84,47 +85,11 @@ export default function DiscoverFeed() {
     setIndex(0);
   }, [users.length]);
 
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-
-        setLocation({ lat, lon });
-
-        try {
-          await fetch(`${import.meta.env.VITE_API_URL}/api/profile/location`, {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              latitude: lat,
-              longitude: lon,
-            }),
-          });
-        } catch (err) {
-          console.error("Location save failed", err);
-        }
-      },
-      () => console.log("Location permission denied")
-    );
-  }, []);
-
   const current = users[index];
   const next = users[index + 1];
 
-  useEffect(() => {
-    const upcoming = users.slice(index + 1, index + 4);
-
-    upcoming.forEach((user) => {
-      if (user.photos?.length) {
-        const img = new Image();
-        img.src = user.photos[0];
-      }
-    });
-  }, [index, users]);
+  const photo = getProfilePhoto(current?.photos);
+  const nextPhoto = getProfilePhoto(next?.photos);
 
   const age = calculateAge(current?.birthdate);
 
@@ -140,76 +105,23 @@ export default function DiscoverFeed() {
         ).toFixed(1)
       : null;
 
-  const vibrate = (pattern: number | number[]) => {
-    if (navigator.vibrate) navigator.vibrate(pattern);
-  };
+  function handleSwipe(direction: "left" | "right") {
+  if (!current || swiping) return;
 
-  const advance = async () => {
-    const nextIndex = index + 1;
+  setSwiping(true);
 
-    if (nextIndex < users.length) {
-      setIndex(nextIndex);
-    } else {
-      await refetch();
-      setIndex(0);
-    }
+  swipe(current.id, direction === "right");
 
+  setTimeout(() => {
+    setIndex((prev) => prev + 1);
     x.set(0);
-  };
-
-  const sendSwipe = async (liked: boolean, superLike = false) => {
-    if (!current || swiping || matchUser) return;
-
-    setSwiping(true);
-
-    try {
-      const result = await swipe(current.id, liked, superLike);
-
-      if (liked) vibrate(30);
-      else vibrate([10, 40, 10]);
-
-      if (result?.isMatch) {
-        setMatchUser(current);
-
-        setTimeout(() => {
-          advance();
-        }, 250);
-
-        return;
-      }
-    } catch (err) {
-      console.error("Swipe failed", err);
-    }
-
     setSwiping(false);
-    await advance();
-  };
 
-  const handleDragEnd = (
-    _: unknown,
-    info: { offset: { x: number }; velocity: { x: number } }
-  ) => {
-    if (swiping || matchUser) return;
-
-    const offsetX = info.offset.x;
-    const velocityX = info.velocity.x;
-
-    const swipePower = Math.abs(offsetX) * velocityX;
-
-    if (swipePower > 5000 || offsetX > SWIPE_THRESHOLD) {
-      sendSwipe(true);
-    } else if (swipePower < -5000 || offsetX < -SWIPE_THRESHOLD) {
-      sendSwipe(false);
-    } else {
-      x.set(0);
-    }
-  };
-
-  useEffect(() => {
-    if (users.length - index < 4 && users.length > 0) {
+    if (index >= users.length - 3) {
       refetch();
     }
-  }, [index, users.length, refetch]);
+  }, 200);
+}
 
   if (isLoading) {
     return (
@@ -227,15 +139,10 @@ export default function DiscoverFeed() {
     );
   }
 
-  const photo =
-    current?.photos?.length ? current.photos[0] : "https://picsum.photos/600";
-
-  const nextPhoto =
-    next?.photos?.length ? next.photos[0] : "https://picsum.photos/600";
-
   return (
     <div className="flex flex-col items-center">
       <div className="relative w-[380px] h-[520px]">
+
         {next && (
           <motion.img
             src={nextPhoto}
@@ -254,29 +161,37 @@ export default function DiscoverFeed() {
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.9}
-              dragMomentum
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              onDragEnd={handleDragEnd}
+              onDragEnd={() => {
+                const offset = x.get();
+
+                if (offset > SWIPE_THRESHOLD) {
+                  handleSwipe("right");
+                } else if (offset < -SWIPE_THRESHOLD) {
+                  handleSwipe("left");
+                } else {
+                  x.set(0);
+                }
+              }}
             >
+
+              <img
+                src={photo}
+                className="w-full h-full object-cover"
+              />
+
               <motion.div
                 style={{ opacity: likeOpacity }}
-                className="absolute top-6 left-6 text-green-400 border-4 border-green-400 px-4 py-2 font-bold text-2xl rounded-lg rotate-[-20deg]"
+                className="absolute top-6 left-6 text-green-400 text-3xl font-bold"
               >
                 LIKE
               </motion.div>
 
               <motion.div
                 style={{ opacity: nopeOpacity }}
-                className="absolute top-6 right-6 text-red-400 border-4 border-red-400 px-4 py-2 font-bold text-2xl rounded-lg rotate-[20deg]"
+                className="absolute top-6 right-6 text-red-400 text-3xl font-bold"
               >
                 NOPE
               </motion.div>
-
-              <img
-                src={photo}
-                loading="eager"
-                className="w-full h-full object-cover"
-              />
 
               <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
                 <h2 className="text-xl font-bold">
@@ -289,63 +204,12 @@ export default function DiscoverFeed() {
                   {distance && ` • ${distance} miles away`}
                 </p>
               </div>
+
             </motion.div>
           )}
         </AnimatePresence>
+
       </div>
-
-      <div className="flex gap-6 mt-6">
-        <button
-          onClick={() => sendSwipe(false)}
-          className="w-14 h-14 rounded-full bg-white/10 text-white text-xl hover:bg-white/20"
-        >
-          ✕
-        </button>
-
-        <button
-          onClick={() => sendSwipe(true, true)}
-          className="w-14 h-14 rounded-full bg-blue-500 text-white text-xl hover:bg-blue-400"
-        >
-          ⭐
-        </button>
-
-        <button
-          onClick={() => sendSwipe(true)}
-          className="w-14 h-14 rounded-full bg-yellow-500 text-black text-xl hover:bg-yellow-400"
-        >
-          ♥
-        </button>
-      </div>
-
-      {matchUser && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-white text-black rounded-2xl p-8 text-center w-[320px]">
-            <h2 className="text-3xl font-bold mb-4">🎉 It's a Match!</h2>
-
-            <p className="mb-4">
-              You and <strong>{matchUser.name}</strong> liked each other.
-            </p>
-
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => setMatchUser(null)}
-                className="px-4 py-2 bg-gray-200 rounded-lg"
-              >
-                Keep Swiping
-              </button>
-
-              <button
-                onClick={() =>
-                  (window.location.href = `/user/messages/${matchUser.id}`)
-                }
-                className="px-4 py-2 bg-yellow-500 rounded-lg"
-              >
-                Message
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

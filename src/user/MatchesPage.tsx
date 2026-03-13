@@ -45,6 +45,8 @@ export default function MatchesPage() {
 
   const matches: MatchItem[] = data || [];
 
+  console.log("MATCH DATA:", matches);
+
   const filteredMatches = matches.filter((m) =>
     m.name.toLowerCase().includes(search.toLowerCase())
   );
@@ -87,10 +89,17 @@ export default function MatchesPage() {
           const primaryPhoto =
             getProfilePhoto(match.photos) || "/default-avatar.png";
 
+          console.log("MATCH PHOTO DEBUG:", {
+            id: match.id,
+            name: match.name,
+            photos: match.photos,
+            resolvedPhoto: primaryPhoto,
+          });
+
           return (
             <div
               key={match.id}
-              onClick={() => navigate(`/user/chat/${match.id}`)}
+              onClick={() => navigate(`/user/messages/${match.id}`)}
               className="group flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-xl hover:bg-white/10 transition cursor-pointer relative"
             >
               <div className="relative">
@@ -127,7 +136,7 @@ export default function MatchesPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/user/chat/${match.id}`);
+                  navigate(`/user/messages/${match.id}`);
                 }}
                 className="opacity-0 group-hover:opacity-100 transition text-sm bg-yellow-500 text-black px-3 py-1 rounded-lg"
               >

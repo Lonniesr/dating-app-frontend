@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import {
   motion,
   useMotionValue,
@@ -58,7 +59,31 @@ function calculateDistance(
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
-export default function DiscoverFeed() {
+export default function MessagesPage() {
+  const { matchId } = useParams();
+
+  /* ---------------------------
+     CHAT VIEW
+  --------------------------- */
+
+  if (matchId) {
+    return (
+      <div className="p-6 text-white">
+        <h1 className="text-2xl font-bold mb-4">Chat</h1>
+
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <p className="text-white/60">
+            Conversation with match <span className="font-semibold">{matchId}</span>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---------------------------
+     DISCOVER VIEW
+  --------------------------- */
+
   const { data, isLoading, refetch } = useDiscover();
   const { swipe } = useSwipe();
 
@@ -67,7 +92,6 @@ export default function DiscoverFeed() {
     : (data as any)?.profiles ?? [];
 
   const [index, setIndex] = useState(0);
-  const [matchUser, setMatchUser] = useState<DiscoverUser | null>(null);
   const [swiping, setSwiping] = useState(false);
 
   const [location, setLocation] = useState<{
@@ -104,6 +128,24 @@ export default function DiscoverFeed() {
           current.longitude
         ).toFixed(1)
       : null;
+
+  function handleSwipe(direction: "left" | "right") {
+    if (!current || swiping) return;
+
+    setSwiping(true);
+
+    swipe(current.id, direction === "right");
+
+    setTimeout(() => {
+      setIndex((prev) => prev + 1);
+      x.set(0);
+      setSwiping(false);
+
+      if (index >= users.length - 3) {
+        refetch();
+      }
+    }, 200);
+  }
 
   if (isLoading) {
     return (
@@ -143,13 +185,37 @@ export default function DiscoverFeed() {
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.9}
-              onDragEnd={() => {}}
+              onDragEnd={() => {
+                const offset = x.get();
+
+                if (offset > SWIPE_THRESHOLD) {
+                  handleSwipe("right");
+                } else if (offset < -SWIPE_THRESHOLD) {
+                  handleSwipe("left");
+                } else {
+                  x.set(0);
+                }
+              }}
             >
 
               <img
                 src={photo}
                 className="w-full h-full object-cover"
               />
+
+              <motion.div
+                style={{ opacity: likeOpacity }}
+                className="absolute top-6 left-6 text-green-400 text-3xl font-bold"
+              >
+                LIKE
+              </motion.div>
+
+              <motion.div
+                style={{ opacity: nopeOpacity }}
+                className="absolute top-6 right-6 text-red-400 text-3xl font-bold"
+              >
+                NOPE
+              </motion.div>
 
               <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
                 <h2 className="text-xl font-bold">

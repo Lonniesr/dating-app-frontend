@@ -67,7 +67,11 @@ export default function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="edit-profile" element={<EditProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
+
+          {/* Messages routes */}
           <Route path="messages" element={<MessagesPage />} />
+          <Route path="messages/:matchId" element={<MessagesPage />} />
+
           <Route path="matches" element={<MatchesPage />} />
 
         </Route>

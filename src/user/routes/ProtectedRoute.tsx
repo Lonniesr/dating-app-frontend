@@ -5,19 +5,26 @@ export default function ProtectedRoute() {
   const { authUser, isLoading } = useUserAuth();
   const location = useLocation();
 
-  /* WAIT FOR AUTH */
+  /* WAIT FOR AUTH TO FINISH */
 
   if (isLoading) {
+    return null;
+  }
+
+  /* AUTH NOT RESOLVED YET */
+  /* Prevent redirect flicker when refreshing deep routes like /user/messages/:id */
+
+  if (authUser === undefined) {
     return null;
   }
 
   /* NOT LOGGED IN */
 
   if (!authUser) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  /* ADMIN */
+  /* ADMIN ROUTING */
 
   if (authUser.role === "admin") {
     if (!location.pathname.startsWith("/admin")) {
