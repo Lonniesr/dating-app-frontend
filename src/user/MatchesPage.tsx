@@ -52,14 +52,10 @@ export default function MatchesPage() {
   if (matches.length === 0) {
     return (
       <div className="p-6 text-white text-center">
-
         <h1 className="text-2xl font-bold mb-4">Your Matches</h1>
 
         <div className="bg-white/5 border border-white/10 rounded-xl p-10">
-
-          <p className="text-white/60 mb-4">
-            You have no matches yet.
-          </p>
+          <p className="text-white/60 mb-4">You have no matches yet.</p>
 
           <button
             onClick={() => navigate("/user/discover")}
@@ -67,18 +63,14 @@ export default function MatchesPage() {
           >
             Start Swiping
           </button>
-
         </div>
-
       </div>
     );
   }
 
   return (
     <div className="p-6 text-white space-y-6">
-
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-
         <h1 className="text-2xl font-bold">Your Matches</h1>
 
         <input
@@ -88,23 +80,20 @@ export default function MatchesPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-yellow-500"
         />
-
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
         {filteredMatches.map((match: MatchItem) => {
-          const primaryPhoto = getProfilePhoto(match.photos);
+          const primaryPhoto =
+            getProfilePhoto(match.photos) || "/default-avatar.png";
 
           return (
             <div
               key={match.id}
-              onClick={() => navigate(`/user/messages/${match.id}`)}
+              onClick={() => navigate(`/user/chat/${match.id}`)}
               className="group flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-xl hover:bg-white/10 transition cursor-pointer relative"
             >
-
               <div className="relative">
-
                 <div className="w-16 h-16 rounded-full overflow-hidden border border-white/20">
                   <img
                     src={primaryPhoto}
@@ -116,11 +105,9 @@ export default function MatchesPage() {
                 {match.online && (
                   <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-400 border-2 border-black rounded-full" />
                 )}
-
               </div>
 
               <div className="flex-1 min-w-0">
-
                 <p className="font-semibold text-lg truncate">
                   {match.name}
                   {match.age ? `, ${match.age}` : ""}
@@ -129,7 +116,6 @@ export default function MatchesPage() {
                 <p className="text-white/60 text-sm truncate">
                   {match.lastMessage || match.gender || "Say hello 👋"}
                 </p>
-
               </div>
 
               {match.unreadCount && match.unreadCount > 0 && (
@@ -141,19 +127,16 @@ export default function MatchesPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/user/messages/${match.id}`);
+                  navigate(`/user/chat/${match.id}`);
                 }}
                 className="opacity-0 group-hover:opacity-100 transition text-sm bg-yellow-500 text-black px-3 py-1 rounded-lg"
               >
                 Chat
               </button>
-
             </div>
           );
         })}
-
       </div>
-
     </div>
   );
 }
