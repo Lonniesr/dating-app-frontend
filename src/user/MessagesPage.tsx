@@ -44,7 +44,7 @@ export default function MessagesPage() {
         return (
           <div
             key={c.id}
-            onClick={() => navigate(`/user/messages/${c.user.id}`)}
+            onClick={() => navigate(`/user/chat/${c.user.id}`)}
             className="flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-xl hover:bg-white/10 cursor-pointer"
           >
             <img

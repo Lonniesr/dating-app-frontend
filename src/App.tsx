@@ -35,6 +35,7 @@ import MatchesPage from "./user/MatchesPage";
 import EditProfilePage from "./user/EditProfilePage";
 import DiscoverFeed from "./user/components/DiscoverFeed";
 import LikesPage from "./user/LikesPage";
+import ChatPage from "./user/ChatPage";
 
 import UserLayout from "./user/layout/UserLayout";
 import ProtectedRoute from "./user/routes/ProtectedRoute";
@@ -68,9 +69,9 @@ export default function App() {
           <Route path="edit-profile" element={<EditProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
 
-          {/* Messages routes */}
+          {/* Messages */}
           <Route path="messages" element={<MessagesPage />} />
-          <Route path="messages/:matchId" element={<MessagesPage />} />
+          <Route path="messages/:id" element={<ChatPage />} />
 
           <Route path="matches" element={<MatchesPage />} />
 

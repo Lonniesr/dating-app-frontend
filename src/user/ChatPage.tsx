@@ -37,14 +37,20 @@ function isMine(m: Message, meId: string | null) {
 }
 
 export default function ChatPage() {
-  const { id: otherUserId } = useParams();
+  const { id } = useParams();
+  const otherUserId = id;
+
+  const API = import.meta.env.VITE_API_URL;
+
   const { socket } = useChatSocket();
   const { authUser } = useUserAuth();
   const meId = authUser?.id ?? null;
 
   const verified = authUser?.verified;
 
-  const { data: messages } = useUserChat(otherUserId || null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+
+  const { data: messages } = useUserChat(conversationId || null);
 
   const [isTyping, setIsTyping] = useState(false);
   const [online, setOnline] = useState(false);
@@ -57,9 +63,40 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /* =========================
+     LOAD / CREATE CONVERSATION
+  ========================= */
+
+  useEffect(() => {
+    async function loadConversation() {
+      if (!otherUserId) return;
+
+      try {
+        const res = await axios.get(
+          `${API}/api/conversations/${otherUserId}`,
+          { withCredentials: true }
+        );
+
+        setConversationId(res.data.id);
+      } catch (err) {
+        console.error("Failed to load conversation", err);
+      }
+    }
+
+    loadConversation();
+  }, [otherUserId]);
+
+  /* =========================
+     AUTO SCROLL
+  ========================= */
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  /* =========================
+     SOCKET EVENTS
+  ========================= */
 
   useEffect(() => {
     if (!socket || !otherUserId) return;
@@ -107,14 +144,18 @@ export default function ChatPage() {
     }, 1200);
   }
 
+  /* =========================
+     SEND MESSAGE
+  ========================= */
+
   async function sendMessage() {
-    if (!text.trim() && !imagePreview && !audioPreview) return;
+    if (!text.trim() || !conversationId) return;
 
     try {
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/messages/${otherUserId}`,
+        `${API}/api/messages/${conversationId}`,
         {
-          text: text.trim() || undefined,
+          text: text.trim(),
           imageUrl: imagePreview || undefined,
           audioUrl: audioPreview || undefined,
           replyToId: replyTo?.id,
@@ -128,6 +169,7 @@ export default function ChatPage() {
       setReplyTo(null);
 
       socket?.emit("typing:stop", { toUserId: otherUserId });
+
     } catch (err) {
       console.error("Send message failed", err);
     }
@@ -174,48 +216,6 @@ export default function ChatPage() {
           />
         )}
       </AnimatePresence>
-
-      {/* HEADER */}
-
-      <div className="p-4 flex items-center gap-3 border-b border-white/10 sticky top-0 bg-black/80 backdrop-blur-xl">
-
-        <div className="relative">
-          <img
-            src="/placeholder.jpg"
-            className="w-10 h-10 rounded-full object-cover"
-          />
-
-          <span
-            className={`absolute -right-1 -bottom-1 w-3 h-3 rounded-full border border-black ${
-              online ? "bg-green-400" : "bg-gray-500"
-            }`}
-          />
-        </div>
-
-        <div className="flex-1">
-          <p className="font-semibold text-lg">Match</p>
-
-          <p className="text-xs text-white/50">
-            {isTyping ? "Typing…" : online ? "Online now" : "Offline"}
-          </p>
-        </div>
-
-        <button
-          onClick={triggerMatchAnimation}
-          className="px-3 py-1 rounded-full bg-pink-500 text-xs font-semibold hover:bg-pink-600"
-        >
-          Matched 💘
-        </button>
-
-      </div>
-
-      {!verified && (
-        <div className="text-xs text-yellow-400 p-2 text-center border-b border-white/10">
-          Verify your profile to unlock voice and image messages
-        </div>
-      )}
-
-      {/* MESSAGES */}
 
       <div className="flex-1 overflow-y-auto px-4 py-6">
 
@@ -291,32 +291,7 @@ export default function ChatPage() {
 
       </div>
 
-      {/* INPUT */}
-
       <div className="p-4 border-t border-white/10 flex items-center gap-3">
-
-        <label
-          className={`cursor-pointer ${
-            !verified && "opacity-30 cursor-not-allowed"
-          }`}
-        >
-          📎
-          {verified && (
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImage}
-            />
-          )}
-        </label>
-
-        <button
-          onClick={toggleRecording}
-          className={!verified ? "opacity-30 cursor-not-allowed" : ""}
-        >
-          🎤
-        </button>
 
         <input
           value={text}
