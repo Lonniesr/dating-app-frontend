@@ -12,7 +12,6 @@ export function useChatSocket() {
 
     const socket = io(import.meta.env.VITE_API_URL, {
       withCredentials: true,
-      transports: ["websocket"],
       query: { userId: authUser.id },
     });
 
