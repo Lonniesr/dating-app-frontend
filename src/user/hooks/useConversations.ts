@@ -2,16 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
 export type ConversationPreview = {
-  conversationId: string;
+  id: string;
   user: {
     id: string;
     name: string;
     avatar?: string | null;
-    online?: boolean; // optional because backend may omit it
+    online?: boolean;
   };
   lastMessage?: {
-    text?: string;        // optional because backend may omit it
-    createdAt?: string;   // optional because backend may omit it
+    text?: string;
+    createdAt?: string;
   } | null;
   unreadCount: number;
 };
@@ -24,7 +24,13 @@ export function useConversations() {
         `${import.meta.env.VITE_API_URL}/api/conversations`,
         { withCredentials: true }
       );
-      return res.data as ConversationPreview[];
+
+      return res.data.map((c: any) => ({
+        id: c.conversationId,
+        user: c.user,
+        lastMessage: c.lastMessage,
+        unreadCount: c.unreadCount ?? 0
+      }));
     },
   });
 }
