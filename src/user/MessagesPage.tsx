@@ -1,239 +1,164 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import {
-  motion,
-  useMotionValue,
-  useTransform,
-  AnimatePresence,
-} from "framer-motion";
 
-import { useDiscover } from "../hooks/useDiscover";
-import { useSwipe } from "./hooks/useSwipe";
-import { getProfilePhoto } from "../utils/getProfilePhoto";
-
-const SWIPE_THRESHOLD = 120;
-
-type DiscoverUser = {
+type Message = {
   id: string;
-  name: string;
-  birthdate?: string;
-  location?: string;
-  latitude?: number;
-  longitude?: number;
-  photos?: string[];
+  senderId: string;
+  receiverId: string;
+  text?: string;
+  createdAt: string;
 };
-
-function calculateAge(birthdate?: string) {
-  if (!birthdate) return null;
-
-  const birth = new Date(birthdate);
-  const today = new Date();
-
-  let age = today.getFullYear() - birth.getFullYear();
-  const m = today.getMonth() - birth.getMonth();
-
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-    age--;
-  }
-
-  return age;
-}
-
-function calculateDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-) {
-  const R = 3958.8;
-
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
-
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-}
 
 export default function MessagesPage() {
   const { matchId } = useParams();
 
-  /* ---------------------------
-     CHAT VIEW
-  --------------------------- */
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  if (matchId) {
-    return (
-      <div className="p-6 text-white">
-        <h1 className="text-2xl font-bold mb-4">Chat</h1>
+  const API = import.meta.env.VITE_API_URL;
 
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-          <p className="text-white/60">
-            Conversation with match <span className="font-semibold">{matchId}</span>
-          </p>
-        </div>
-      </div>
-    );
+  /* ===============================
+     LOAD CONVERSATION + MESSAGES
+  =============================== */
+
+  async function loadMessages() {
+    try {
+      if (!matchId) return;
+
+      /* STEP 1 — GET OR CREATE CONVERSATION */
+
+      const convoRes = await fetch(
+        `${API}/api/conversations/${matchId}`,
+        { credentials: "include" }
+      );
+
+      if (!convoRes.ok) {
+        throw new Error("Failed to load conversation");
+      }
+
+      const conversation = await convoRes.json();
+
+      if (!conversation?.id) {
+        throw new Error("Conversation ID missing");
+      }
+
+      setConversationId(conversation.id);
+
+      /* STEP 2 — LOAD MESSAGES */
+
+      const msgRes = await fetch(
+        `${API}/api/messages/${conversation.id}`,
+        { credentials: "include" }
+      );
+
+      const data = await msgRes.json();
+
+      if (Array.isArray(data)) {
+        setMessages(data);
+      }
+
+      setLoading(false);
+
+    } catch (err) {
+      console.error("LOAD MESSAGES ERROR:", err);
+      setLoading(false);
+    }
   }
-
-  /* ---------------------------
-     DISCOVER VIEW
-  --------------------------- */
-
-  const { data, isLoading, refetch } = useDiscover();
-  const { swipe } = useSwipe();
-
-  const users: DiscoverUser[] = Array.isArray(data)
-    ? data
-    : (data as any)?.profiles ?? [];
-
-  const [index, setIndex] = useState(0);
-  const [swiping, setSwiping] = useState(false);
-
-  const [location, setLocation] = useState<{
-    lat: number;
-    lon: number;
-  } | null>(null);
-
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 0, 200], [-15, 0, 15]);
-
-  const likeOpacity = useTransform(x, [0, 150], [0, 1]);
-  const nopeOpacity = useTransform(x, [-150, 0], [1, 0]);
 
   useEffect(() => {
-    setIndex(0);
-  }, [users.length]);
+    loadMessages();
+  }, [matchId]);
 
-  const current = users[index];
-  const next = users[index + 1];
+  /* ===============================
+     SEND MESSAGE
+  =============================== */
 
-  const photo = getProfilePhoto(current?.photos);
-  const nextPhoto = getProfilePhoto(next?.photos);
+  async function sendMessage() {
+    if (!input.trim() || !conversationId) return;
 
-  const age = calculateAge(current?.birthdate);
+    try {
+      const res = await fetch(
+        `${API}/api/messages/${conversationId}`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: input,
+          }),
+        }
+      );
 
-  const distance =
-    location &&
-    current?.latitude != null &&
-    current?.longitude != null
-      ? calculateDistance(
-          location.lat,
-          location.lon,
-          current.latitude,
-          current.longitude
-        ).toFixed(1)
-      : null;
+      const message = await res.json();
 
-  function handleSwipe(direction: "left" | "right") {
-    if (!current || swiping) return;
+      setMessages((prev) => [...prev, message]);
+      setInput("");
 
-    setSwiping(true);
-
-    swipe(current.id, direction === "right");
-
-    setTimeout(() => {
-      setIndex((prev) => prev + 1);
-      x.set(0);
-      setSwiping(false);
-
-      if (index >= users.length - 3) {
-        refetch();
-      }
-    }, 200);
+    } catch (err) {
+      console.error("SEND MESSAGE ERROR:", err);
+    }
   }
 
-  if (isLoading) {
-    return (
-      <div className="h-[520px] flex items-center justify-center">
-        <p className="text-white/60">Loading people…</p>
-      </div>
-    );
-  }
+  /* ===============================
+     UI
+  =============================== */
 
-  if (!users.length) {
+  if (loading) {
     return (
-      <div className="h-[520px] flex items-center justify-center">
-        <p className="text-white/60">No people found nearby.</p>
+      <div className="p-6 text-white">
+        Loading conversation...
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative w-[380px] h-[520px]">
+    <div className="flex flex-col h-full text-white">
 
-        {next && (
-          <motion.img
-            src={nextPhoto}
-            className="absolute w-full h-full object-cover rounded-2xl"
-            initial={{ scale: 0.95, opacity: 0.6 }}
-            animate={{ scale: 0.95, opacity: 0.6 }}
-          />
+      {/* MESSAGE LIST */}
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+
+        {messages.length === 0 && (
+          <p className="text-white/50">
+            No messages yet. Say hello 👋
+          </p>
         )}
 
-        <AnimatePresence>
-          {current && (
-            <motion.div
-              key={current.id}
-              className="absolute w-full h-full rounded-2xl overflow-hidden shadow-xl"
-              style={{ x, rotate }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.9}
-              onDragEnd={() => {
-                const offset = x.get();
-
-                if (offset > SWIPE_THRESHOLD) {
-                  handleSwipe("right");
-                } else if (offset < -SWIPE_THRESHOLD) {
-                  handleSwipe("left");
-                } else {
-                  x.set(0);
-                }
-              }}
-            >
-
-              <img
-                src={photo}
-                className="w-full h-full object-cover"
-              />
-
-              <motion.div
-                style={{ opacity: likeOpacity }}
-                className="absolute top-6 left-6 text-green-400 text-3xl font-bold"
-              >
-                LIKE
-              </motion.div>
-
-              <motion.div
-                style={{ opacity: nopeOpacity }}
-                className="absolute top-6 right-6 text-red-400 text-3xl font-bold"
-              >
-                NOPE
-              </motion.div>
-
-              <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
-                <h2 className="text-xl font-bold">
-                  {current.name}
-                  {age !== null && `, ${age}`}
-                </h2>
-
-                <p className="text-sm opacity-80">
-                  {current.location || "Unknown location"}
-                  {distance && ` • ${distance} miles away`}
-                </p>
-              </div>
-
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className="bg-white/10 p-3 rounded-lg max-w-xs"
+          >
+            {msg.text}
+          </div>
+        ))}
 
       </div>
+
+      {/* MESSAGE INPUT */}
+
+      <div className="p-4 border-t border-white/10 flex gap-2">
+
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type a message..."
+          className="flex-1 bg-white/10 rounded-lg px-3 py-2 outline-none"
+        />
+
+        <button
+          onClick={sendMessage}
+          className="bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold"
+        >
+          Send
+        </button>
+
+      </div>
+
     </div>
   );
 }
