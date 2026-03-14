@@ -38,7 +38,7 @@ function isMine(m: Message, meId: string | null) {
 
 export default function ChatPage() {
   const { id } = useParams();
-  const otherUserId = id;
+  const conversationIdParam = id;
 
   const API = import.meta.env.VITE_API_URL;
 
@@ -64,27 +64,14 @@ export default function ChatPage() {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* =========================
-     LOAD / CREATE CONVERSATION
+     SET CONVERSATION FROM URL
   ========================= */
 
   useEffect(() => {
-    async function loadConversation() {
-      if (!otherUserId) return;
-
-      try {
-        const res = await axios.get(
-          `${API}/api/conversations/${otherUserId}`,
-          { withCredentials: true }
-        );
-
-        setConversationId(res.data.id);
-      } catch (err) {
-        console.error("Failed to load conversation", err);
-      }
+    if (conversationIdParam) {
+      setConversationId(conversationIdParam);
     }
-
-    loadConversation();
-  }, [otherUserId]);
+  }, [conversationIdParam]);
 
   /* =========================
      AUTO SCROLL
@@ -99,26 +86,20 @@ export default function ChatPage() {
   ========================= */
 
   useEffect(() => {
-    if (!socket || !otherUserId) return;
+    if (!socket || !conversationId) return;
 
-    socket.emit("conversation:join", { otherUserId });
+    socket.emit("conversation:join", { conversationId });
 
-    socket.on("typing:start", ({ fromUserId }) => {
-      if (fromUserId === otherUserId) {
-        setIsTyping(true);
-      }
+    socket.on("typing:start", () => {
+      setIsTyping(true);
     });
 
-    socket.on("typing:stop", ({ fromUserId }) => {
-      if (fromUserId === otherUserId) {
-        setIsTyping(false);
-      }
+    socket.on("typing:stop", () => {
+      setIsTyping(false);
     });
 
-    socket.on("user:presence", ({ userId, online }) => {
-      if (userId === otherUserId) {
-        setOnline(online);
-      }
+    socket.on("user:presence", ({ online }) => {
+      setOnline(online);
     });
 
     return () => {
@@ -126,21 +107,21 @@ export default function ChatPage() {
       socket.off("typing:stop");
       socket.off("user:presence");
     };
-  }, [socket, otherUserId]);
+  }, [socket, conversationId]);
 
   function handleTyping(value: string) {
     setText(value);
 
-    if (!socket || !otherUserId) return;
+    if (!socket || !conversationId) return;
 
-    socket.emit("typing:start", { toUserId: otherUserId });
+    socket.emit("typing:start", { conversationId });
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("typing:stop", { toUserId: otherUserId });
+      socket.emit("typing:stop", { conversationId });
     }, 1200);
   }
 
@@ -168,7 +149,7 @@ export default function ChatPage() {
       setAudioPreview(null);
       setReplyTo(null);
 
-      socket?.emit("typing:stop", { toUserId: otherUserId });
+      socket?.emit("typing:stop", { conversationId });
 
     } catch (err) {
       console.error("Send message failed", err);

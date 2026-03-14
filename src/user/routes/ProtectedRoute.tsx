@@ -8,14 +8,11 @@ export default function ProtectedRoute() {
   /* WAIT FOR AUTH TO FINISH */
 
   if (isLoading) {
-    return null;
-  }
-
-  /* AUTH NOT RESOLVED YET */
-  /* Prevent redirect flicker when refreshing deep routes like /user/messages/:id */
-
-  if (authUser === undefined) {
-    return null;
+    return (
+      <div className="flex items-center justify-center h-screen text-white">
+        Loading...
+      </div>
+    );
   }
 
   /* NOT LOGGED IN */
