@@ -10,7 +10,9 @@ export default function BasicStep({ next }: BasicStepProps) {
 
   const [step, setStep] = useState(1);
 
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+
   const [birthdate, setBirthdate] = useState("");
 
   const [gender, setGender] = useState("");
@@ -52,11 +54,40 @@ export default function BasicStep({ next }: BasicStepProps) {
       );
     });
 
+  const checkUsername = async (value: string) => {
+    if (value.length < 3) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/check-username?username=${value}`
+      );
+
+      const data = await res.json();
+
+      setUsernameAvailable(data.available);
+    } catch (err) {
+      console.error("Username check failed:", err);
+    }
+  };
+
   const submit = async () => {
     setError(null);
 
-    if (!name || !birthdate) {
-      setError("Please enter your name and birthdate.");
+    if (!username || !birthdate) {
+      setError("Please enter a username and birthdate.");
+      return;
+    }
+
+    if (username.length < 3) {
+      setError("Username must be at least 3 characters.");
+      return;
+    }
+
+    if (usernameAvailable === false) {
+      setError("Username already taken.");
       return;
     }
 
@@ -86,7 +117,7 @@ export default function BasicStep({ next }: BasicStepProps) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: name.trim(),
+            username: username.trim(),
             birthdate,
             gender,
             race,
@@ -123,8 +154,18 @@ export default function BasicStep({ next }: BasicStepProps) {
     setError(null);
 
     if (step === 1) {
-      if (!name || !birthdate) {
-        setError("Please enter your name and birthdate.");
+      if (!username || !birthdate) {
+        setError("Please enter a username and birthdate.");
+        return;
+      }
+
+      if (username.length < 3) {
+        setError("Username must be at least 3 characters.");
+        return;
+      }
+
+      if (usernameAvailable === false) {
+        setError("Username already taken.");
         return;
       }
     }
@@ -163,11 +204,33 @@ export default function BasicStep({ next }: BasicStepProps) {
         <>
           <input
             type="text"
-            placeholder="Full Name"
-            className="w-full p-3 mb-4 rounded bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            placeholder="Choose a username"
+            className="w-full p-3 mb-2 rounded bg-white/10 text-white border border-white/20 focus:border-yellow-500 outline-none"
+            value={username}
+            onChange={(e) => {
+              let value = e.target.value.toLowerCase();
+              value = value.replace(/[^a-z0-9_]/g, "");
+              if (value.length > 20) return;
+              setUsername(value);
+              checkUsername(value);
+            }}
           />
+
+          {username && username.length < 3 && (
+            <div className="text-xs text-red-400 mb-2">
+              Username must be at least 3 characters
+            </div>
+          )}
+
+          {usernameAvailable !== null && username.length >= 3 && (
+            <div className="text-xs mb-4">
+              {usernameAvailable ? (
+                <span className="text-green-400">✓ Username available</span>
+              ) : (
+                <span className="text-red-400">✗ Username taken</span>
+              )}
+            </div>
+          )}
 
           <div className="mb-6">
             <label className="block text-sm text-white/60 mb-1">
@@ -194,9 +257,7 @@ export default function BasicStep({ next }: BasicStepProps) {
             value={gender}
             onChange={(e) => setGender(e.target.value)}
           >
-            <option value="" className="text-black">
-              Select gender
-            </option>
+            <option value="" className="text-black">Select gender</option>
             <option value="male" className="text-black">♂ Male</option>
             <option value="female" className="text-black">♀ Female</option>
             <option value="other" className="text-black">⚧ Other</option>

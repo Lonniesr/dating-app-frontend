@@ -34,10 +34,6 @@ function isMine(m: Message, meId: string | null) {
 
 export default function ChatPage() {
 
-  /* =========================
-     ROUTE PARAM (OTHER USER)
-  ========================= */
-
   const { id: otherUserId } = useParams<{ id: string }>();
   const userId = otherUserId ?? null;
 
@@ -48,10 +44,19 @@ export default function ChatPage() {
   const { authUser } = useUserAuth();
   const meId = authUser?.id ?? null;
 
-  const {
-    data: messages,
-    refetch,
-  } = useUserChat(userId);
+  const { data: messages, refetch } = useUserChat(userId);
+
+  /* =========================
+     LIVE MESSAGE STATE
+  ========================= */
+
+  const [liveMessages, setLiveMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    if (messages) {
+      setLiveMessages(messages);
+    }
+  }, [messages]);
 
   const [text, setText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -65,39 +70,50 @@ export default function ChatPage() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [liveMessages]);
 
   /* =========================
-     SOCKET EVENTS
+     SOCKET ROOM JOIN
   ========================= */
 
   useEffect(() => {
     if (!socket || !userId) return;
 
-    socket.emit("conversation:join", { userId });
+    socket.emit("conversation:join", { otherUserId: userId });
 
     socket.on("typing:start", () => setIsTyping(true));
     socket.on("typing:stop", () => setIsTyping(false));
 
+    /* LIVE MESSAGE RECEIVE */
+
+    socket.on("message:new", (message: Message) => {
+      setLiveMessages((prev) => [...prev, message]);
+    });
+
     return () => {
       socket.off("typing:start");
       socket.off("typing:stop");
+      socket.off("message:new");
     };
   }, [socket, userId]);
+
+  /* =========================
+     TYPING HANDLER
+  ========================= */
 
   function handleTyping(value: string) {
     setText(value);
 
     if (!socket || !userId) return;
 
-    socket.emit("typing:start", { userId });
+    socket.emit("typing:start", { toUserId: userId });
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("typing:stop", { userId });
+      socket.emit("typing:stop", { toUserId: userId });
     }, 1200);
   }
 
@@ -118,13 +134,15 @@ export default function ChatPage() {
         { withCredentials: true }
       );
 
-      console.log("message sent:", res.data);
+      const newMessage = res.data;
+
+      /* instantly add locally */
+
+      setLiveMessages((prev) => [...prev, newMessage]);
 
       setText("");
 
-      await refetch(); // refresh messages immediately
-
-      socket?.emit("typing:stop", { userId });
+      socket?.emit("typing:stop", { toUserId: userId });
 
     } catch (err: any) {
 
@@ -136,15 +154,28 @@ export default function ChatPage() {
     }
   }
 
+  /* =========================
+     MARK MESSAGES AS READ
+  ========================= */
+
+  useEffect(() => {
+    if (!socket || !userId) return;
+
+    socket.emit("message:read", {
+      otherUserId: userId,
+    });
+
+  }, [socket, userId, liveMessages]);
+
   const lastMessage =
-    (messages?.[messages.length - 1] as Message | undefined) ?? undefined;
+    liveMessages?.[liveMessages.length - 1];
 
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
       <div className="flex-1 overflow-y-auto px-4 py-6">
 
-        {messages?.map((msg: Message) => {
+        {liveMessages?.map((msg: Message) => {
           const mine = isMine(msg, meId);
 
           return (

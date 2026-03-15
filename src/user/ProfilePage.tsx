@@ -163,7 +163,7 @@ export default function ProfilePage() {
 
           <div>
             <div className="flex items-center gap-2">
-              <p className="font-bold text-xl">{authUser.name}</p>
+              <p className="font-bold text-xl">{authUser.username}</p>
 
               {authUser.verified && (
                 <span className="text-blue-400 text-sm font-semibold">
