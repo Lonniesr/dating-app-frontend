@@ -5,7 +5,7 @@ import {
   type MouseEvent,
 } from "react";
 import { useParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import axios from "axios";
 
 import { useUserChat } from "./hooks/useUserChat";
@@ -34,8 +34,12 @@ function isMine(m: Message, meId: string | null) {
 
 export default function ChatPage() {
 
-  const { id } = useParams<{ id: string }>();
-  const conversationId = id ?? null;
+  /* =========================
+     ROUTE PARAM (OTHER USER)
+  ========================= */
+
+  const { id: otherUserId } = useParams<{ id: string }>();
+  const userId = otherUserId ?? null;
 
   const API_RAW = import.meta.env.VITE_API_URL || "";
   const API = API_RAW.endsWith("/api") ? API_RAW : `${API_RAW}/api`;
@@ -47,7 +51,7 @@ export default function ChatPage() {
   const {
     data: messages,
     refetch,
-  } = useUserChat(conversationId);
+  } = useUserChat(userId);
 
   const [text, setText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -68,9 +72,9 @@ export default function ChatPage() {
   ========================= */
 
   useEffect(() => {
-    if (!socket || !conversationId) return;
+    if (!socket || !userId) return;
 
-    socket.emit("conversation:join", { conversationId });
+    socket.emit("conversation:join", { userId });
 
     socket.on("typing:start", () => setIsTyping(true));
     socket.on("typing:stop", () => setIsTyping(false));
@@ -79,21 +83,21 @@ export default function ChatPage() {
       socket.off("typing:start");
       socket.off("typing:stop");
     };
-  }, [socket, conversationId]);
+  }, [socket, userId]);
 
   function handleTyping(value: string) {
     setText(value);
 
-    if (!socket || !conversationId) return;
+    if (!socket || !userId) return;
 
-    socket.emit("typing:start", { conversationId });
+    socket.emit("typing:start", { userId });
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("typing:stop", { conversationId });
+      socket.emit("typing:stop", { userId });
     }, 1200);
   }
 
@@ -102,11 +106,11 @@ export default function ChatPage() {
   ========================= */
 
   async function sendMessage() {
-    if (!text.trim() || !conversationId) return;
+    if (!text.trim() || !userId) return;
 
     try {
 
-      const url = `${API}/messages/${conversationId}`;
+      const url = `${API}/messages/${userId}`;
 
       const res = await axios.post(
         url,
@@ -120,17 +124,14 @@ export default function ChatPage() {
 
       await refetch(); // refresh messages immediately
 
-      socket?.emit("typing:stop", { conversationId });
+      socket?.emit("typing:stop", { userId });
 
     } catch (err: any) {
 
       console.error("Send message failed", err);
 
-      if (err.response?.status === 404) {
-        console.error(
-          "Conversation does not exist in database:",
-          conversationId
-        );
+      if (err.response) {
+        console.error("Server response:", err.response.data);
       }
     }
   }
