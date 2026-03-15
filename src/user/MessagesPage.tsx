@@ -43,8 +43,8 @@ export default function MessagesPage() {
 
         return (
           <div
-            key={c.id}
-            onClick={() => navigate(`/user/messages/${c.id}`)}
+            key={c.conversationId}
+            onClick={() => navigate(`/user/messages/${c.conversationId}`)}
             className="flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-xl hover:bg-white/10 cursor-pointer"
           >
             <img
@@ -59,6 +59,13 @@ export default function MessagesPage() {
                 {c.lastMessage?.text ?? "Say hello 👋"}
               </p>
             </div>
+
+            {/* UNREAD BADGE */}
+            {c.unreadCount > 0 && (
+              <div className="bg-pink-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                {c.unreadCount}
+              </div>
+            )}
           </div>
         );
       })}

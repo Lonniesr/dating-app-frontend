@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
 export type ConversationPreview = {
-  id: string;
+  conversationId: string;
   user: {
     id: string;
     name: string;
@@ -26,10 +26,10 @@ export function useConversations() {
       );
 
       return res.data.map((c: any) => ({
-        id: c.id ?? c.conversationId,   // ensure valid ID
+        conversationId: c.conversationId ?? c.id,
         user: c.user,
         lastMessage: c.lastMessage,
-        unreadCount: c.unreadCount ?? 0
+        unreadCount: c.unreadCount ?? 0,
       }));
     },
   });
