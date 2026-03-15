@@ -26,7 +26,7 @@ export function useConversations() {
       );
 
       return res.data.map((c: any) => ({
-        id: c.conversationId,
+        id: c.id ?? c.conversationId,   // ensure valid ID
         user: c.user,
         lastMessage: c.lastMessage,
         unreadCount: c.unreadCount ?? 0

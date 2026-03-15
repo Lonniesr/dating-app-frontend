@@ -60,6 +60,9 @@ function calculateDistance(
 
 export default function DiscoverFeed() {
   const { data, isLoading, refetch } = useDiscover();
+
+  console.log("discover data:", data);
+
   const { swipe } = useSwipe();
 
   const users: DiscoverUser[] = Array.isArray(data)
@@ -67,7 +70,6 @@ export default function DiscoverFeed() {
     : (data as any)?.profiles ?? [];
 
   const [index, setIndex] = useState(0);
-  const [matchUser, setMatchUser] = useState<DiscoverUser | null>(null);
   const [swiping, setSwiping] = useState(false);
 
   const [location, setLocation] = useState<{
@@ -80,6 +82,24 @@ export default function DiscoverFeed() {
 
   const likeOpacity = useTransform(x, [0, 150], [0, 1]);
   const nopeOpacity = useTransform(x, [-150, 0], [1, 0]);
+
+  /* GET USER LOCATION */
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+        });
+      },
+      () => {
+        console.warn("Location permission denied");
+      }
+    );
+  }, []);
 
   useEffect(() => {
     setIndex(0);
@@ -106,22 +126,22 @@ export default function DiscoverFeed() {
       : null;
 
   function handleSwipe(direction: "left" | "right") {
-  if (!current || swiping) return;
+    if (!current || swiping) return;
 
-  setSwiping(true);
+    setSwiping(true);
 
-  swipe(current.id, direction === "right");
+    swipe(current.id, direction === "right");
 
-  setTimeout(() => {
-    setIndex((prev) => prev + 1);
-    x.set(0);
-    setSwiping(false);
+    setTimeout(() => {
+      setIndex((prev) => prev + 1);
+      x.set(0);
+      setSwiping(false);
 
-    if (index >= users.length - 3) {
-      refetch();
-    }
-  }, 200);
-}
+      if (index + 1 >= users.length - 3) {
+        refetch();
+      }
+    }, 200);
+  }
 
   if (isLoading) {
     return (
@@ -141,6 +161,9 @@ export default function DiscoverFeed() {
 
   return (
     <div className="flex flex-col items-center">
+
+      {/* CARD STACK */}
+
       <div className="relative w-[380px] h-[520px]">
 
         {next && (
@@ -173,7 +196,6 @@ export default function DiscoverFeed() {
                 }
               }}
             >
-
               <img
                 src={photo}
                 className="w-full h-full object-cover"
@@ -210,6 +232,37 @@ export default function DiscoverFeed() {
         </AnimatePresence>
 
       </div>
+
+      {/* ACTION BUTTONS */}
+
+      <div className="flex gap-6 mt-6">
+
+        {/* PASS */}
+        <button
+          onClick={() => handleSwipe("left")}
+          className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-red-400 text-xl hover:bg-red-500/20"
+        >
+          ✕
+        </button>
+
+        {/* SUPER LIKE */}
+        <button
+          onClick={() => handleSwipe("right")}
+          className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-blue-400 text-xl hover:bg-blue-500/20"
+        >
+          ★
+        </button>
+
+        {/* LIKE */}
+        <button
+          onClick={() => handleSwipe("right")}
+          className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-green-400 text-xl hover:bg-green-500/20"
+        >
+          ♥
+        </button>
+
+      </div>
+
     </div>
   );
 }

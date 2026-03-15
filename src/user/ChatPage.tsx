@@ -3,7 +3,6 @@ import {
   useEffect,
   useRef,
   type MouseEvent,
-  type ChangeEvent,
 } from "react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,9 +19,6 @@ interface Message {
   receiverId: string;
   createdAt: string;
   read: boolean;
-  imageUrl?: string;
-  audioUrl?: string;
-  replyToId?: string | null;
 }
 
 function formatTime(date: string) {
@@ -37,41 +33,27 @@ function isMine(m: Message, meId: string | null) {
 }
 
 export default function ChatPage() {
-  const { id } = useParams();
-  const conversationIdParam = id;
 
-  const API = import.meta.env.VITE_API_URL;
+  const { id } = useParams<{ id: string }>();
+  const conversationId = id ?? null;
+
+  const API_RAW = import.meta.env.VITE_API_URL || "";
+  const API = API_RAW.endsWith("/api") ? API_RAW : `${API_RAW}/api`;
 
   const { socket } = useChatSocket();
   const { authUser } = useUserAuth();
   const meId = authUser?.id ?? null;
 
-  const verified = authUser?.verified;
+  const {
+    data: messages,
+    refetch,
+  } = useUserChat(conversationId);
 
-  const [conversationId, setConversationId] = useState<string | null>(null);
-
-  const { data: messages } = useUserChat(conversationId || null);
-
-  const [isTyping, setIsTyping] = useState(false);
-  const [online, setOnline] = useState(false);
   const [text, setText] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [audioPreview, setAudioPreview] = useState<string | null>(null);
-  const [replyTo, setReplyTo] = useState<Message | null>(null);
-  const [matchPulse, setMatchPulse] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  /* =========================
-     SET CONVERSATION FROM URL
-  ========================= */
-
-  useEffect(() => {
-    if (conversationIdParam) {
-      setConversationId(conversationIdParam);
-    }
-  }, [conversationIdParam]);
 
   /* =========================
      AUTO SCROLL
@@ -90,22 +72,12 @@ export default function ChatPage() {
 
     socket.emit("conversation:join", { conversationId });
 
-    socket.on("typing:start", () => {
-      setIsTyping(true);
-    });
-
-    socket.on("typing:stop", () => {
-      setIsTyping(false);
-    });
-
-    socket.on("user:presence", ({ online }) => {
-      setOnline(online);
-    });
+    socket.on("typing:start", () => setIsTyping(true));
+    socket.on("typing:stop", () => setIsTyping(false));
 
     return () => {
       socket.off("typing:start");
       socket.off("typing:stop");
-      socket.off("user:presence");
     };
   }, [socket, conversationId]);
 
@@ -133,52 +105,34 @@ export default function ChatPage() {
     if (!text.trim() || !conversationId) return;
 
     try {
-      await axios.post(
-        `${API}/api/messages/${conversationId}`,
-        {
-          text: text.trim(),
-          imageUrl: imagePreview || undefined,
-          audioUrl: audioPreview || undefined,
-          replyToId: replyTo?.id,
-        },
+
+      const url = `${API}/messages/${conversationId}`;
+
+      const res = await axios.post(
+        url,
+        { text: text.trim() },
         { withCredentials: true }
       );
 
+      console.log("message sent:", res.data);
+
       setText("");
-      setImagePreview(null);
-      setAudioPreview(null);
-      setReplyTo(null);
+
+      await refetch(); // refresh messages immediately
 
       socket?.emit("typing:stop", { conversationId });
 
-    } catch (err) {
+    } catch (err: any) {
+
       console.error("Send message failed", err);
+
+      if (err.response?.status === 404) {
+        console.error(
+          "Conversation does not exist in database:",
+          conversationId
+        );
+      }
     }
-  }
-
-  function handleImage(e: ChangeEvent<HTMLInputElement>) {
-    if (!verified) return;
-
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const url = URL.createObjectURL(file);
-    setImagePreview(url);
-  }
-
-  function toggleRecording() {
-    if (!verified) return;
-
-    if (!audioPreview) {
-      setAudioPreview("/fake-audio.mp3");
-    } else {
-      setAudioPreview(null);
-    }
-  }
-
-  function triggerMatchAnimation() {
-    setMatchPulse(true);
-    setTimeout(() => setMatchPulse(false), 800);
   }
 
   const lastMessage =
@@ -186,17 +140,6 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full bg-black text-white">
-
-      <AnimatePresence>
-        {matchPulse && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.4 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-pink-500/40 pointer-events-none"
-          />
-        )}
-      </AnimatePresence>
 
       <div className="flex-1 overflow-y-auto px-4 py-6">
 
@@ -213,10 +156,8 @@ export default function ChatPage() {
               }`}
               onContextMenu={(e: MouseEvent) => {
                 e.preventDefault();
-                setReplyTo(msg);
               }}
             >
-
               <div className="max-w-[70%]">
 
                 <div
@@ -226,38 +167,18 @@ export default function ChatPage() {
                       : "bg-white/10 text-white rounded-bl-none"
                   }`}
                 >
-
-                  {msg.imageUrl && (
-                    <img
-                      src={msg.imageUrl}
-                      className="rounded-xl mb-2 max-h-64 object-cover"
-                    />
-                  )}
-
-                  {msg.audioUrl && (
-                    <audio
-                      controls
-                      src={msg.audioUrl}
-                      className="mb-2 w-full"
-                    />
-                  )}
-
                   {msg.text && <p>{msg.text}</p>}
-
                 </div>
 
                 <div className="flex items-center gap-2 text-[10px] text-white/40 mt-1">
-
                   <span>{formatTime(msg.createdAt)}</span>
 
                   {mine && msg.read && msg.id === lastMessage?.id && (
                     <span>Seen</span>
                   )}
-
                 </div>
 
               </div>
-
             </motion.div>
           );
         })}

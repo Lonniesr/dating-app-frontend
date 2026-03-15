@@ -14,11 +14,11 @@ type DiscoverProfile = {
 
 type DiscoverResponse = {
   profiles: DiscoverProfile[];
-  nextCursor: number;
+  nextCursor: number | null;
 };
 
 export function useDiscover() {
-  return useInfiniteQuery<DiscoverResponse>({
+  const query = useInfiniteQuery<DiscoverResponse>({
     queryKey: ["discover"],
 
     initialPageParam: 0,
@@ -42,4 +42,14 @@ export function useDiscover() {
     staleTime: 30000,
     refetchOnWindowFocus: false,
   });
+
+  /* Flatten all pages into a single array */
+
+  const profiles =
+    query.data?.pages.flatMap((page) => page.profiles) ?? [];
+
+  return {
+    ...query,
+    data: profiles,
+  };
 }
