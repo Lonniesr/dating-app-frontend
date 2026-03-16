@@ -62,7 +62,7 @@ export default function BasicStep({ next }: BasicStepProps) {
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/users/check-username?username=${value}`
+        `${import.meta.env.VITE_API_URL}/api/user/check-username?username=${value}`
       );
 
       const data = await res.json();
