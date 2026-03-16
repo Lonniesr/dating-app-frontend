@@ -1,10 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  motion,
-  useMotionValue,
-  useTransform,
-  AnimatePresence,
-} from "framer-motion";
+import { motion, useMotionValue, useTransform } from "framer-motion";
 
 import { useDiscover } from "../../hooks/useDiscover";
 import { useSwipe } from "../hooks/useSwipe";
@@ -31,9 +26,7 @@ function calculateAge(birthdate?: string) {
   let age = today.getFullYear() - birth.getFullYear();
   const m = today.getMonth() - birth.getMonth();
 
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-    age--;
-  }
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
 
   return age;
 }
@@ -59,20 +52,21 @@ function calculateDistance(
 }
 
 export default function DiscoverFeed() {
-  const { data, isLoading, refetch } = useDiscover();
+  const { data, isLoading } = useDiscover();
   const { swipe } = useSwipe();
 
-  const users: DiscoverUser[] = Array.isArray(data)
-    ? data
-    : (data as any)?.profiles ?? [];
+  const [feed, setFeed] = useState<DiscoverUser[]>([]);
+  const [busy, setBusy] = useState(false);
 
-  const [index, setIndex] = useState(0);
-  const [swiping, setSwiping] = useState(false);
+  useEffect(() => {
+    if (data && data.length && feed.length === 0) {
+      setFeed(data);
+    }
+  }, [data]);
 
-  const [location, setLocation] = useState<{
-    lat: number;
-    lon: number;
-  } | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(
+    null
+  );
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 0, 200], [-15, 0, 15]);
@@ -84,24 +78,17 @@ export default function DiscoverFeed() {
     if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      (pos) =>
         setLocation({
           lat: pos.coords.latitude,
           lon: pos.coords.longitude,
-        });
-      },
-      () => {
-        console.warn("Location permission denied");
-      }
+        }),
+      () => console.warn("Location permission denied")
     );
   }, []);
 
-  useEffect(() => {
-    setIndex(0);
-  }, [users.length]);
-
-  const current = users[index];
-  const next = users[index + 1];
+  const current = feed[0];
+  const next = feed[1];
 
   const photo = getProfilePhoto(current?.photos);
   const nextPhoto = getProfilePhoto(next?.photos);
@@ -120,31 +107,22 @@ export default function DiscoverFeed() {
         ).toFixed(1)
       : null;
 
-  function handleSwipe(direction: "left" | "right") {
-    if (!current || swiping) return;
+  async function handleSwipe(direction: "left" | "right") {
+    if (!current || busy) return;
 
-    setSwiping(true);
+    setBusy(true);
 
     swipe(current.id, direction === "right");
 
-    const flyAway = direction === "right" ? 500 : -500;
+    const fly = direction === "right" ? 500 : -500;
 
-    x.set(flyAway);
+    x.set(fly);
 
     setTimeout(() => {
-      setIndex((prev) => {
-        const nextIndex = prev + 1;
-
-        if (nextIndex >= users.length - 3) {
-          refetch();
-        }
-
-        return nextIndex;
-      });
-
+      setFeed((prev) => prev.slice(1));
       x.set(0);
-      setSwiping(false);
-    }, 250);
+      setBusy(false);
+    }, 160);
   }
 
   if (isLoading) {
@@ -155,10 +133,10 @@ export default function DiscoverFeed() {
     );
   }
 
-  if (!users.length) {
+  if (!current) {
     return (
       <div className="h-[520px] flex items-center justify-center">
-        <p className="text-white/60">No people found nearby.</p>
+        <p className="text-white/60">No more profiles.</p>
       </div>
     );
   }
@@ -168,93 +146,80 @@ export default function DiscoverFeed() {
       <div className="relative w-[380px] h-[520px]">
 
         {next && (
-          <motion.img
-            key={next.id}
+          <img
             src={nextPhoto}
-            className="absolute w-full h-full object-cover rounded-2xl"
-            initial={{ scale: 0.95, opacity: 0.6 }}
-            animate={{ scale: 0.97, opacity: 0.7 }}
+            className="absolute w-full h-full object-cover rounded-2xl opacity-60 scale-95"
           />
         )}
 
-        <AnimatePresence>
-          {current && (
-            <motion.div
-              key={current.id}
-              className="absolute w-full h-full rounded-2xl overflow-hidden shadow-xl"
-              style={{ x, rotate }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.9}
-              onDragEnd={() => {
-                const offset = x.get();
+        <motion.div
+          key={current.id}
+          className="absolute w-full h-full rounded-2xl overflow-hidden shadow-xl"
+          style={{ x, rotate }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.9}
+          onDragEnd={() => {
+            const offset = x.get();
 
-                if (offset > SWIPE_THRESHOLD) {
-                  handleSwipe("right");
-                } else if (offset < -SWIPE_THRESHOLD) {
-                  handleSwipe("left");
-                } else {
-                  x.set(0);
-                }
-              }}
-            >
-              <img
-                key={current.id}
-                src={photo}
-                className="w-full h-full object-cover"
-              />
+            if (offset > SWIPE_THRESHOLD) handleSwipe("right");
+            else if (offset < -SWIPE_THRESHOLD) handleSwipe("left");
+            else x.set(0);
+          }}
+        >
+          <img src={photo} className="w-full h-full object-cover" />
 
-              <motion.div
-                style={{ opacity: likeOpacity }}
-                className="absolute top-6 left-6 text-green-400 text-3xl font-bold"
-              >
-                LIKE
-              </motion.div>
+          <motion.div
+            style={{ opacity: likeOpacity }}
+            className="absolute top-6 left-6 text-green-400 text-3xl font-bold"
+          >
+            LIKE
+          </motion.div>
 
-              <motion.div
-                style={{ opacity: nopeOpacity }}
-                className="absolute top-6 right-6 text-red-400 text-3xl font-bold"
-              >
-                NOPE
-              </motion.div>
+          <motion.div
+            style={{ opacity: nopeOpacity }}
+            className="absolute top-6 right-6 text-red-400 text-3xl font-bold"
+          >
+            NOPE
+          </motion.div>
 
-              <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
-                <h2 className="text-xl font-bold">
-                  {current.name}
-                  {age !== null && `, ${age}`}
-                </h2>
+          <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
+            <h2 className="text-xl font-bold">
+              {current.name}
+              {age !== null && `, ${age}`}
+            </h2>
 
-                <p className="text-sm opacity-80">
-                  {current.location || "Unknown location"}
-                  {distance && ` • ${distance} miles away`}
-                </p>
-              </div>
-
-            </motion.div>
-          )}
-        </AnimatePresence>
+            <p className="text-sm opacity-80">
+              {current.location || "Unknown location"}
+              {distance && ` • ${distance} miles away`}
+            </p>
+          </div>
+        </motion.div>
 
       </div>
 
       <div className="flex gap-6 mt-6">
 
         <button
+          disabled={busy}
           onClick={() => handleSwipe("left")}
-          className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-red-400 text-xl hover:bg-red-500/20"
+          className="w-14 h-14 rounded-full bg-white/10 text-red-400 text-xl"
         >
           ✕
         </button>
 
         <button
+          disabled={busy}
           onClick={() => handleSwipe("right")}
-          className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-blue-400 text-xl hover:bg-blue-500/20"
+          className="w-16 h-16 rounded-full bg-white/10 text-blue-400 text-xl"
         >
           ★
         </button>
 
         <button
+          disabled={busy}
           onClick={() => handleSwipe("right")}
-          className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-green-400 text-xl hover:bg-green-500/20"
+          className="w-14 h-14 rounded-full bg-white/10 text-green-400 text-xl"
         >
           ♥
         </button>

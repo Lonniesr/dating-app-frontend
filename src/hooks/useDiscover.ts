@@ -1,4 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 type DiscoverProfile = {
   id: string;
@@ -20,7 +21,6 @@ type DiscoverResponse = {
 export function useDiscover() {
   const query = useInfiniteQuery<DiscoverResponse>({
     queryKey: ["discover"],
-
     initialPageParam: 0,
 
     queryFn: async ({ pageParam }) => {
@@ -43,10 +43,11 @@ export function useDiscover() {
     refetchOnWindowFocus: false,
   });
 
-  /* Flatten all pages into a single array */
+  /* Memoize flattened pages so reference stays stable */
 
-  const profiles =
-    query.data?.pages.flatMap((page) => page.profiles) ?? [];
+  const profiles = useMemo(() => {
+    return query.data?.pages.flatMap((page) => page.profiles) ?? [];
+  }, [query.data]);
 
   return {
     ...query,

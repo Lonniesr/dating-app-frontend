@@ -3,8 +3,6 @@ import { useUserAuth } from "../context/UserAuthContext";
 const API = import.meta.env.VITE_API_URL;
 
 export function useSwipe() {
-  const { refreshUser } = useUserAuth();
-
   async function swipe(
     targetId: string,
     liked: boolean,
@@ -39,9 +37,6 @@ export function useSwipe() {
       console.error("Swipe failed:", data);
       throw new Error("Swipe request failed");
     }
-
-    // refresh user state (matches, stats etc)
-    await refreshUser();
 
     return data;
   }
