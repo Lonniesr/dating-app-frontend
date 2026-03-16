@@ -65,11 +65,14 @@ export default function App() {
           <Route path="discover" element={<DiscoverFeed />} />
           <Route path="likes" element={<LikesPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
+
+          {/* USER PROFILE */}
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="profile/:id" element={<ProfilePage />} />
+
           <Route path="edit-profile" element={<EditProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
 
-          {/* Messages */}
           <Route path="messages" element={<MessagesPage />} />
           <Route path="messages/:id" element={<ChatPage />} />
 

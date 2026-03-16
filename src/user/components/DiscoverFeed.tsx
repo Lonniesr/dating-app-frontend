@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, useMotionValue, useTransform } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 import { useDiscover } from "../../hooks/useDiscover";
 import { useSwipe } from "../hooks/useSwipe";
@@ -54,6 +55,7 @@ function calculateDistance(
 export default function DiscoverFeed() {
   const { data, isLoading } = useDiscover();
   const { swipe } = useSwipe();
+  const navigate = useNavigate();
 
   const [feed, setFeed] = useState<DiscoverUser[]>([]);
   const [busy, setBusy] = useState(false);
@@ -183,7 +185,13 @@ export default function DiscoverFeed() {
             NOPE
           </motion.div>
 
-          <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
+          <div
+            className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/user/profile/${current.id}`);
+            }}
+          >
             <h2 className="text-xl font-bold">
               {current.name}
               {age !== null && `, ${age}`}
@@ -192,6 +200,10 @@ export default function DiscoverFeed() {
             <p className="text-sm opacity-80">
               {current.location || "Unknown location"}
               {distance && ` • ${distance} miles away`}
+            </p>
+
+            <p className="text-xs opacity-60 mt-1">
+              Tap to view profile
             </p>
           </div>
         </motion.div>
