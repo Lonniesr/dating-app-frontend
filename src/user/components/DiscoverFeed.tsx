@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { motion, useMotionValue, useTransform } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 
 import { useDiscover } from "../../hooks/useDiscover";
 import { useSwipe } from "../hooks/useSwipe";
@@ -57,29 +56,26 @@ export default function DiscoverFeed() {
 
   const { data, isLoading } = useDiscover();
   const { swipe } = useSwipe();
-  const navigate = useNavigate();
 
   const [feed, setFeed] = useState<DiscoverUser[]>([]);
   const [busy, setBusy] = useState(false);
 
-  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<any | null>(null);
 
-  useEffect(() => {
-    if (data && data.length && feed.length === 0) {
-      setFeed(data);
-    }
-  }, [data]);
-
-  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(
-    null
-  );
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 0, 200], [-15, 0, 15]);
 
   const likeOpacity = useTransform(x, [0, 150], [0, 1]);
   const nopeOpacity = useTransform(x, [-150, 0], [1, 0]);
+
+  useEffect(() => {
+    if (data && data.length && feed.length === 0) {
+      setFeed(data);
+    }
+  }, [data]);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -140,6 +136,11 @@ export default function DiscoverFeed() {
     } catch (err) {
       console.error("Failed to load profile", err);
     }
+  }
+
+  function closeProfile() {
+    setSelectedUser(null);
+    setProfileData(null);
   }
 
   if (isLoading) {
@@ -228,6 +229,8 @@ export default function DiscoverFeed() {
 
       </div>
 
+      {/* SWIPE BUTTONS */}
+
       <div className="flex gap-6 mt-6">
 
         <button
@@ -256,49 +259,84 @@ export default function DiscoverFeed() {
 
       </div>
 
+      {/* PROFILE MODAL */}
+
       {selectedUser && profileData && (
 
         <div className="fixed inset-0 bg-black/90 z-50 overflow-y-auto">
 
           <button
-            onClick={() => {
-              setSelectedUser(null);
-              setProfileData(null);
-            }}
+            onClick={closeProfile}
             className="absolute top-6 right-6 text-white text-3xl"
           >
             ✕
           </button>
 
-          <div className="max-w-md mx-auto pt-16 pb-20">
+          <div className="max-w-md mx-auto pt-16 pb-24 text-white">
 
-            {profileData.photos?.map((p: string, i: number) => (
-              <img
-                key={i}
-                src={getProfilePhoto([p])}
-                className="w-full mb-2 rounded-xl"
-              />
-            ))}
-
-            <div className="p-4 text-white">
+            <div className="px-4 mb-6">
 
               <h2 className="text-2xl font-bold">
                 {profileData.username || profileData.name}
+                {profileData.age && `, ${profileData.age}`}
               </h2>
 
+              {(profileData.location || profileData.latitude) && (
+                <p className="text-white/60 mt-1">
+                  {profileData.location || "Nearby"}
+                </p>
+              )}
+
               {profileData.bio && (
-                <p className="mt-4 text-white/80">
+                <p className="mt-3 text-white/80">
                   {profileData.bio}
                 </p>
               )}
 
-              {profileData.birthplace && (
-                <p className="text-white/60 mt-2">
-                  From {profileData.birthplace}
-                </p>
-              )}
-
             </div>
+
+            {/* PROMPTS MOVED UP */}
+
+            {Array.isArray(profileData.prompts) && profileData.prompts.length > 0 && (
+
+              <div className="px-4 space-y-4 mb-6">
+
+                {profileData.prompts.map((prompt: any, i: number) => (
+
+                  <div
+                    key={i}
+                    className="bg-white/5 p-4 rounded-xl border border-white/10"
+                  >
+
+                    <p className="text-xs text-white/50 mb-1">
+                      {prompt.question}
+                    </p>
+
+                    <p className="text-white">
+                      {prompt.answer}
+                    </p>
+
+                  </div>
+
+                ))}
+
+              </div>
+
+            )}
+
+            {/* PHOTOS */}
+
+            {Array.isArray(profileData.photos) && (
+              <div className="space-y-3 px-4">
+                {profileData.photos.map((p: string, i: number) => (
+                  <img
+                    key={i}
+                    src={getProfilePhoto([p])}
+                    className="w-full rounded-xl"
+                  />
+                ))}
+              </div>
+            )}
 
           </div>
 
