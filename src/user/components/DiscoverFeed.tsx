@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useDiscover } from "../../hooks/useDiscover";
 import { useSwipe } from "../hooks/useSwipe";
 import { getProfilePhoto } from "../../utils/getProfilePhoto";
+import apiClient from "../../services/apiClient";
 
 const SWIPE_THRESHOLD = 120;
 
@@ -53,12 +54,16 @@ function calculateDistance(
 }
 
 export default function DiscoverFeed() {
+
   const { data, isLoading } = useDiscover();
   const { swipe } = useSwipe();
   const navigate = useNavigate();
 
   const [feed, setFeed] = useState<DiscoverUser[]>([]);
   const [busy, setBusy] = useState(false);
+
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [profileData, setProfileData] = useState<any | null>(null);
 
   useEffect(() => {
     if (data && data.length && feed.length === 0) {
@@ -127,6 +132,16 @@ export default function DiscoverFeed() {
     }, 160);
   }
 
+  async function openProfile(userId: string) {
+    try {
+      const res = await apiClient.get(`/api/profile/${userId}`);
+      setProfileData(res.data);
+      setSelectedUser(userId);
+    } catch (err) {
+      console.error("Failed to load profile", err);
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="h-[520px] flex items-center justify-center">
@@ -145,6 +160,7 @@ export default function DiscoverFeed() {
 
   return (
     <div className="flex flex-col items-center">
+
       <div className="relative w-[380px] h-[520px]">
 
         {next && (
@@ -169,6 +185,7 @@ export default function DiscoverFeed() {
             else x.set(0);
           }}
         >
+
           <img src={photo} className="w-full h-full object-cover" />
 
           <motion.div
@@ -189,7 +206,7 @@ export default function DiscoverFeed() {
             className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent text-white cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/user/profile/${current.id}`);
+              openProfile(current.id);
             }}
           >
             <h2 className="text-xl font-bold">
@@ -206,6 +223,7 @@ export default function DiscoverFeed() {
               Tap to view profile
             </p>
           </div>
+
         </motion.div>
 
       </div>
@@ -237,6 +255,57 @@ export default function DiscoverFeed() {
         </button>
 
       </div>
+
+      {selectedUser && profileData && (
+
+        <div className="fixed inset-0 bg-black/90 z-50 overflow-y-auto">
+
+          <button
+            onClick={() => {
+              setSelectedUser(null);
+              setProfileData(null);
+            }}
+            className="absolute top-6 right-6 text-white text-3xl"
+          >
+            ✕
+          </button>
+
+          <div className="max-w-md mx-auto pt-16 pb-20">
+
+            {profileData.photos?.map((p: string, i: number) => (
+              <img
+                key={i}
+                src={getProfilePhoto([p])}
+                className="w-full mb-2 rounded-xl"
+              />
+            ))}
+
+            <div className="p-4 text-white">
+
+              <h2 className="text-2xl font-bold">
+                {profileData.username || profileData.name}
+              </h2>
+
+              {profileData.bio && (
+                <p className="mt-4 text-white/80">
+                  {profileData.bio}
+                </p>
+              )}
+
+              {profileData.birthplace && (
+                <p className="text-white/60 mt-2">
+                  From {profileData.birthplace}
+                </p>
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
     </div>
   );
 }

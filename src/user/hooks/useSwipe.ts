@@ -1,5 +1,3 @@
-import { useUserAuth } from "../context/UserAuthContext";
-
 const API = import.meta.env.VITE_API_URL;
 
 export function useSwipe() {

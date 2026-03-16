@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useUserAuth } from "./context/UserAuthContext";
 import { supabase } from "../lib/supabaseClient";
 import apiClient from "../services/apiClient";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 
 import GenderIcon from "./components/GenderIcon";
@@ -52,7 +52,6 @@ export default function ProfilePage() {
 
   const { id } = useParams();
   const { authUser, isLoading } = useUserAuth();
-  const navigate = useNavigate();
 
   const [otherUser, setOtherUser] = useState<any>(null);
   const [newInvite, setNewInvite] = useState<Invite | null>(null);
@@ -162,8 +161,6 @@ export default function ProfilePage() {
         {viewingOtherUser ? "User Profile" : "My Profile"}
       </h1>
 
-      {/* PROFILE HEADER */}
-
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
 
         <div className="flex items-center gap-5">
@@ -219,8 +216,6 @@ export default function ProfilePage() {
 
       </div>
 
-      {/* OWNER ONLY */}
-
       {!viewingOtherUser && (
 
         <>
@@ -254,8 +249,6 @@ export default function ProfilePage() {
         </>
 
       )}
-
-      {/* INVITE MODAL */}
 
       {newInvite && (
 
