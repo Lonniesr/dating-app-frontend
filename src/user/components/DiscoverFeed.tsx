@@ -60,9 +60,6 @@ function calculateDistance(
 
 export default function DiscoverFeed() {
   const { data, isLoading, refetch } = useDiscover();
-
-  console.log("discover data:", data);
-
   const { swipe } = useSwipe();
 
   const users: DiscoverUser[] = Array.isArray(data)
@@ -82,8 +79,6 @@ export default function DiscoverFeed() {
 
   const likeOpacity = useTransform(x, [0, 150], [0, 1]);
   const nopeOpacity = useTransform(x, [-150, 0], [1, 0]);
-
-  /* GET USER LOCATION */
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -132,15 +127,24 @@ export default function DiscoverFeed() {
 
     swipe(current.id, direction === "right");
 
+    const flyAway = direction === "right" ? 500 : -500;
+
+    x.set(flyAway);
+
     setTimeout(() => {
-      setIndex((prev) => prev + 1);
+      setIndex((prev) => {
+        const nextIndex = prev + 1;
+
+        if (nextIndex >= users.length - 3) {
+          refetch();
+        }
+
+        return nextIndex;
+      });
+
       x.set(0);
       setSwiping(false);
-
-      if (index + 1 >= users.length - 3) {
-        refetch();
-      }
-    }, 200);
+    }, 250);
   }
 
   if (isLoading) {
@@ -161,17 +165,15 @@ export default function DiscoverFeed() {
 
   return (
     <div className="flex flex-col items-center">
-
-      {/* CARD STACK */}
-
       <div className="relative w-[380px] h-[520px]">
 
         {next && (
           <motion.img
+            key={next.id}
             src={nextPhoto}
             className="absolute w-full h-full object-cover rounded-2xl"
             initial={{ scale: 0.95, opacity: 0.6 }}
-            animate={{ scale: 0.95, opacity: 0.6 }}
+            animate={{ scale: 0.97, opacity: 0.7 }}
           />
         )}
 
@@ -197,6 +199,7 @@ export default function DiscoverFeed() {
               }}
             >
               <img
+                key={current.id}
                 src={photo}
                 className="w-full h-full object-cover"
               />
@@ -233,11 +236,8 @@ export default function DiscoverFeed() {
 
       </div>
 
-      {/* ACTION BUTTONS */}
-
       <div className="flex gap-6 mt-6">
 
-        {/* PASS */}
         <button
           onClick={() => handleSwipe("left")}
           className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-red-400 text-xl hover:bg-red-500/20"
@@ -245,7 +245,6 @@ export default function DiscoverFeed() {
           ✕
         </button>
 
-        {/* SUPER LIKE */}
         <button
           onClick={() => handleSwipe("right")}
           className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-blue-400 text-xl hover:bg-blue-500/20"
@@ -253,7 +252,6 @@ export default function DiscoverFeed() {
           ★
         </button>
 
-        {/* LIKE */}
         <button
           onClick={() => handleSwipe("right")}
           className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-green-400 text-xl hover:bg-green-500/20"
@@ -262,7 +260,6 @@ export default function DiscoverFeed() {
         </button>
 
       </div>
-
     </div>
   );
 }
