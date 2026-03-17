@@ -1,29 +1,34 @@
 import { useQuery } from "@tanstack/react-query";
 
 type SwipeStatsResponse = {
-  total: number;
-  likes: number;
-  passes: number;
+  likesGiven: number;
+  passesGiven: number;
+  superLikesGiven: number;
+  likesReceived: number;
   matches: number;
-  activity: {
-    createdAt: string;
-    _count: number;
-  }[];
 };
 
+const API = import.meta.env.VITE_API_URL;
+
 export function useSwipeStats() {
+
   return useQuery<SwipeStatsResponse>({
     queryKey: ["swipe-stats"],
+
     queryFn: async () => {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/user/swipe-stats`,
-        { credentials: "include" }
-      );
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const res = await fetch(`${API}/api/swipe/stats`, {
+        credentials: "include",
+      });
 
-      return data;
-    }
+      if (!res.ok) {
+        throw new Error("Failed to load swipe stats");
+      }
+
+      return res.json();
+    },
+
+    staleTime: 0,
   });
+
 }

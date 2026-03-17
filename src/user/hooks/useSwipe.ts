@@ -1,11 +1,13 @@
 const API = import.meta.env.VITE_API_URL;
 
 export function useSwipe() {
+
   async function swipe(
     targetId: string,
     liked: boolean,
     superLike: boolean = false
   ) {
+
     console.log("➡️ Sending swipe", { targetId, liked, superLike });
 
     const res = await fetch(`${API}/api/swipe`, {
@@ -36,8 +38,15 @@ export function useSwipe() {
       throw new Error("Swipe request failed");
     }
 
+    /**
+     * Trigger stats refresh event
+     */
+
+    window.dispatchEvent(new Event("swipe-updated"));
+
     return data;
   }
 
   return { swipe };
+
 }

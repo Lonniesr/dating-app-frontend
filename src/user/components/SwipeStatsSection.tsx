@@ -1,6 +1,7 @@
 import { useSwipeStats } from "../hooks/useSwipeStats";
 
 export default function SwipeStatsSection() {
+
   const { data, isLoading } = useSwipeStats();
 
   if (isLoading) {
@@ -19,21 +20,45 @@ export default function SwipeStatsSection() {
     );
   }
 
+  const total = (data.likesGiven ?? 0) + (data.passesGiven ?? 0);
+
   return (
+
     <div className="bg-white/5 p-5 rounded-xl border border-white/10 text-white mb-6">
-      <h2 className="text-xl font-bold mb-3">Swipe Stats</h2>
+
+      <h2 className="text-xl font-bold mb-3">
+        Swipe Stats
+      </h2>
 
       <div className="space-y-1 text-white/80">
+
         <p>
-          <strong>Total Swipes:</strong> {data.total}
+          <strong>Total Swipes:</strong> {total}
         </p>
+
         <p>
-          <strong>Likes:</strong> {data.likes}
+          <strong>Likes Given:</strong> {data.likesGiven ?? 0}
         </p>
+
         <p>
-          <strong>Passes:</strong> {data.passes}
+          <strong>Passes:</strong> {data.passesGiven ?? 0}
         </p>
+
+        <p>
+          <strong>Super Likes:</strong> {data.superLikesGiven ?? 0}
+        </p>
+
+        <p>
+          <strong>Likes Received:</strong> {data.likesReceived ?? 0}
+        </p>
+
+        <p>
+          <strong>Matches:</strong> {data.matches ?? 0}
+        </p>
+
       </div>
+
     </div>
+
   );
 }

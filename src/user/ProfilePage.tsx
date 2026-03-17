@@ -55,6 +55,7 @@ export default function ProfilePage() {
 
   const [otherUser, setOtherUser] = useState<any>(null);
   const [newInvite, setNewInvite] = useState<Invite | null>(null);
+  const [prompts, setPrompts] = useState<any[]>([]);
 
   const [inviteStats, setInviteStats] = useState<InviteStats>({
     sent: 0,
@@ -84,13 +85,26 @@ export default function ProfilePage() {
 
   }, [id]);
 
+  useEffect(() => {
+
+    if (viewingOtherUser) return;
+
+    if (Array.isArray(authUser?.prompts)) {
+      setPrompts(authUser.prompts);
+    } else {
+      setPrompts([
+        { question: "", answer: "" },
+        { question: "", answer: "" },
+        { question: "", answer: "" },
+      ]);
+    }
+
+  }, [authUser, viewingOtherUser]);
+
   const createInviteMutation = useMutation({
     mutationFn: () => userInvitesService.create(),
     onSuccess: (invite: Invite) => {
       setNewInvite(invite);
-    },
-    onError: (err) => {
-      console.error("Invite creation failed:", err);
     },
   });
 
@@ -111,6 +125,25 @@ export default function ProfilePage() {
 
   }, [viewingOtherUser]);
 
+  const updatePrompt = (index: number, field: string, value: string) => {
+    const updated = [...prompts];
+    updated[index][field] = value;
+    setPrompts(updated);
+  };
+
+  const addPrompt = () => {
+    setPrompts([...prompts, { question: "", answer: "" }]);
+  };
+
+  const savePrompts = async () => {
+    try {
+      await apiClient.post("/api/profile/prompts", { prompts });
+      alert("Prompts saved");
+    } catch {
+      alert("Failed to save prompts");
+    }
+  };
+
   const downloadQR = () => {
     const canvas = document.getElementById("invite-qr") as HTMLCanvasElement;
     if (!canvas) return;
@@ -121,25 +154,6 @@ export default function ProfilePage() {
     link.href = pngUrl;
     link.download = `invite-${newInvite?.code}.png`;
     link.click();
-  };
-
-  const shareInvite = async () => {
-    if (!newInvite?.inviteLink) return;
-
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: "Join me on Lynq",
-          text: "Use my invite to join Lynq.",
-          url: newInvite.inviteLink,
-        });
-      } else {
-        navigator.clipboard.writeText(newInvite.inviteLink);
-        alert("Invite link copied");
-      }
-    } catch (err) {
-      console.error("Share failed", err);
-    }
   };
 
   if (isLoading || !profileUser) {
@@ -160,6 +174,8 @@ export default function ProfilePage() {
       <h1 className="text-2xl font-bold mb-6">
         {viewingOtherUser ? "User Profile" : "My Profile"}
       </h1>
+
+      {/* PROFILE HEADER */}
 
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
 
@@ -204,50 +220,109 @@ export default function ProfilePage() {
               </p>
             )}
 
-            {!viewingOtherUser && profileUser.email && (
-              <p className="text-white/60 text-sm">
-                {profileUser.email}
-              </p>
-            )}
-
           </div>
 
         </div>
 
       </div>
 
+      {/* PROMPT EDITOR */}
+
       {!viewingOtherUser && (
 
+        <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+
+          <h2 className="text-lg font-semibold mb-4">
+            Edit Prompts
+          </h2>
+
+          {prompts.map((p, i) => (
+
+            <div key={i} className="mb-4">
+
+              <input
+                className="w-full bg-white/10 p-2 rounded mb-2"
+                placeholder="Prompt question"
+                value={p.question}
+                onChange={(e) =>
+                  updatePrompt(i, "question", e.target.value)
+                }
+              />
+
+              <textarea
+                className="w-full bg-white/10 p-2 rounded"
+                placeholder="Your answer"
+                value={p.answer}
+                onChange={(e) =>
+                  updatePrompt(i, "answer", e.target.value)
+                }
+              />
+
+            </div>
+
+          ))}
+
+          <div className="flex gap-3">
+
+            <button
+              onClick={addPrompt}
+              className="bg-gray-700 px-3 py-2 rounded"
+            >
+              Add Prompt
+            </button>
+
+            <button
+              onClick={savePrompts}
+              className="bg-yellow-600 px-4 py-2 rounded font-semibold"
+            >
+              Save Prompts
+            </button>
+
+          </div>
+
+        </div>
+
+      )}
+
+      {!viewingOtherUser && (
         <>
-          <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
 
-            <div className="flex justify-between items-center">
+          <SwipeStatsSection />
 
-              <h2 className="text-lg font-semibold">
-                Invite Friends
-              </h2>
+          {/* INVITE PERFORMANCE */}
 
-              <button
-                onClick={() => createInviteMutation.mutate()}
-                disabled={createInviteMutation.isPending}
-                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-semibold disabled:opacity-50"
-              >
-                {createInviteMutation.isPending
-                  ? "Creating..."
-                  : "Generate Invite"}
-              </button>
+          <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6 text-white">
+
+            <h2 className="text-xl font-bold mb-3">
+              Invite Performance
+            </h2>
+
+            <div className="space-y-1 text-white/80">
+
+              <p>
+                <strong>Invites Sent:</strong> {inviteStats.sent}
+              </p>
+
+              <p>
+                <strong>Friends Joined:</strong> {inviteStats.joined}
+              </p>
+
+              <p>
+                <strong>Conversion Rate:</strong>{" "}
+                {inviteStats.sent > 0
+                  ? `${Math.round((inviteStats.joined / inviteStats.sent) * 100)}%`
+                  : "0%"}
+              </p>
 
             </div>
 
           </div>
 
-          <SwipeStatsSection />
           <MatchCountSection />
           <SwipeActivityChart />
           <PhotoManagerSection />
 
         </>
-
       )}
 
       {newInvite && (
@@ -255,10 +330,6 @@ export default function ProfilePage() {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
 
           <div className="bg-gray-900 p-6 rounded-xl border border-white/10 w-[320px] text-center">
-
-            <h2 className="text-lg font-semibold mb-4">
-              Invite Friends
-            </h2>
 
             <QRCodeCanvas
               id="invite-qr"
@@ -270,37 +341,19 @@ export default function ProfilePage() {
               {newInvite.inviteLink}
             </p>
 
-            <div className="flex flex-col gap-2 mt-4">
+            <button
+              onClick={downloadQR}
+              className="bg-purple-600 hover:bg-purple-700 py-2 rounded mt-4 w-full"
+            >
+              Download QR
+            </button>
 
-              <button
-                onClick={() => navigator.clipboard.writeText(newInvite.inviteLink)}
-                className="bg-blue-600 hover:bg-blue-700 py-2 rounded"
-              >
-                Copy Link
-              </button>
-
-              <button
-                onClick={downloadQR}
-                className="bg-purple-600 hover:bg-purple-700 py-2 rounded"
-              >
-                Download QR
-              </button>
-
-              <button
-                onClick={shareInvite}
-                className="bg-green-600 hover:bg-green-700 py-2 rounded"
-              >
-                Share
-              </button>
-
-              <button
-                onClick={() => setNewInvite(null)}
-                className="bg-gray-700 hover:bg-gray-800 py-2 rounded"
-              >
-                Close
-              </button>
-
-            </div>
+            <button
+              onClick={() => setNewInvite(null)}
+              className="bg-gray-700 hover:bg-gray-800 py-2 rounded mt-2 w-full"
+            >
+              Close
+            </button>
 
           </div>
 
