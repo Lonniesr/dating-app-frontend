@@ -15,6 +15,35 @@ API.interceptors.request.use((config) => {
 });
 
 export const onboardingClient = {
+
+  /* =========================
+     AUTH / INVITE FLOW
+  ========================= */
+
+  validateInvite: async (inviteCode: string) => {
+    const res = await API.post("/validate-invite", { inviteCode });
+    return res.data;
+  },
+
+  register: async (data: {
+    email: string;
+    username: string;
+    password: string;
+    inviteCode: string;
+  }) => {
+    const res = await API.post("/register", data);
+    return res.data;
+  },
+
+  login: async (email: string, password: string) => {
+    const res = await API.post("/login", { email, password });
+    return res.data;
+  },
+
+  /* =========================
+     ONBOARDING STEPS
+  ========================= */
+
   saveBasic: async (data: {
     name?: string;
     age?: number;
@@ -26,7 +55,9 @@ export const onboardingClient = {
   },
 
   savePreferences: async (preferences: any) => {
-    const res = await API.post("/preferences", preferences);
+    const res = await API.post("/preferences", {
+      preferences, // ✅ correct structure
+    });
     return res.data;
   },
 

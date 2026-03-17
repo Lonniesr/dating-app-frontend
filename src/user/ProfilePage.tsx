@@ -5,20 +5,17 @@ import { useUserAuth } from "./context/UserAuthContext";
 import { supabase } from "../lib/supabaseClient";
 import apiClient from "../services/apiClient";
 import { useParams } from "react-router-dom";
-import { QRCodeCanvas } from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
+import lynqlogo from "../assets/lynqlogo.png";
 
 import GenderIcon from "./components/GenderIcon";
 import SwipeStatsSection from "./components/SwipeStatsSection";
 import MatchCountSection from "./components/MatchCountSection";
-import SwipeActivityChart from "./components/SwipeActivityChart";
 import PhotoManagerSection from "./components/PhotoManagerSection";
 
 function resolvePhotoUrl(photo: string) {
   if (!photo) return "";
-
-  if (photo.startsWith("http")) {
-    return photo;
-  }
+  if (photo.startsWith("http")) return photo;
 
   const { data } = supabase.storage.from("photos").getPublicUrl(photo);
   return data.publicUrl;
@@ -59,7 +56,7 @@ export default function ProfilePage() {
 
   const [inviteStats, setInviteStats] = useState<InviteStats>({
     sent: 0,
-    joined: 0,
+    joined: 0
   });
 
   const viewingOtherUser = !!id;
@@ -95,7 +92,7 @@ export default function ProfilePage() {
       setPrompts([
         { question: "", answer: "" },
         { question: "", answer: "" },
-        { question: "", answer: "" },
+        { question: "", answer: "" }
       ]);
     }
 
@@ -105,7 +102,7 @@ export default function ProfilePage() {
     mutationFn: () => userInvitesService.create(),
     onSuccess: (invite: Invite) => {
       setNewInvite(invite);
-    },
+    }
   });
 
   useEffect(() => {
@@ -145,15 +142,39 @@ export default function ProfilePage() {
   };
 
   const downloadQR = () => {
-    const canvas = document.getElementById("invite-qr") as HTMLCanvasElement;
-    if (!canvas) return;
 
-    const pngUrl = canvas.toDataURL("image/png");
+    const svg = document.getElementById("invite-qr");
+    if (!svg) return;
+
+    const serializer = new XMLSerializer();
+    const source = serializer.serializeToString(svg);
+
+    const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
     const link = document.createElement("a");
-
-    link.href = pngUrl;
-    link.download = `invite-${newInvite?.code}.png`;
+    link.href = url;
+    link.download = `lynq-invite-${newInvite?.code}.svg`;
     link.click();
+  };
+
+  const copyInvite = () => {
+    navigator.clipboard.writeText(newInvite?.inviteLink || "");
+    alert("Invite link copied");
+  };
+
+  const shareInvite = async () => {
+    if (!newInvite?.inviteLink) return;
+
+    if (navigator.share) {
+      await navigator.share({
+        title: "Join me on Lynq",
+        text: "Use my invite to join Lynq",
+        url: newInvite.inviteLink
+      });
+    } else {
+      copyInvite();
+    }
   };
 
   if (isLoading || !profileUser) {
@@ -217,6 +238,12 @@ export default function ProfilePage() {
             {profileUser.location && (
               <p className="text-white/70 text-sm mt-1">
                 {profileUser.location}
+              </p>
+            )}
+
+            {!viewingOtherUser && profileUser.email && (
+              <p className="text-white/60 text-sm">
+                {profileUser.email}
               </p>
             )}
 
@@ -285,11 +312,31 @@ export default function ProfilePage() {
       )}
 
       {!viewingOtherUser && (
+
         <>
+          <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+
+            <div className="flex justify-between items-center">
+
+              <h2 className="text-lg font-semibold">
+                Invite Friends
+              </h2>
+
+              <button
+                onClick={() => createInviteMutation.mutate()}
+                disabled={createInviteMutation.isPending}
+                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-semibold disabled:opacity-50"
+              >
+                {createInviteMutation.isPending
+                  ? "Creating..."
+                  : "Generate Invite"}
+              </button>
+
+            </div>
+
+          </div>
 
           <SwipeStatsSection />
-
-          {/* INVITE PERFORMANCE */}
 
           <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6 text-white">
 
@@ -319,41 +366,83 @@ export default function ProfilePage() {
           </div>
 
           <MatchCountSection />
-          <SwipeActivityChart />
           <PhotoManagerSection />
 
         </>
+
       )}
+
+      {/* INVITE MODAL */}
 
       {newInvite && (
 
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
 
-          <div className="bg-gray-900 p-6 rounded-xl border border-white/10 w-[320px] text-center">
+          <div className="bg-gray-900 p-8 rounded-xl border border-white/10 text-center w-[360px]">
 
-            <QRCodeCanvas
-              id="invite-qr"
-              value={newInvite.inviteLink}
-              size={180}
-            />
+            <h2 className="text-2xl font-bold text-yellow-400 mb-4">
+              Lynq
+            </h2>
 
-            <p className="text-xs text-white/60 mt-3 break-all">
+            <div className="relative w-full flex justify-center">
+
+              <QRCodeSVG
+                id="invite-qr"
+                value={newInvite.inviteLink}
+                size={260}
+                level="H"
+                includeMargin
+                className="bg-white p-4 rounded-lg w-full"
+              />
+
+              <img
+                src={lynqlogo}
+                alt="Lynq"
+                className="absolute w-16 h-16 bg-white rounded-lg p-1 shadow"
+                style={{
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)"
+                }}
+              />
+
+            </div>
+
+            <p className="text-xs text-white/60 mt-4 break-all">
               {newInvite.inviteLink}
             </p>
 
-            <button
-              onClick={downloadQR}
-              className="bg-purple-600 hover:bg-purple-700 py-2 rounded mt-4 w-full"
-            >
-              Download QR
-            </button>
+            <div className="flex flex-col gap-2 mt-4">
 
-            <button
-              onClick={() => setNewInvite(null)}
-              className="bg-gray-700 hover:bg-gray-800 py-2 rounded mt-2 w-full"
-            >
-              Close
-            </button>
+              <button
+                onClick={copyInvite}
+                className="bg-blue-600 hover:bg-blue-700 py-2 rounded font-semibold"
+              >
+                Copy Link
+              </button>
+
+              <button
+                onClick={shareInvite}
+                className="bg-green-600 hover:bg-green-700 py-2 rounded font-semibold"
+              >
+                Share
+              </button>
+
+              <button
+                onClick={downloadQR}
+                className="bg-purple-600 hover:bg-purple-700 py-2 rounded font-semibold"
+              >
+                Download QR
+              </button>
+
+              <button
+                onClick={() => setNewInvite(null)}
+                className="bg-gray-700 hover:bg-gray-800 py-2 rounded"
+              >
+                Close
+              </button>
+
+            </div>
 
           </div>
 

@@ -1,5 +1,7 @@
+// src/hooks/useOnboarding.ts
+
 import { useState } from "react";
-import onboardingClient from "@/lib/onboardingClient";
+import { onboardingClient } from "../api/onboardingClient"; // ✅ FIXED PATH + NAMED EXPORT
 
 export function useOnboarding() {
   const [loading, setLoading] = useState(false);
@@ -65,7 +67,7 @@ export function useOnboarding() {
     setError(null);
 
     try {
-      const res = await onboardingClient.completeOnboarding();
+      const res = await onboardingClient.complete(); // ✅ FIXED METHOD NAME
       return res;
     } catch (err: any) {
       setError("Failed to complete onboarding");

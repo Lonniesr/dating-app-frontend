@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+// src/invite/Onboarding/index.tsx
+
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useUserAuth } from "../../user/context/UserAuthContext";
 
@@ -7,35 +9,36 @@ import PhotosStep from "./steps/PhotosStep";
 import PreferencesStep from "./steps/PreferencesStep";
 import PersonalityStep from "./steps/PersonalityStep";
 
-export default function OnboardingPage() {
+export default function Onboarding() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { authUser } = useUserAuth();
 
   const [step, setStep] = useState(0);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
-  const [initialized, setInitialized] = useState(false);
+
+  const hasInitialized = useRef(false); // 🔥 CRITICAL FIX
 
   const totalSteps = 4;
   const progressPercent = ((step + 1) / totalSteps) * 100;
 
   /* ================================
-     Grab invite code from URL
+     Invite Code
   ================================= */
 
   useEffect(() => {
     const code = searchParams.get("invite");
-    if (code) {
-      setInviteCode(code);
-    }
+    if (code) setInviteCode(code);
   }, [searchParams]);
 
   /* ================================
-     Smart Resume Logic
+     Smart Resume (RUN ONCE ONLY)
   ================================= */
 
   useEffect(() => {
-    if (!authUser || initialized) return;
+    if (!authUser || hasInitialized.current) return;
+
+    console.log("🧠 SETTING INITIAL STEP");
 
     const hasBasic =
       Boolean(authUser.name?.trim()) &&
@@ -57,35 +60,31 @@ export default function OnboardingPage() {
       authUser.prompts &&
       Object.keys(authUser.prompts).length > 0;
 
-    if (!hasBasic) {
-      setStep(0);
-    }
-    else if (!hasPhotos) {
-      setStep(1);
-    }
-    else if (!hasPreferences) {
-      setStep(2);
-    }
-    else if (!hasPrompts) {
-      setStep(3);
-    }
-    else {
-      navigate("/user/dashboard");
-    }
+    if (!hasBasic) setStep(0);
+    else if (!hasPhotos) setStep(1);
+    else if (!hasPreferences) setStep(2);
+    else if (!hasPrompts) setStep(3);
+    else navigate("/user/dashboard");
 
-    setInitialized(true);
-
-  }, [authUser, initialized, navigate]);
+    hasInitialized.current = true; // 🔥 LOCK IT FOREVER
+  }, [authUser, navigate]);
 
   /* ================================
-     Navigation Helpers
+     Navigation
   ================================= */
 
-  const goNext = () => setStep((prev) => prev + 1);
-  const goBack = () => setStep((prev) => prev - 1);
+  const goNext = () => {
+    console.log("➡️ NEXT CLICKED");
+    setStep((prev) => prev + 1);
+  };
+
+  const goBack = () => {
+    console.log("⬅️ BACK CLICKED");
+    setStep((prev) => prev - 1);
+  };
 
   /* ================================
-     Finish Onboarding
+     Finish
   ================================= */
 
   const finish = async () => {
@@ -113,13 +112,11 @@ export default function OnboardingPage() {
   return (
     <div className="max-w-xl mx-auto py-10 text-white px-4">
 
-      {/* Progress Bar */}
+      {/* Progress */}
 
       <div className="mb-8">
         <div className="flex justify-between text-sm text-white/60 mb-2">
-          <span>
-            Step {step + 1} of {totalSteps}
-          </span>
+          <span>Step {step + 1} of {totalSteps}</span>
           <span>{Math.round(progressPercent)}%</span>
         </div>
 
@@ -131,22 +128,13 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Step Content */}
+      {/* Steps */}
 
-      <div className="transition-all duration-300">
+      <div>
         {step === 0 && <BasicStep next={goNext} />}
-
-        {step === 1 && (
-          <PhotosStep next={goNext} back={goBack} />
-        )}
-
-        {step === 2 && (
-          <PreferencesStep next={goNext} back={goBack} />
-        )}
-
-        {step === 3 && (
-          <PersonalityStep next={finish} back={goBack} />
-        )}
+        {step === 1 && <PhotosStep next={goNext} back={goBack} />}
+        {step === 2 && <PreferencesStep next={goNext} back={goBack} />}
+        {step === 3 && <PersonalityStep next={finish} back={goBack} />}
       </div>
 
     </div>

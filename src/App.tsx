@@ -54,6 +54,13 @@ export default function App() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/invite/:code" element={<InviteLandingPage />} />
 
+      {/* ✅ FIX: ONBOARDING OUTSIDE PROTECTED ROUTE */}
+
+      <Route
+        path="/invite/onboarding/*"
+        element={<OnboardingPage />}
+      />
+
       {/* PROTECTED USER AREA */}
 
       <Route element={<ProtectedRoute />}>
@@ -66,7 +73,6 @@ export default function App() {
           <Route path="likes" element={<LikesPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
 
-          {/* USER PROFILE */}
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/:id" element={<ProfilePage />} />
 
@@ -80,14 +86,9 @@ export default function App() {
 
         </Route>
 
-        <Route
-          path="/invite/onboarding/*"
-          element={<OnboardingPage />}
-        />
-
       </Route>
 
-      {/* ADMIN AREA */}
+      {/* ADMIN */}
 
       <Route
         path="/admin"

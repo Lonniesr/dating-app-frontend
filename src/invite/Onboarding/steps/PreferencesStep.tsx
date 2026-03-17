@@ -11,6 +11,7 @@ export default function PreferencesStep({
   next,
   back,
 }: PreferencesStepProps) {
+
   const queryClient = useQueryClient();
   const { authUser, refreshUser } = useUserAuth();
 
@@ -24,24 +25,34 @@ export default function PreferencesStep({
   const [loading, setLoading] = useState(false);
 
   /* =========================
+     DEBUG: COMPONENT MOUNT
+  ========================= */
+
+  useEffect(() => {
+    console.log("👀 PreferencesStep mounted");
+  }, []);
+
+  /* =========================
      LOAD EXISTING PREFERENCES
   ========================= */
 
   useEffect(() => {
+
     if (!authUser?.preferences) return;
 
     const prefs = authUser.preferences;
 
-    if (prefs.interestedIn) setInterestedIn(prefs.interestedIn);
-    if (prefs.racePreference) setRacePreference(prefs.racePreference);
-    if (prefs.minAge) setMinAge(prefs.minAge);
-    if (prefs.maxAge) setMaxAge(prefs.maxAge);
+    setInterestedIn(prefs.interestedIn ?? "");
+    setRacePreference(prefs.racePreference ?? "");
+    setMinAge(prefs.minAge ?? 18);
+    setMaxAge(prefs.maxAge ?? 35);
 
-    if (prefs.locationRadius === null) {
-      setLocationRadius(null);
-    } else if (prefs.locationRadius) {
-      setLocationRadius(prefs.locationRadius);
-    }
+    setLocationRadius(
+      prefs.locationRadius === null
+        ? null
+        : prefs.locationRadius ?? 25
+    );
+
   }, [authUser]);
 
   /* =========================
@@ -49,6 +60,9 @@ export default function PreferencesStep({
   ========================= */
 
   const submit = async () => {
+
+    console.log("🔥 SUBMIT FUNCTION CALLED");
+
     setError(null);
 
     if (!interestedIn) {
@@ -56,67 +70,69 @@ export default function PreferencesStep({
       return;
     }
 
-    if (minAge < 18) {
-      setError("Minimum age must be at least 18.");
-      return;
-    }
-
-    if (minAge >= maxAge) {
-      setError("Minimum age must be less than maximum age.");
-      return;
-    }
-
     setLoading(true);
 
     try {
+
+      console.log("📡 SENDING REQUEST...");
+
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/onboarding/preferences`,
+        `${import.meta.env.VITE_API_URL}/api/settings/preferences`,
         {
-          method: "POST",
+          method: "PUT",
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            preferences: {
-              interestedIn,
-              racePreference: racePreference || null,
-              minAge,
-              maxAge,
-              locationRadius,
-            },
+            interestedIn,
+            racePreference: racePreference || null,
+            minAge,
+            maxAge,
+            locationRadius,
           }),
         }
       );
 
+      console.log("📡 RESPONSE RECEIVED");
+
       const data = await res.json();
 
       if (!res.ok) {
+        console.error("❌ API ERROR:", data);
         setError(data.error || "Failed to save preferences.");
         return;
       }
 
-      /* Refresh auth user */
+      console.log("✅ SAVED SUCCESSFULLY");
 
       await refreshUser();
-
-      /* Refresh other cached data */
 
       await queryClient.invalidateQueries({
         queryKey: ["authUser"],
       });
 
       next();
+
     } catch (err) {
-      console.error("Preferences error:", err);
+
+      console.error("❌ FETCH ERROR:", err);
       setError("Something went wrong. Please try again.");
+
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-[#111] p-8 rounded-2xl border border-white/10 shadow-xl text-white">
+
+    <div
+      onSubmit={(e) => {
+        console.log("🚨 FORM SUBMIT BLOCKED");
+        e.preventDefault();
+      }}
+      className="bg-[#111] p-8 rounded-2xl border border-white/10 shadow-xl text-white"
+    >
 
       <h1 className="text-2xl font-bold mb-6">Dating Preferences</h1>
 
@@ -143,30 +159,7 @@ export default function PreferencesStep({
         </select>
       </div>
 
-      {/* Race Preference */}
-
-      <div className="mb-4">
-        <label className="block mb-2 font-medium">
-          Race Preference (optional)
-        </label>
-
-        <select
-          value={racePreference}
-          onChange={(e) => setRacePreference(e.target.value)}
-          className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20"
-        >
-          <option value="" className="text-black">No Preference</option>
-          <option value="White" className="text-black">White</option>
-          <option value="Black" className="text-black">Black</option>
-          <option value="Asian" className="text-black">Asian</option>
-          <option value="Latino" className="text-black">Latino</option>
-          <option value="Middle Eastern" className="text-black">Middle Eastern</option>
-          <option value="Mixed" className="text-black">Mixed</option>
-          <option value="Other" className="text-black">Other</option>
-        </select>
-      </div>
-
-      {/* Age Range */}
+      {/* Age */}
 
       <div className="mb-4">
         <label className="block mb-2 font-medium">Age Range</label>
@@ -174,8 +167,6 @@ export default function PreferencesStep({
         <div className="flex gap-3">
           <input
             type="number"
-            min={18}
-            max={100}
             value={minAge}
             onChange={(e) => setMinAge(Number(e.target.value))}
             className="w-1/2 p-3 rounded-lg bg-white/10 border border-white/20"
@@ -183,8 +174,6 @@ export default function PreferencesStep({
 
           <input
             type="number"
-            min={18}
-            max={100}
             value={maxAge}
             onChange={(e) => setMaxAge(Number(e.target.value))}
             className="w-1/2 p-3 rounded-lg bg-white/10 border border-white/20"
@@ -192,59 +181,34 @@ export default function PreferencesStep({
         </div>
       </div>
 
-      {/* Location Radius */}
-
-      <div className="mb-6">
-
-        <label className="block mb-2 font-medium">Location Radius</label>
-
-        <div className="flex items-center gap-2 mb-3">
-          <input
-            type="checkbox"
-            checked={locationRadius === null}
-            onChange={(e) =>
-              setLocationRadius(e.target.checked ? null : 25)
-            }
-          />
-
-          <span className="text-sm text-white/80">
-            No location limit
-          </span>
-        </div>
-
-        {locationRadius !== null && (
-          <select
-            value={locationRadius}
-            onChange={(e) =>
-              setLocationRadius(Number(e.target.value))
-            }
-            className="w-full p-3 rounded-lg bg-white/10 border border-white/20"
-          >
-            <option value={5} className="text-black">5 miles</option>
-            <option value={10} className="text-black">10 miles</option>
-            <option value={25} className="text-black">25 miles</option>
-            <option value={50} className="text-black">50 miles</option>
-            <option value={100} className="text-black">100 miles</option>
-          </select>
-        )}
-
-      </div>
+      {/* Buttons */}
 
       <div className="flex gap-3">
 
         <button
-          onClick={back}
+          type="button"
+          onClick={(e) => {
+            console.log("⬅️ BACK CLICKED");
+            e.preventDefault();
+            e.stopPropagation();
+            back();
+          }}
           className="flex-1 py-3 bg-white/10 rounded-lg hover:bg-white/20"
         >
           Back
         </button>
 
         <button
-          onClick={submit}
-          disabled={loading}
-          className="flex-1 py-3 bg-yellow-500 text-black rounded-lg font-semibold disabled:opacity-50"
+          type="button"
+          onClick={(e) => {
+            console.log("👉 CONTINUE CLICKED");
+            e.preventDefault();
+            e.stopPropagation();
+            submit();
+          }}
+          className="flex-1 py-3 bg-yellow-500 text-black rounded-lg font-semibold"
         >
-          {loading ? "Saving..." : "Continue"}
+          Continue
         </button>
 
       </div>

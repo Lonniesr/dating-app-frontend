@@ -37,23 +37,31 @@ export default function EditProfilePage() {
     setInterestedIn(authUser.preferences?.interestedIn || "");
     setMinAge(authUser.preferences?.minAge || 18);
     setMaxAge(authUser.preferences?.maxAge || 40);
-    setLocationRadius(authUser.preferences?.locationRadius || 50);
+    setLocationRadius(authUser.preferences?.locationRadius ?? 50);
   }, [authUser]);
 
   /* ===============================
-     SAVE PROFILE
+     SAVE PROFILE (FIXED)
   =============================== */
 
   const saveProfile = async () => {
     try {
       setLoading(true);
 
+      console.log("🚀 SAVING PROFILE + PREFERENCES");
+
+      /* ✅ 1. Save basic profile */
+
       await apiClient.put("/api/user/profile", {
         name,
         bio,
         gender,
+      });
+
+      /* ✅ 2. Save preferences (FIXED ROUTE) */
+
+      await apiClient.post("/api/onboarding/preferences", {
         preferences: {
-          ...(authUser?.preferences || {}),
           interestedIn,
           minAge,
           maxAge,
@@ -61,11 +69,13 @@ export default function EditProfilePage() {
         },
       });
 
+      console.log("✅ SAVE COMPLETE");
+
       await refreshUser();
 
       navigate("/user/profile");
     } catch (err) {
-      console.error("Profile update failed", err);
+      console.error("❌ Profile update failed", err);
     } finally {
       setLoading(false);
     }
@@ -94,7 +104,7 @@ export default function EditProfilePage() {
 
       <div className="space-y-5">
 
-        {/* NAME */}
+        {/* NAME (LOCKED) */}
 
         <div>
           <label className="text-sm text-white/70">
@@ -102,9 +112,9 @@ export default function EditProfilePage() {
           </label>
 
           <input
-            className="w-full p-3 rounded bg-white/10 border border-white/20"
+            disabled
+            className="w-full p-3 rounded bg-white/5 border border-white/10 text-white/50 cursor-not-allowed"
             value={name}
-            onChange={(e) => setName(e.target.value)}
           />
         </div>
 
@@ -215,43 +225,6 @@ export default function EditProfilePage() {
           </div>
 
         </div>
-
-        {/* PROMPTS */}
-
-        {prompts.length > 0 && (
-
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-
-            <h2 className="font-semibold mb-4">
-              Personality Prompts
-            </h2>
-
-            <div className="space-y-4">
-
-              {prompts.map((prompt, i) => (
-
-                <div
-                  key={i}
-                  className="bg-white/10 p-4 rounded-lg"
-                >
-
-                  <div className="text-xs text-white/50 mb-1">
-                    {prompt.question}
-                  </div>
-
-                  <div className="text-sm">
-                    {prompt.answer}
-                  </div>
-
-                </div>
-
-              ))}
-
-            </div>
-
-          </div>
-
-        )}
 
         {/* SAVE BUTTON */}
 
