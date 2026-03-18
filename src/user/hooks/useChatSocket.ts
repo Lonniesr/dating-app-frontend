@@ -15,14 +15,15 @@ export function useChatSocket() {
 
     const socket = io(`${import.meta.env.VITE_API_URL}/chat`, {
       withCredentials: true,
-      query: { userId: authUser.id },
+      transports: ["websocket"], // 🔥 helps avoid polling issues
+      // ❌ REMOVED query: { userId }
     });
 
     socketRef.current = socket;
 
     socket.on("connect", () => {
       console.log("💬 Socket connected");
-      socket.emit("chat:join", authUser.id);
+      socket.emit("chat:join", authUser.id); // ✅ still fine
       setReady(true);
     });
 

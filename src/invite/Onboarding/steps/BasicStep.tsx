@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface BasicStepProps {
@@ -6,20 +6,22 @@ interface BasicStepProps {
 }
 
 export default function BasicStep({ next }: BasicStepProps) {
-
   const queryClient = useQueryClient();
 
   const [step, setStep] = useState(1);
 
   const [username, setUsername] = useState("");
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+
+  const usernameTimeoutRef = useRef<any>(null);
 
   const [birthdate, setBirthdate] = useState("");
 
   const [gender, setGender] = useState("");
   const [race, setRace] = useState("");
 
-  const [birthplace, setBirthplace] = useState("");
+  const [locationName, setLocationName] = useState(""); // ✅ FIXED
   const [bio, setBio] = useState("");
 
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
@@ -28,7 +30,6 @@ export default function BasicStep({ next }: BasicStepProps) {
   const [loading, setLoading] = useState(false);
 
   const calculateAge = (dateString: string) => {
-
     const birth = new Date(dateString);
     const today = new Date();
 
@@ -50,28 +51,22 @@ export default function BasicStep({ next }: BasicStepProps) {
   ========================= */
 
   const getIPLocation = async () => {
-
     try {
-
       const res = await fetch("https://ipapi.co/json/");
       const data = await res.json();
 
       const loc = {
         lat: data.latitude,
-        lon: data.longitude
+        lon: data.longitude,
       };
 
       console.log("🌐 IP LOCATION:", loc);
 
       setLocation(loc);
-
     } catch (err) {
-
       console.error("IP location failed:", err);
       setError("Unable to determine your location.");
-
     }
-
   };
 
   /* =========================
@@ -79,71 +74,66 @@ export default function BasicStep({ next }: BasicStepProps) {
   ========================= */
 
   const requestLocation = async () => {
-
     if (!navigator.geolocation) {
       await getIPLocation();
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
-
       (pos) => {
-
         const loc = {
           lat: pos.coords.latitude,
-          lon: pos.coords.longitude
+          lon: pos.coords.longitude,
         };
 
         console.log("📍 GPS LOCATION:", loc);
 
         setLocation(loc);
-
       },
-
-      async (err) => {
-
-        console.warn("GPS denied, falling back to IP:", err);
-
+      async () => {
         await getIPLocation();
-
       },
-
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 0
+        maximumAge: 0,
       }
-
     );
-
   };
 
   /* =========================
      USERNAME CHECK
   ========================= */
 
-  const checkUsername = async (value: string) => {
+  const checkUsername = (value: string) => {
+    if (usernameTimeoutRef.current) {
+      clearTimeout(usernameTimeoutRef.current);
+    }
 
     if (value.length < 3) {
       setUsernameAvailable(null);
       return;
     }
 
-    try {
+    usernameTimeoutRef.current = setTimeout(async () => {
+      try {
+        setCheckingUsername(true);
 
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/user/check-username?username=${value}`
-      );
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/user/check-username?username=${encodeURIComponent(value)}`
+        );
 
-      const data = await res.json();
+        const data = await res.json();
 
-      setUsernameAvailable(data.available);
+        console.log("🔍 USERNAME CHECK:", value, data);
 
-    } catch (err) {
-
-      console.error("Username check failed:", err);
-
-    }
+        setUsernameAvailable(data.available);
+      } catch (err) {
+        console.error("Username check failed:", err);
+      } finally {
+        setCheckingUsername(false);
+      }
+    }, 400);
   };
 
   /* =========================
@@ -151,7 +141,6 @@ export default function BasicStep({ next }: BasicStepProps) {
   ========================= */
 
   const submit = async () => {
-
     setError(null);
 
     if (!username || !birthdate) {
@@ -186,19 +175,23 @@ export default function BasicStep({ next }: BasicStepProps) {
       return;
     }
 
+    if (!locationName) {
+      setError("Please enter your city.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-
       const payload = {
         username: username.trim(),
         birthdate,
         gender,
         race,
         bio: bio.trim() || null,
-        birthplace: birthplace.trim() || null,
+        location: locationName.trim(), // ✅ FIXED
         latitude: location.lat,
-        longitude: location.lon
+        longitude: location.lon,
       };
 
       console.log("🚨 BASIC STEP PAYLOAD:", payload);
@@ -209,15 +202,13 @@ export default function BasicStep({ next }: BasicStepProps) {
           method: "POST",
           credentials: "include",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
         }
       );
 
       const data = await res.json();
-
-      console.log("🚨 SERVER RESPONSE:", data);
 
       if (!res.ok) {
         setError(data.error || "Failed to save.");
@@ -226,27 +217,22 @@ export default function BasicStep({ next }: BasicStepProps) {
       }
 
       await queryClient.invalidateQueries({
-        queryKey: ["authUser"]
+        queryKey: ["authUser"],
       });
 
       next();
-
     } catch (err) {
-
       console.error("Basic step error:", err);
       setError("Failed to save onboarding.");
-
     }
 
     setLoading(false);
   };
 
   const nextStep = () => {
-
     setError(null);
 
     if (step === 1) {
-
       if (!username || !birthdate) {
         setError("Please enter a username and birthdate.");
         return;
@@ -261,31 +247,24 @@ export default function BasicStep({ next }: BasicStepProps) {
         setError("Username already taken.");
         return;
       }
-
     }
 
     if (step === 2) {
-
       if (!gender || !race) {
         setError("Please select your gender and race.");
         return;
       }
-
     }
 
     setStep(step + 1);
-
   };
 
   const prevStep = () => {
-
     setError(null);
     setStep(step - 1);
-
   };
 
   return (
-
     <div className="bg-[#111] p-8 rounded-2xl border border-white/10 shadow-xl">
 
       <h1 className="text-2xl font-bold mb-2">Basic Information</h1>
@@ -308,7 +287,6 @@ export default function BasicStep({ next }: BasicStepProps) {
             className="w-full p-3 mb-2 rounded bg-white/10 text-white border border-white/20"
             value={username}
             onChange={(e) => {
-
               let value = e.target.value.toLowerCase();
               value = value.replace(/[^a-z0-9_]/g, "");
 
@@ -316,12 +294,28 @@ export default function BasicStep({ next }: BasicStepProps) {
 
               setUsername(value);
               checkUsername(value);
-
             }}
           />
 
-          <div className="mb-6">
+          {checkingUsername && (
+            <div className="text-yellow-400 text-sm mb-4">
+              Checking username...
+            </div>
+          )}
 
+          {usernameAvailable === true && (
+            <div className="text-green-400 text-sm mb-4">
+              ✓ Username available
+            </div>
+          )}
+
+          {usernameAvailable === false && (
+            <div className="text-red-400 text-sm mb-4">
+              ✗ Username taken
+            </div>
+          )}
+
+          <div className="mb-6">
             <label className="block text-sm text-white/60 mb-1">
               Birthdate
             </label>
@@ -332,7 +326,6 @@ export default function BasicStep({ next }: BasicStepProps) {
               value={birthdate}
               onChange={(e) => setBirthdate(e.target.value)}
             />
-
           </div>
         </>
       )}
@@ -384,10 +377,10 @@ export default function BasicStep({ next }: BasicStepProps) {
 
           <input
             type="text"
-            placeholder="Where are you from?"
+            placeholder="Your city (e.g. Atlanta, GA)"
             className="w-full p-3 mb-4 rounded bg-white/10 border border-white/20"
-            value={birthplace}
-            onChange={(e) => setBirthplace(e.target.value)}
+            value={locationName}
+            onChange={(e) => setLocationName(e.target.value)}
           />
 
           <textarea
@@ -401,7 +394,6 @@ export default function BasicStep({ next }: BasicStepProps) {
       )}
 
       <div className="flex gap-3">
-
         {step > 1 && (
           <button
             onClick={prevStep}
@@ -429,9 +421,7 @@ export default function BasicStep({ next }: BasicStepProps) {
             {loading ? "Saving..." : "Finish"}
           </button>
         )}
-
       </div>
-
     </div>
   );
 }

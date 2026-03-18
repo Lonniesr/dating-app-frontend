@@ -73,12 +73,21 @@ export const onboardingClient = {
   },
 
   /**
-   * 🔥 FIXED: USE /api/profile INSTEAD
+   * 🔥 FIXED: ALWAYS SEND locationRadius
    */
   savePreferences: async (preferences: any) => {
     const res = await PROFILE_API.put("/api/profile", {
-      preferences,
+      preferences: {
+        interestedIn: preferences.interestedIn,
+        minAge: preferences.minAge,
+        maxAge: preferences.maxAge,
+        locationRadius:
+          preferences.locationRadius !== undefined
+            ? preferences.locationRadius
+            : 50, // ✅ default fallback
+      },
     });
+
     return res.data;
   },
 

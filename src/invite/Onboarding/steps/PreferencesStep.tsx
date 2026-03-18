@@ -11,7 +11,6 @@ export default function PreferencesStep({
   next,
   back,
 }: PreferencesStepProps) {
-
   const queryClient = useQueryClient();
   const { authUser, refreshUser } = useUserAuth();
 
@@ -19,25 +18,18 @@ export default function PreferencesStep({
   const [racePreference, setRacePreference] = useState("");
   const [minAge, setMinAge] = useState(18);
   const [maxAge, setMaxAge] = useState(35);
-  const [locationRadius, setLocationRadius] = useState<number | null>(25);
+
+  const [locationRadius, setLocationRadius] = useState<number>(25);
+  const [anyLocation, setAnyLocation] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  /* =========================
-     DEBUG: COMPONENT MOUNT
-  ========================= */
-
-  useEffect(() => {
-    console.log("👀 PreferencesStep mounted");
-  }, []);
 
   /* =========================
      LOAD EXISTING PREFERENCES
   ========================= */
 
   useEffect(() => {
-
     if (!authUser?.preferences) return;
 
     const prefs = authUser.preferences;
@@ -47,12 +39,13 @@ export default function PreferencesStep({
     setMinAge(prefs.minAge ?? 18);
     setMaxAge(prefs.maxAge ?? 35);
 
-    setLocationRadius(
-      prefs.locationRadius === null
-        ? null
-        : prefs.locationRadius ?? 25
-    );
-
+    if (prefs.locationRadius === null) {
+      setAnyLocation(true);
+      setLocationRadius(25);
+    } else {
+      setAnyLocation(false);
+      setLocationRadius(prefs.locationRadius ?? 25);
+    }
   }, [authUser]);
 
   /* =========================
@@ -60,9 +53,6 @@ export default function PreferencesStep({
   ========================= */
 
   const submit = async () => {
-
-    console.log("🔥 SUBMIT FUNCTION CALLED");
-
     setError(null);
 
     if (!interestedIn) {
@@ -73,11 +63,8 @@ export default function PreferencesStep({
     setLoading(true);
 
     try {
-
-      console.log("📡 SENDING REQUEST...");
-
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/settings/preferences`,
+        `${import.meta.env.VITE_API_URL}/api/profile`, // ✅ FIXED ENDPOINT
         {
           method: "PUT",
           credentials: "include",
@@ -85,26 +72,23 @@ export default function PreferencesStep({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            interestedIn,
-            racePreference: racePreference || null,
-            minAge,
-            maxAge,
-            locationRadius,
+            preferences: {
+              interestedIn,
+              racePreference: racePreference || null,
+              minAge,
+              maxAge,
+              locationRadius: anyLocation ? null : locationRadius, // 🔥 KEY FIX
+            },
           }),
         }
       );
 
-      console.log("📡 RESPONSE RECEIVED");
-
       const data = await res.json();
 
       if (!res.ok) {
-        console.error("❌ API ERROR:", data);
         setError(data.error || "Failed to save preferences.");
         return;
       }
-
-      console.log("✅ SAVED SUCCESSFULLY");
 
       await refreshUser();
 
@@ -113,27 +97,16 @@ export default function PreferencesStep({
       });
 
       next();
-
     } catch (err) {
-
-      console.error("❌ FETCH ERROR:", err);
+      console.error(err);
       setError("Something went wrong. Please try again.");
-
     } finally {
       setLoading(false);
     }
   };
 
   return (
-
-    <div
-      onSubmit={(e) => {
-        console.log("🚨 FORM SUBMIT BLOCKED");
-        e.preventDefault();
-      }}
-      className="bg-[#111] p-8 rounded-2xl border border-white/10 shadow-xl text-white"
-    >
-
+    <div className="bg-[#111] p-8 rounded-2xl border border-white/10 shadow-xl text-white">
       <h1 className="text-2xl font-bold mb-6">Dating Preferences</h1>
 
       {error && (
@@ -152,10 +125,18 @@ export default function PreferencesStep({
           onChange={(e) => setInterestedIn(e.target.value)}
           className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20"
         >
-          <option value="" className="text-black">Select...</option>
-          <option value="Men" className="text-black">Men</option>
-          <option value="Women" className="text-black">Women</option>
-          <option value="Everyone" className="text-black">Everyone</option>
+          <option value="" className="text-black">
+            Select...
+          </option>
+          <option value="Men" className="text-black">
+            Men
+          </option>
+          <option value="Women" className="text-black">
+            Women
+          </option>
+          <option value="Everyone" className="text-black">
+            Everyone
+          </option>
         </select>
       </div>
 
@@ -181,18 +162,34 @@ export default function PreferencesStep({
         </div>
       </div>
 
+      {/* 🔥 ANY LOCATION + RADIUS */}
+
+      <div className="mb-4 space-y-3">
+        <label className="flex items-center gap-2 text-sm text-white/80">
+          <input
+            type="checkbox"
+            checked={anyLocation}
+            onChange={(e) => setAnyLocation(e.target.checked)}
+          />
+          Any location
+        </label>
+
+        <input
+          type="number"
+          value={locationRadius}
+          onChange={(e) => setLocationRadius(Number(e.target.value))}
+          disabled={anyLocation}
+          className="w-full p-3 rounded-lg bg-white/10 border border-white/20 disabled:opacity-50"
+          placeholder="Distance radius"
+        />
+      </div>
+
       {/* Buttons */}
 
       <div className="flex gap-3">
-
         <button
           type="button"
-          onClick={(e) => {
-            console.log("⬅️ BACK CLICKED");
-            e.preventDefault();
-            e.stopPropagation();
-            back();
-          }}
+          onClick={back}
           className="flex-1 py-3 bg-white/10 rounded-lg hover:bg-white/20"
         >
           Back
@@ -200,19 +197,13 @@ export default function PreferencesStep({
 
         <button
           type="button"
-          onClick={(e) => {
-            console.log("👉 CONTINUE CLICKED");
-            e.preventDefault();
-            e.stopPropagation();
-            submit();
-          }}
-          className="flex-1 py-3 bg-yellow-500 text-black rounded-lg font-semibold"
+          onClick={submit}
+          disabled={loading}
+          className="flex-1 py-3 bg-yellow-500 text-black rounded-lg font-semibold disabled:opacity-50"
         >
-          Continue
+          {loading ? "Saving..." : "Continue"}
         </button>
-
       </div>
-
     </div>
   );
 }
