@@ -89,11 +89,7 @@ export default function ProfilePage() {
     if (Array.isArray(authUser?.prompts)) {
       setPrompts(authUser.prompts);
     } else {
-      setPrompts([
-        { question: "", answer: "" },
-        { question: "", answer: "" },
-        { question: "", answer: "" }
-      ]);
+      setPrompts([]);
     }
 
   }, [authUser, viewingOtherUser]);
@@ -121,25 +117,6 @@ export default function ProfilePage() {
     loadInviteStats();
 
   }, [viewingOtherUser]);
-
-  const updatePrompt = (index: number, field: string, value: string) => {
-    const updated = [...prompts];
-    updated[index][field] = value;
-    setPrompts(updated);
-  };
-
-  const addPrompt = () => {
-    setPrompts([...prompts, { question: "", answer: "" }]);
-  };
-
-  const savePrompts = async () => {
-    try {
-      await apiClient.post("/api/profile/prompts", { prompts });
-      alert("Prompts saved");
-    } catch {
-      alert("Failed to save prompts");
-    }
-  };
 
   const downloadQR = () => {
 
@@ -253,67 +230,11 @@ export default function ProfilePage() {
 
       </div>
 
-      {/* PROMPT EDITOR */}
-
-      {!viewingOtherUser && (
-
-        <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
-
-          <h2 className="text-lg font-semibold mb-4">
-            Edit Prompts
-          </h2>
-
-          {prompts.map((p, i) => (
-
-            <div key={i} className="mb-4">
-
-              <input
-                className="w-full bg-white/10 p-2 rounded mb-2"
-                placeholder="Prompt question"
-                value={p.question}
-                onChange={(e) =>
-                  updatePrompt(i, "question", e.target.value)
-                }
-              />
-
-              <textarea
-                className="w-full bg-white/10 p-2 rounded"
-                placeholder="Your answer"
-                value={p.answer}
-                onChange={(e) =>
-                  updatePrompt(i, "answer", e.target.value)
-                }
-              />
-
-            </div>
-
-          ))}
-
-          <div className="flex gap-3">
-
-            <button
-              onClick={addPrompt}
-              className="bg-gray-700 px-3 py-2 rounded"
-            >
-              Add Prompt
-            </button>
-
-            <button
-              onClick={savePrompts}
-              className="bg-yellow-600 px-4 py-2 rounded font-semibold"
-            >
-              Save Prompts
-            </button>
-
-          </div>
-
-        </div>
-
-      )}
-
       {!viewingOtherUser && (
 
         <>
+          {/* INVITE */}
+
           <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
 
             <div className="flex justify-between items-center">
@@ -335,6 +256,43 @@ export default function ProfilePage() {
             </div>
 
           </div>
+
+          {/* ✅ PERSONALITY PROMPTS (NOW HERE) */}
+
+          {prompts.length > 0 && (
+
+            <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+
+              <h2 className="text-lg font-semibold mb-4">
+                Personality Prompts
+              </h2>
+
+              <div className="space-y-4">
+
+                {prompts.map((p, i) => (
+
+                  <div
+                    key={i}
+                    className="bg-white/10 p-4 rounded-lg"
+                  >
+
+                    <div className="text-xs text-white/50 mb-1">
+                      {p.question}
+                    </div>
+
+                    <div className="text-sm">
+                      {p.answer}
+                    </div>
+
+                  </div>
+
+                ))}
+
+              </div>
+
+            </div>
+
+          )}
 
           <SwipeStatsSection />
 
@@ -372,14 +330,10 @@ export default function ProfilePage() {
 
       )}
 
-      {/* INVITE MODAL */}
-
+      {/* INVITE MODAL unchanged */}
       {newInvite && (
-
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-
           <div className="bg-gray-900 p-8 rounded-xl border border-white/10 text-center w-[360px]">
-
             <h2 className="text-2xl font-bold text-yellow-400 mb-4">
               Lynq
             </h2>
@@ -414,40 +368,26 @@ export default function ProfilePage() {
 
             <div className="flex flex-col gap-2 mt-4">
 
-              <button
-                onClick={copyInvite}
-                className="bg-blue-600 hover:bg-blue-700 py-2 rounded font-semibold"
-              >
+              <button onClick={copyInvite} className="bg-blue-600 py-2 rounded font-semibold">
                 Copy Link
               </button>
 
-              <button
-                onClick={shareInvite}
-                className="bg-green-600 hover:bg-green-700 py-2 rounded font-semibold"
-              >
+              <button onClick={shareInvite} className="bg-green-600 py-2 rounded font-semibold">
                 Share
               </button>
 
-              <button
-                onClick={downloadQR}
-                className="bg-purple-600 hover:bg-purple-700 py-2 rounded font-semibold"
-              >
+              <button onClick={downloadQR} className="bg-purple-600 py-2 rounded font-semibold">
                 Download QR
               </button>
 
-              <button
-                onClick={() => setNewInvite(null)}
-                className="bg-gray-700 hover:bg-gray-800 py-2 rounded"
-              >
+              <button onClick={() => setNewInvite(null)} className="bg-gray-700 py-2 rounded">
                 Close
               </button>
 
             </div>
 
           </div>
-
         </div>
-
       )}
 
     </div>

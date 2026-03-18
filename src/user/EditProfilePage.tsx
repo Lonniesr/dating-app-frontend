@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useUserAuth } from "./context/UserAuthContext";
 import apiClient from "../services/apiClient";
 
@@ -9,7 +8,6 @@ type PromptItem = {
 };
 
 export default function EditProfilePage() {
-  const navigate = useNavigate();
   const { authUser, refreshUser } = useUserAuth();
 
   const [name, setName] = useState("");
@@ -21,7 +19,11 @@ export default function EditProfilePage() {
   const [maxAge, setMaxAge] = useState(40);
   const [locationRadius, setLocationRadius] = useState(50);
 
+  const [prompts, setPrompts] = useState<PromptItem[]>([]);
+
   const [loading, setLoading] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   /* ===============================
      LOAD USER DATA
@@ -38,62 +40,69 @@ export default function EditProfilePage() {
     setMinAge(authUser.preferences?.minAge || 18);
     setMaxAge(authUser.preferences?.maxAge || 40);
     setLocationRadius(authUser.preferences?.locationRadius ?? 50);
+
+    if (Array.isArray(authUser.prompts)) {
+      setPrompts(authUser.prompts);
+    } else {
+      setPrompts([
+        { question: "", answer: "" },
+        { question: "", answer: "" },
+        { question: "", answer: "" },
+      ]);
+    }
   }, [authUser]);
 
   /* ===============================
-     SAVE PROFILE (FIXED)
+     PROMPT HANDLERS
+  =============================== */
+
+  const updatePrompt = (index: number, field: string, value: string) => {
+    const updated = [...prompts];
+    updated[index][field as keyof PromptItem] = value;
+    setPrompts(updated);
+  };
+
+  const addPrompt = () => {
+    setPrompts([...prompts, { question: "", answer: "" }]);
+  };
+
+  /* ===============================
+     🚀 UNIFIED SAVE (UX UPGRADED)
   =============================== */
 
   const saveProfile = async () => {
     try {
       setLoading(true);
-
-      console.log("🚀 SAVING PROFILE + PREFERENCES");
-
-      /* ✅ 1. Save basic profile */
+      setSaved(false);
+      setError(null);
 
       await apiClient.put("/api/user/profile", {
         name,
         bio,
         gender,
-      });
-
-      /* ✅ 2. Save preferences (FIXED ROUTE) */
-
-      await apiClient.post("/api/onboarding/preferences", {
         preferences: {
           interestedIn,
           minAge,
           maxAge,
           locationRadius,
         },
+        prompts,
       });
-
-      console.log("✅ SAVE COMPLETE");
 
       await refreshUser();
 
-      navigate("/user/profile");
+      setSaved(true);
+
+      // auto-clear "Saved"
+      setTimeout(() => setSaved(false), 2500);
+
     } catch (err) {
-      console.error("❌ Profile update failed", err);
+      console.error("❌ Save failed", err);
+      setError("Failed to save changes");
     } finally {
       setLoading(false);
     }
   };
-
-  /* ===============================
-     NORMALIZE PROMPTS
-  =============================== */
-
-  let prompts: PromptItem[] = [];
-
-  if (authUser?.prompts) {
-    if (Array.isArray(authUser.prompts)) {
-      prompts = authUser.prompts as PromptItem[];
-    } else {
-      prompts = Object.values(authUser.prompts) as PromptItem[];
-    }
-  }
 
   return (
     <div className="p-6 text-white max-w-xl mx-auto pb-28">
@@ -102,18 +111,29 @@ export default function EditProfilePage() {
         Edit Profile
       </h1>
 
+      {/* ✅ SUCCESS / ERROR FEEDBACK */}
+
+      {saved && (
+        <div className="mb-4 bg-green-500/20 text-green-400 p-3 rounded-lg text-sm">
+          Profile saved successfully ✓
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-4 bg-red-500/20 text-red-400 p-3 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
+
       <div className="space-y-5">
 
-        {/* NAME (LOCKED) */}
+        {/* NAME */}
 
         <div>
-          <label className="text-sm text-white/70">
-            Name
-          </label>
-
+          <label className="text-sm text-white/70">Name</label>
           <input
             disabled
-            className="w-full p-3 rounded bg-white/5 border border-white/10 text-white/50 cursor-not-allowed"
+            className="w-full p-3 rounded bg-white/5 border border-white/10 text-white/50"
             value={name}
           />
         </div>
@@ -121,10 +141,7 @@ export default function EditProfilePage() {
         {/* BIO */}
 
         <div>
-          <label className="text-sm text-white/70">
-            Bio
-          </label>
-
+          <label className="text-sm text-white/70">Bio</label>
           <textarea
             className="w-full p-3 rounded bg-white/10 border border-white/20"
             rows={3}
@@ -136,10 +153,7 @@ export default function EditProfilePage() {
         {/* GENDER */}
 
         <div>
-          <label className="text-sm text-white/70">
-            Gender
-          </label>
-
+          <label className="text-sm text-white/70">Gender</label>
           <select
             className="w-full p-3 rounded bg-white/10 border border-white/20"
             value={gender}
@@ -152,7 +166,7 @@ export default function EditProfilePage() {
           </select>
         </div>
 
-        {/* DATING PREFERENCES */}
+        {/* PREFERENCES */}
 
         <div className="bg-white/5 border border-white/10 rounded-xl p-4">
 
@@ -162,67 +176,81 @@ export default function EditProfilePage() {
 
           <div className="space-y-4">
 
-            <div>
-              <label className="text-sm text-white/70">
-                Interested In
-              </label>
+            <select
+              value={interestedIn}
+              onChange={(e) => setInterestedIn(e.target.value)}
+              className="w-full p-3 rounded bg-white/10 border border-white/20"
+            >
+              <option value="">Interested In</option>
+              <option value="Men">Men</option>
+              <option value="Women">Women</option>
+              <option value="Everyone">Everyone</option>
+            </select>
 
-              <select
-                className="w-full p-3 rounded bg-white/10 border border-white/20"
-                value={interestedIn}
-                onChange={(e) => setInterestedIn(e.target.value)}
-              >
-                <option value="">Select</option>
-                <option value="Men">Men</option>
-                <option value="Women">Women</option>
-                <option value="Everyone">Everyone</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-sm text-white/70">
-                Age Range
-              </label>
-
-              <div className="flex gap-3">
-
-                <input
-                  type="number"
-                  value={minAge}
-                  onChange={(e) =>
-                    setMinAge(Number(e.target.value))
-                  }
-                  className="w-full p-3 rounded bg-white/10 border border-white/20"
-                />
-
-                <input
-                  type="number"
-                  value={maxAge}
-                  onChange={(e) =>
-                    setMaxAge(Number(e.target.value))
-                  }
-                  className="w-full p-3 rounded bg-white/10 border border-white/20"
-                />
-
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm text-white/70">
-                Distance Radius (miles)
-              </label>
-
+            <div className="flex gap-3">
               <input
                 type="number"
-                value={locationRadius}
-                onChange={(e) =>
-                  setLocationRadius(Number(e.target.value))
-                }
+                value={minAge}
+                onChange={(e) => setMinAge(Number(e.target.value))}
+                className="w-full p-3 rounded bg-white/10 border border-white/20"
+              />
+              <input
+                type="number"
+                value={maxAge}
+                onChange={(e) => setMaxAge(Number(e.target.value))}
                 className="w-full p-3 rounded bg-white/10 border border-white/20"
               />
             </div>
 
+            <input
+              type="number"
+              value={locationRadius}
+              onChange={(e) =>
+                setLocationRadius(Number(e.target.value))
+              }
+              className="w-full p-3 rounded bg-white/10 border border-white/20"
+              placeholder="Distance radius"
+            />
+
           </div>
+
+        </div>
+
+        {/* PROMPTS */}
+
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+
+          <h2 className="font-semibold mb-4">
+            Personality Prompts
+          </h2>
+
+          {prompts.map((p, i) => (
+            <div key={i} className="mb-4">
+              <input
+                className="w-full bg-white/10 p-2 rounded mb-2"
+                placeholder="Prompt question"
+                value={p.question}
+                onChange={(e) =>
+                  updatePrompt(i, "question", e.target.value)
+                }
+              />
+              <textarea
+                className="w-full bg-white/10 p-2 rounded"
+                placeholder="Your answer"
+                value={p.answer}
+                onChange={(e) =>
+                  updatePrompt(i, "answer", e.target.value)
+                }
+              />
+            </div>
+          ))}
+
+          <button
+            onClick={addPrompt}
+            className="bg-gray-700 px-3 py-2 rounded"
+          >
+            Add Prompt
+          </button>
 
         </div>
 
@@ -231,9 +259,9 @@ export default function EditProfilePage() {
         <button
           onClick={saveProfile}
           disabled={loading}
-          className="w-full py-3 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-semibold"
+          className="w-full py-3 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-semibold disabled:opacity-50"
         >
-          {loading ? "Saving..." : "Save Changes"}
+          {loading ? "Saving..." : saved ? "Saved ✓" : "Save Changes"}
         </button>
 
       </div>
