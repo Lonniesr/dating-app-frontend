@@ -1,11 +1,25 @@
 // src/api/onboardingClient.ts
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+
+/* =========================
+   BASE CLIENTS
+========================= */
+
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL + "/api/onboarding",
+  baseURL: BASE_URL + "/api/onboarding",
 });
 
-// Attach JWT automatically
+const PROFILE_API = axios.create({
+  baseURL: BASE_URL,
+  withCredentials: true,
+});
+
+/* =========================
+   AUTH HEADER (for onboarding routes)
+========================= */
+
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -13,6 +27,10 @@ API.interceptors.request.use((config) => {
   }
   return config;
 });
+
+/* =========================
+   ONBOARDING CLIENT
+========================= */
 
 export const onboardingClient = {
 
@@ -54,13 +72,19 @@ export const onboardingClient = {
     return res.data;
   },
 
+  /**
+   * 🔥 FIXED: USE /api/profile INSTEAD
+   */
   savePreferences: async (preferences: any) => {
-    const res = await API.post("/preferences", {
-      preferences, // ✅ correct structure
+    const res = await PROFILE_API.put("/api/profile", {
+      preferences,
     });
     return res.data;
   },
 
+  /**
+   * OPTIONAL (can unify later, but safe to keep)
+   */
   savePersonality: async (personality: any) => {
     const res = await API.post("/personality", personality);
     return res.data;

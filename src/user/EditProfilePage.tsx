@@ -67,7 +67,7 @@ export default function EditProfilePage() {
   };
 
   /* ===============================
-     🚀 UNIFIED SAVE (UX UPGRADED)
+     🚀 SAVE PROFILE (FIXED)
   =============================== */
 
   const saveProfile = async () => {
@@ -76,7 +76,9 @@ export default function EditProfilePage() {
       setSaved(false);
       setError(null);
 
-      await apiClient.put("/api/user/profile", {
+      console.log("🚀 SENDING UPDATE...");
+
+      const res = await apiClient.put("/api/profile", {
         name,
         bio,
         gender,
@@ -89,16 +91,18 @@ export default function EditProfilePage() {
         prompts,
       });
 
+      console.log("✅ RESPONSE:", res.data);
+
       await refreshUser();
 
       setSaved(true);
 
-      // auto-clear "Saved"
       setTimeout(() => setSaved(false), 2500);
-
-    } catch (err) {
+    } catch (err: any) {
       console.error("❌ Save failed", err);
-      setError("Failed to save changes");
+      setError(
+        err?.response?.data?.error || "Failed to save changes"
+      );
     } finally {
       setLoading(false);
     }
@@ -106,12 +110,11 @@ export default function EditProfilePage() {
 
   return (
     <div className="p-6 text-white max-w-xl mx-auto pb-28">
-
       <h1 className="text-2xl font-bold mb-6">
         Edit Profile
       </h1>
 
-      {/* ✅ SUCCESS / ERROR FEEDBACK */}
+      {/* SUCCESS / ERROR */}
 
       {saved && (
         <div className="mb-4 bg-green-500/20 text-green-400 p-3 rounded-lg text-sm">
@@ -169,13 +172,11 @@ export default function EditProfilePage() {
         {/* PREFERENCES */}
 
         <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-
           <h2 className="font-semibold mb-4">
             Dating Preferences
           </h2>
 
           <div className="space-y-4">
-
             <select
               value={interestedIn}
               onChange={(e) => setInterestedIn(e.target.value)}
@@ -211,15 +212,12 @@ export default function EditProfilePage() {
               className="w-full p-3 rounded bg-white/10 border border-white/20"
               placeholder="Distance radius"
             />
-
           </div>
-
         </div>
 
         {/* PROMPTS */}
 
         <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-
           <h2 className="font-semibold mb-4">
             Personality Prompts
           </h2>
@@ -251,7 +249,6 @@ export default function EditProfilePage() {
           >
             Add Prompt
           </button>
-
         </div>
 
         {/* SAVE BUTTON */}
@@ -265,7 +262,6 @@ export default function EditProfilePage() {
         </button>
 
       </div>
-
     </div>
   );
 }

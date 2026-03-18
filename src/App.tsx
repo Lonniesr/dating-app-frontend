@@ -77,6 +77,7 @@ export default function App() {
           <Route path="profile/:id" element={<ProfilePage />} />
 
           <Route path="edit-profile" element={<EditProfilePage />} />
+
           <Route path="settings" element={<SettingsPage />} />
 
           <Route path="messages" element={<MessagesPage />} />
