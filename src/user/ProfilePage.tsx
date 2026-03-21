@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useUserAuth } from "./context/UserAuthContext";
 import { supabase } from "../lib/supabaseClient";
 import apiClient from "../services/apiClient";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import lynqlogo from "../assets/lynqlogo.png";
 
@@ -46,8 +46,8 @@ interface Invite {
 }
 
 export default function ProfilePage() {
-
   const { id } = useParams();
+  const navigate = useNavigate();
   const { authUser, isLoading } = useUserAuth();
 
   const [otherUser, setOtherUser] = useState<any>(null);
@@ -56,14 +56,13 @@ export default function ProfilePage() {
 
   const [inviteStats, setInviteStats] = useState<InviteStats>({
     sent: 0,
-    joined: 0
+    joined: 0,
   });
 
   const viewingOtherUser = !!id;
   const profileUser = viewingOtherUser ? otherUser : authUser;
 
   useEffect(() => {
-
     if (!id) {
       setOtherUser(null);
       return;
@@ -79,11 +78,9 @@ export default function ProfilePage() {
     };
 
     loadProfile();
-
   }, [id]);
 
   useEffect(() => {
-
     if (viewingOtherUser) return;
 
     if (Array.isArray(authUser?.prompts)) {
@@ -91,18 +88,16 @@ export default function ProfilePage() {
     } else {
       setPrompts([]);
     }
-
   }, [authUser, viewingOtherUser]);
 
   const createInviteMutation = useMutation({
     mutationFn: () => userInvitesService.create(),
     onSuccess: (invite: Invite) => {
       setNewInvite(invite);
-    }
+    },
   });
 
   useEffect(() => {
-
     if (viewingOtherUser) return;
 
     const loadInviteStats = async () => {
@@ -115,11 +110,9 @@ export default function ProfilePage() {
     };
 
     loadInviteStats();
-
   }, [viewingOtherUser]);
 
   const downloadQR = () => {
-
     const svg = document.getElementById("invite-qr");
     if (!svg) return;
 
@@ -147,7 +140,7 @@ export default function ProfilePage() {
       await navigator.share({
         title: "Join me on Lynq",
         text: "Use my invite to join Lynq",
-        url: newInvite.inviteLink
+        url: newInvite.inviteLink,
       });
     } else {
       copyInvite();
@@ -166,17 +159,27 @@ export default function ProfilePage() {
   const age = calculateAge(profileUser.birthdate);
 
   return (
-
     <div className="p-6 text-white pb-28">
 
       <h1 className="text-2xl font-bold mb-6">
         {viewingOtherUser ? "User Profile" : "My Profile"}
       </h1>
 
+      {!viewingOtherUser && (
+        <div className="mb-6 flex justify-end">
+          <a
+            href={`mailto:support@letslynq.com?subject=Issue%20Report&body=Page:${
+              typeof window !== "undefined" ? window.location.pathname : ""
+            }%0AUser:${authUser?.email || ""}%0A%0ADescribe your issue:`}
+            className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"
+          >
+            Report an Issue
+          </a>
+        </div>
+      )}
+
       {/* PROFILE HEADER */}
-
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
-
         <div className="flex items-center gap-5">
 
           <div className="w-24 h-24 rounded-full overflow-hidden border border-white/20 bg-white/10">
@@ -206,6 +209,12 @@ export default function ProfilePage() {
                 </span>
               )}
 
+              {profileUser.verification_status === "pending" && (
+                <span className="text-yellow-400 text-sm font-semibold">
+                  ⏳ Pending
+                </span>
+              )}
+
               {profileUser.gender && (
                 <GenderIcon gender={profileUser.gender} />
               )}
@@ -224,166 +233,64 @@ export default function ProfilePage() {
               </p>
             )}
 
+            {/* 🔥 SELFIE VERIFICATION BUTTON */}
+            {!viewingOtherUser &&
+              profileUser.verification_status !== "approved" && (
+                <button
+                  onClick={() => navigate("/user/verify-selfie")}
+                  className="mt-3 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm"
+                >
+                  Verify Your Profile
+                </button>
+              )}
+
           </div>
 
         </div>
-
       </div>
 
       {!viewingOtherUser && (
-
         <>
-          {/* INVITE */}
-
-          <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
-
-            <div className="flex justify-between items-center">
-
-              <h2 className="text-lg font-semibold">
-                Invite Friends
-              </h2>
-
-              <button
-                onClick={() => createInviteMutation.mutate()}
-                disabled={createInviteMutation.isPending}
-                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-semibold disabled:opacity-50"
-              >
-                {createInviteMutation.isPending
-                  ? "Creating..."
-                  : "Generate Invite"}
-              </button>
-
-            </div>
-
-          </div>
-
-          {/* ✅ PERSONALITY PROMPTS (NOW HERE) */}
-
-          {prompts.length > 0 && (
-
-            <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
-
-              <h2 className="text-lg font-semibold mb-4">
-                Personality Prompts
-              </h2>
-
-              <div className="space-y-4">
-
-                {prompts.map((p, i) => (
-
-                  <div
-                    key={i}
-                    className="bg-white/10 p-4 rounded-lg"
-                  >
-
-                    <div className="text-xs text-white/50 mb-1">
-                      {p.question}
-                    </div>
-
-                    <div className="text-sm">
-                      {p.answer}
-                    </div>
-
-                  </div>
-
-                ))}
-
-              </div>
-
-            </div>
-
-          )}
-
           <SwipeStatsSection />
-
-          <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6 text-white">
-
-            <h2 className="text-xl font-bold mb-3">
-              Invite Performance
-            </h2>
-
-            <div className="space-y-1 text-white/80">
-
-              <p>
-                <strong>Invites Sent:</strong> {inviteStats.sent}
-              </p>
-
-              <p>
-                <strong>Friends Joined:</strong> {inviteStats.joined}
-              </p>
-
-              <p>
-                <strong>Conversion Rate:</strong>{" "}
-                {inviteStats.sent > 0
-                  ? `${Math.round((inviteStats.joined / inviteStats.sent) * 100)}%`
-                  : "0%"}
-              </p>
-
-            </div>
-
-          </div>
-
           <MatchCountSection />
           <PhotoManagerSection />
-
         </>
-
       )}
 
-      {/* INVITE MODAL unchanged */}
       {newInvite && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
           <div className="bg-gray-900 p-8 rounded-xl border border-white/10 text-center w-[360px]">
+
             <h2 className="text-2xl font-bold text-yellow-400 mb-4">
               Lynq
             </h2>
 
-            <div className="relative w-full flex justify-center">
-
-              <QRCodeSVG
-                id="invite-qr"
-                value={newInvite.inviteLink}
-                size={260}
-                level="H"
-                includeMargin
-                className="bg-white p-4 rounded-lg w-full"
-              />
-
-              <img
-                src={lynqlogo}
-                alt="Lynq"
-                className="absolute w-16 h-16 bg-white rounded-lg p-1 shadow"
-                style={{
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)"
-                }}
-              />
-
-            </div>
+            <QRCodeSVG
+              id="invite-qr"
+              value={newInvite.inviteLink}
+              size={260}
+              level="H"
+              includeMargin
+              className="bg-white p-4 rounded-lg w-full"
+            />
 
             <p className="text-xs text-white/60 mt-4 break-all">
               {newInvite.inviteLink}
             </p>
 
             <div className="flex flex-col gap-2 mt-4">
-
               <button onClick={copyInvite} className="bg-blue-600 py-2 rounded font-semibold">
                 Copy Link
               </button>
-
               <button onClick={shareInvite} className="bg-green-600 py-2 rounded font-semibold">
                 Share
               </button>
-
               <button onClick={downloadQR} className="bg-purple-600 py-2 rounded font-semibold">
                 Download QR
               </button>
-
               <button onClick={() => setNewInvite(null)} className="bg-gray-700 py-2 rounded">
                 Close
               </button>
-
             </div>
 
           </div>

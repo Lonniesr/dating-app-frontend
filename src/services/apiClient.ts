@@ -13,6 +13,20 @@ const api = axios.create({
 });
 
 /**
+ * 🔥 ADD AUTH TOKEN TO EVERY REQUEST
+ */
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
+/**
  * Optional: Centralized error logging
  */
 api.interceptors.response.use(

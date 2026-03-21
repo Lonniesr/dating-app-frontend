@@ -1,89 +1,95 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import DataTable from "../components/DataTable";
+import { useEffect, useState } from "react";
+import api from "../../services/apiClient";
 
-import { adminVerificationService } from "../services/adminVerificationService";
-import type { VerificationUser } from "../services/adminVerificationService";
+type UserVerification = {
+  id: string;
+  name?: string;
+  username?: string;
+  verification_selfie: string;
+  verification_status: string;
+};
 
-export default function AdminVerificationPage() {
-  const queryClient = useQueryClient();
+export default function AdminVerification() {
+  const [users, setUsers] = useState<UserVerification[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: users, isLoading } = useQuery<VerificationUser[]>({
-    queryKey: ["admin-verification"],
-    queryFn: () => adminVerificationService.list(),
-  });
+  const loadQueue = async () => {
+    try {
+      const res = await api.get("/api/admin/verification");
+      setUsers(res.data);
+    } catch (err) {
+      console.error("Failed to load verification queue", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const approveMutation = useMutation({
-    mutationFn: (userId: string) => adminVerificationService.approve(userId),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["admin-verification"] }),
-  });
+  useEffect(() => {
+    loadQueue();
+  }, []);
 
-  const rejectMutation = useMutation({
-    mutationFn: (userId: string) => adminVerificationService.reject(userId),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["admin-verification"] }),
-  });
+  const approve = async (id: string) => {
+    await api.post(`/api/admin/verification/${id}/approve`);
+    setUsers((prev) => prev.filter((u) => u.id !== id));
+  };
 
-  if (isLoading) {
-    return <div className="glass-card">Loading verification queue…</div>;
+  const reject = async (id: string) => {
+    await api.post(`/api/admin/verification/${id}/reject`);
+    setUsers((prev) => prev.filter((u) => u.id !== id));
+  };
+
+  if (loading) {
+    return <div className="p-6 text-white">Loading…</div>;
   }
 
   return (
-    <div className="fade-in">
+    <div className="p-6 text-white">
 
-      <h1
-        className="admin-gold-shimmer"
-        style={{ fontSize: "2rem", marginBottom: "1.5rem" }}
-      >
+      <h1 className="text-2xl font-bold mb-6">
         Verification Queue
       </h1>
 
-      <DataTable
-        searchable
-        columns={[
-          { key: "selfie", label: "Selfie" },
-          { key: "name", label: "Name" },
-          { key: "email", label: "Email" },
-          { key: "createdAt", label: "Joined" },
-        ]}
-        data={
-          users?.map((u) => ({
-            id: u.id,
+      {users.length === 0 && (
+        <p className="text-white/60">No pending verifications</p>
+      )}
 
-            selfie: u.verification_selfie ? (
-              <img
-                src={u.verification_selfie}
-                alt="selfie"
-                style={{
-                  width: 60,
-                  height: 60,
-                  objectFit: "cover",
-                  borderRadius: "8px",
-                }}
-              />
-            ) : (
-              "No selfie"
-            ),
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            name: u.name ?? "Unknown",
-            email: u.email,
-            createdAt: new Date(u.createdAt).toLocaleDateString(),
-          })) ?? []
-        }
-        actions={[
-          {
-            label: "Approve",
-            className: "btn-gold",
-            onClick: (row) => approveMutation.mutate(row.id),
-          },
-          {
-            label: "Reject",
-            className: "btn-danger",
-            onClick: (row) => rejectMutation.mutate(row.id),
-          },
-        ]}
-      />
+        {users.map((user) => (
+          <div
+            key={user.id}
+            className="bg-white/5 border border-white/10 rounded-xl p-4"
+          >
+            <p className="font-semibold mb-2">
+              {user.username || user.name || "User"}
+            </p>
 
+            <img
+              src={user.verification_selfie}
+              alt="selfie"
+              className="w-full h-64 object-cover rounded-lg mb-4"
+            />
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => approve(user.id)}
+                className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded"
+              >
+                Approve
+              </button>
+
+              <button
+                onClick={() => reject(user.id)}
+                className="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded"
+              >
+                Reject
+              </button>
+            </div>
+
+          </div>
+        ))}
+
+      </div>
     </div>
   );
 }

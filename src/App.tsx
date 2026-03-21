@@ -37,6 +37,9 @@ import DiscoverFeed from "./user/components/DiscoverFeed";
 import LikesPage from "./user/LikesPage";
 import ChatPage from "./user/ChatPage";
 
+/* ✅ NEW */
+import SelfieVerificationPage from "./user/SelfieVerificationPage";
+
 import UserLayout from "./user/layout/UserLayout";
 import ProtectedRoute from "./user/routes/ProtectedRoute";
 
@@ -54,15 +57,9 @@ export default function App() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/invite/:code" element={<InviteLandingPage />} />
 
-      {/* ✅ FIX: ONBOARDING OUTSIDE PROTECTED ROUTE */}
-
-      <Route
-        path="/invite/onboarding/*"
-        element={<OnboardingPage />}
-      />
+      <Route path="/invite/onboarding/*" element={<OnboardingPage />} />
 
       {/* PROTECTED USER AREA */}
-
       <Route element={<ProtectedRoute />}>
 
         <Route path="/user" element={<UserLayout />}>
@@ -85,12 +82,14 @@ export default function App() {
 
           <Route path="matches" element={<MatchesPage />} />
 
+          {/* ✅ NEW ROUTE */}
+          <Route path="verify-selfie" element={<SelfieVerificationPage />} />
+
         </Route>
 
       </Route>
 
       {/* ADMIN */}
-
       <Route
         path="/admin"
         element={
