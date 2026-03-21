@@ -12,13 +12,14 @@ type UserVerification = {
 export default function AdminVerification() {
   const [users, setUsers] = useState<UserVerification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const loadQueue = async () => {
     try {
       const res = await api.get("/api/admin/verification");
-      setUsers(res.data);
+      setUsers(res.data || []);
     } catch (err) {
-      console.error("Failed to load verification queue", err);
+      console.error("❌ Failed to load verification queue", err);
     } finally {
       setLoading(false);
     }
@@ -26,16 +27,43 @@ export default function AdminVerification() {
 
   useEffect(() => {
     loadQueue();
+
+    // 🔁 Auto-refresh every 15 seconds (safety sync)
+    const interval = setInterval(loadQueue, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   const approve = async (id: string) => {
-    await api.post(`/api/admin/verification/${id}/approve`);
-    setUsers((prev) => prev.filter((u) => u.id !== id));
+    try {
+      setActionLoading(id);
+
+      await api.post(`/api/admin/verification/${id}/approve`);
+
+      // ✅ instant UI update (no reload)
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+
+    } catch (err) {
+      console.error("❌ Approve failed", err);
+      alert("Approve failed");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const reject = async (id: string) => {
-    await api.post(`/api/admin/verification/${id}/reject`);
-    setUsers((prev) => prev.filter((u) => u.id !== id));
+    try {
+      setActionLoading(id);
+
+      await api.post(`/api/admin/verification/${id}/reject`);
+
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+
+    } catch (err) {
+      console.error("❌ Reject failed", err);
+      alert("Reject failed");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   if (loading) {
@@ -73,16 +101,18 @@ export default function AdminVerification() {
             <div className="flex gap-2">
               <button
                 onClick={() => approve(user.id)}
-                className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded"
+                disabled={actionLoading === user.id}
+                className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded disabled:opacity-50"
               >
-                Approve
+                {actionLoading === user.id ? "Processing..." : "Approve"}
               </button>
 
               <button
                 onClick={() => reject(user.id)}
-                className="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded"
+                disabled={actionLoading === user.id}
+                className="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded disabled:opacity-50"
               >
-                Reject
+                {actionLoading === user.id ? "Processing..." : "Reject"}
               </button>
             </div>
 

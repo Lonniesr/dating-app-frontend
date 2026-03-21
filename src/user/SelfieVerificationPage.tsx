@@ -10,6 +10,26 @@ export default function SelfieVerificationPage() {
   const [loading, setLoading] = useState(false);
 
   /* =========================
+     CAMERA HELPERS
+  ========================= */
+
+  const stopCamera = () => {
+    const video = videoRef.current;
+
+    if (video && video.srcObject) {
+      const stream = video.srcObject as MediaStream;
+
+      stream.getTracks().forEach((track) => {
+        track.stop();
+      });
+
+      video.srcObject = null;
+
+      console.log("🛑 Camera stopped");
+    }
+  };
+
+  /* =========================
      CAMERA
   ========================= */
 
@@ -59,10 +79,13 @@ export default function SelfieVerificationPage() {
 
     console.log("✅ Photo captured");
     setImage(dataUrl);
+
+    // ✅ Stop camera after capture (best UX)
+    stopCamera();
   };
 
   /* =========================
-     SUBMIT FLOW (DEBUG VERSION)
+     SUBMIT FLOW
   ========================= */
 
   const handleSubmit = async () => {
@@ -104,6 +127,9 @@ export default function SelfieVerificationPage() {
 
       console.log("✅ API RESPONSE:", res);
 
+      // ✅ EXTRA SAFETY (in case camera still running)
+      stopCamera();
+
       alert("Verification submitted ✅");
       setImage(null);
 
@@ -123,7 +149,6 @@ export default function SelfieVerificationPage() {
 
   return (
     <div className="p-6 text-white max-w-xl mx-auto">
-
       <h1 className="text-2xl font-bold mb-6">
         Selfie Verification
       </h1>
