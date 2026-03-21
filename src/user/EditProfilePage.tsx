@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useUserAuth } from "./context/UserAuthContext";
 import apiClient from "../services/apiClient";
+import { useNavigate } from "react-router-dom";
 
 type PromptItem = {
   question: string;
@@ -9,6 +10,7 @@ type PromptItem = {
 
 export default function EditProfilePage() {
   const { authUser, refreshUser } = useUserAuth();
+  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -53,7 +55,7 @@ export default function EditProfilePage() {
   }, [authUser]);
 
   /* ===============================
-     PROMPT HANDLERS
+     PROMPTS
   =============================== */
 
   const updatePrompt = (index: number, field: string, value: string) => {
@@ -67,7 +69,7 @@ export default function EditProfilePage() {
   };
 
   /* ===============================
-     🚀 SAVE PROFILE (FIXED)
+     SAVE PROFILE
   =============================== */
 
   const saveProfile = async () => {
@@ -75,8 +77,6 @@ export default function EditProfilePage() {
       setLoading(true);
       setSaved(false);
       setError(null);
-
-      console.log("🚀 SENDING UPDATE...");
 
       const res = await apiClient.put("/api/profile", {
         name,
@@ -91,18 +91,14 @@ export default function EditProfilePage() {
         prompts,
       });
 
-      console.log("✅ RESPONSE:", res.data);
-
       await refreshUser();
-
       setSaved(true);
 
       setTimeout(() => setSaved(false), 2500);
+
     } catch (err: any) {
       console.error("❌ Save failed", err);
-      setError(
-        err?.response?.data?.error || "Failed to save changes"
-      );
+      setError(err?.response?.data?.error || "Failed to save changes");
     } finally {
       setLoading(false);
     }
@@ -110,9 +106,36 @@ export default function EditProfilePage() {
 
   return (
     <div className="p-6 text-white max-w-xl mx-auto pb-28">
+
       <h1 className="text-2xl font-bold mb-6">
         Edit Profile
       </h1>
+
+      {/* ✅ VERIFICATION SECTION (NEW CLEAN VERSION) */}
+      {!authUser?.verified && (
+        <div className="mb-6 bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl">
+          <h2 className="font-semibold mb-2">Profile Verification</h2>
+
+          {authUser?.verification_status === "pending" ? (
+            <p className="text-yellow-400 text-sm">
+              Your verification is under review ⏳
+            </p>
+          ) : (
+            <>
+              <p className="text-white/70 text-sm mb-3">
+                Verify your profile to build trust and get more matches.
+              </p>
+
+              <button
+                onClick={() => navigate("/user/verify-selfie")}
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm"
+              >
+                Start Verification
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* SUCCESS / ERROR */}
 
@@ -131,7 +154,6 @@ export default function EditProfilePage() {
       <div className="space-y-5">
 
         {/* NAME */}
-
         <div>
           <label className="text-sm text-white/70">Name</label>
           <input
@@ -142,7 +164,6 @@ export default function EditProfilePage() {
         </div>
 
         {/* BIO */}
-
         <div>
           <label className="text-sm text-white/70">Bio</label>
           <textarea
@@ -154,7 +175,6 @@ export default function EditProfilePage() {
         </div>
 
         {/* GENDER */}
-
         <div>
           <label className="text-sm text-white/70">Gender</label>
           <select
@@ -169,90 +189,7 @@ export default function EditProfilePage() {
           </select>
         </div>
 
-        {/* PREFERENCES */}
-
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-          <h2 className="font-semibold mb-4">
-            Dating Preferences
-          </h2>
-
-          <div className="space-y-4">
-            <select
-              value={interestedIn}
-              onChange={(e) => setInterestedIn(e.target.value)}
-              className="w-full p-3 rounded bg-white/10 border border-white/20"
-            >
-              <option value="">Interested In</option>
-              <option value="Men">Men</option>
-              <option value="Women">Women</option>
-              <option value="Everyone">Everyone</option>
-            </select>
-
-            <div className="flex gap-3">
-              <input
-                type="number"
-                value={minAge}
-                onChange={(e) => setMinAge(Number(e.target.value))}
-                className="w-full p-3 rounded bg-white/10 border border-white/20"
-              />
-              <input
-                type="number"
-                value={maxAge}
-                onChange={(e) => setMaxAge(Number(e.target.value))}
-                className="w-full p-3 rounded bg-white/10 border border-white/20"
-              />
-            </div>
-
-            <input
-              type="number"
-              value={locationRadius}
-              onChange={(e) =>
-                setLocationRadius(Number(e.target.value))
-              }
-              className="w-full p-3 rounded bg-white/10 border border-white/20"
-              placeholder="Distance radius"
-            />
-          </div>
-        </div>
-
-        {/* PROMPTS */}
-
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-          <h2 className="font-semibold mb-4">
-            Personality Prompts
-          </h2>
-
-          {prompts.map((p, i) => (
-            <div key={i} className="mb-4">
-              <input
-                className="w-full bg-white/10 p-2 rounded mb-2"
-                placeholder="Prompt question"
-                value={p.question}
-                onChange={(e) =>
-                  updatePrompt(i, "question", e.target.value)
-                }
-              />
-              <textarea
-                className="w-full bg-white/10 p-2 rounded"
-                placeholder="Your answer"
-                value={p.answer}
-                onChange={(e) =>
-                  updatePrompt(i, "answer", e.target.value)
-                }
-              />
-            </div>
-          ))}
-
-          <button
-            onClick={addPrompt}
-            className="bg-gray-700 px-3 py-2 rounded"
-          >
-            Add Prompt
-          </button>
-        </div>
-
         {/* SAVE BUTTON */}
-
         <button
           onClick={saveProfile}
           disabled={loading}
