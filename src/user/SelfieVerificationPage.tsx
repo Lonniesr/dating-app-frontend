@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { submitSelfieVerification } from "../services/selfieVerificationService";
+import { submitSelfieVerification } from "./services/selfieVerificationService";
 
 export default function SelfieVerificationPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
