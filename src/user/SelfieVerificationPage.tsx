@@ -14,35 +14,55 @@ export default function SelfieVerificationPage() {
   ========================= */
 
   const startCamera = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" },
-    });
+    try {
+      console.log("🎥 Starting camera...");
 
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+      });
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+
+      console.log("✅ Camera started");
+    } catch (err) {
+      console.error("❌ Camera error:", err);
+      alert("Camera failed to start");
     }
   };
 
   const takePhoto = () => {
+    console.log("📸 Capturing photo...");
+
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
-    if (!video || !canvas) return;
+    if (!video || !canvas) {
+      console.warn("⚠️ Video or canvas missing");
+      return;
+    }
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) {
+      console.warn("⚠️ No canvas context");
+      return;
+    }
 
     ctx.drawImage(video, 0, 0);
 
     const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+
+    console.log("✅ Photo captured");
     setImage(dataUrl);
   };
 
   /* =========================
-     SUBMIT FLOW
+     SUBMIT FLOW (DEBUG VERSION)
   ========================= */
 
   const handleSubmit = async () => {
@@ -51,30 +71,51 @@ export default function SelfieVerificationPage() {
     setLoading(true);
 
     try {
+      console.log("1️⃣ Converting base64 → blob...");
       const blob = await (await fetch(image)).blob();
+      console.log("✅ Blob created:", blob.size, "bytes");
 
       const fileName = `selfie-${Date.now()}.jpg`;
 
-      const { error } = await supabase.storage
+      console.log("2️⃣ Uploading to Supabase...");
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from("selfies")
         .upload(fileName, blob);
 
-      if (error) throw error;
+      if (uploadError) {
+        console.error("❌ UPLOAD ERROR:", uploadError);
+        alert("Upload failed: " + uploadError.message);
+        return;
+      }
 
-      const { data } = supabase.storage
+      console.log("✅ Upload success:", uploadData);
+
+      console.log("3️⃣ Getting public URL...");
+      const { data: publicUrlData } = supabase.storage
         .from("selfies")
         .getPublicUrl(fileName);
 
-      const selfieUrl = data.publicUrl;
+      const selfieUrl = publicUrlData.publicUrl;
 
-      await submitSelfieVerification(selfieUrl);
+      console.log("✅ Public URL:", selfieUrl);
+
+      console.log("4️⃣ Sending to backend...");
+      const res = await submitSelfieVerification(selfieUrl);
+
+      console.log("✅ API RESPONSE:", res);
 
       alert("Verification submitted ✅");
       setImage(null);
 
-    } catch (err) {
-      console.error(err);
-      alert("Verification failed ❌");
+    } catch (err: any) {
+      console.error("🔥 FULL ERROR:", err);
+      console.error("🔥 RESPONSE:", err?.response?.data);
+
+      alert(
+        err?.response?.data?.message ||
+        err?.message ||
+        "Verification failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -92,6 +133,8 @@ export default function SelfieVerificationPage() {
         <video
           ref={videoRef}
           autoPlay
+          playsInline
+          muted
           className="w-full rounded-lg mb-4"
         />
 
