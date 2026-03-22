@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import DataTable from "../components/DataTable";
-import axios from "axios";
+import api from "../../services/apiClient"; // ✅ FIX
 
 export default function AdminUserSearchPage() {
   const [query, setQuery] = useState("");
@@ -12,9 +12,11 @@ export default function AdminUserSearchPage() {
     queryFn: async () => {
       if (!submittedQuery.trim()) return [];
 
-      const res = await axios.get("/api/admin/search", {
+      const res = await api.get("/api/admin/search", {
         params: { q: submittedQuery },
       });
+
+      console.log("🔍 SEARCH RESULTS:", res.data); // ✅ DEBUG
 
       return res.data.results ?? [];
     },
@@ -22,6 +24,7 @@ export default function AdminUserSearchPage() {
   });
 
   const handleSearch = () => {
+    console.log("🔎 Searching for:", query);
     setSubmittedQuery(query);
   };
 
@@ -40,7 +43,7 @@ export default function AdminUserSearchPage() {
           onChange={(e) => setQuery(e.target.value)}
           style={{
             width: "100%",
-            color: "#fff",            // ✅ FIX: visible text
+            color: "#fff",
             background: "rgba(255,255,255,0.08)",
             border: "1px solid rgba(255,255,255,0.15)",
           }}
