@@ -20,6 +20,10 @@ export default function AdminUserDetailPage() {
     return <div className="glass-card">User not found.</div>;
   }
 
+  // ✅ SAFETY LAYER (CRITICAL FIX)
+  const photos = user.photos ?? [];
+  const matches = user.matches ?? [];
+
   return (
     <div className="fade-in">
       {/* HEADER */}
@@ -62,6 +66,7 @@ export default function AdminUserDetailPage() {
           {/* PHOTOS */}
           <div style={{ flex: 1 }}>
             <div className="label">Photos</div>
+
             <div
               style={{
                 display: "grid",
@@ -70,8 +75,8 @@ export default function AdminUserDetailPage() {
                 marginTop: "0.5rem",
               }}
             >
-              {user.photos.length > 0 ? (
-                user.photos.map((url, i) => (
+              {photos.length > 0 ? (
+                photos.map((url, i) => (
                   <img
                     key={i}
                     src={url}
@@ -98,13 +103,13 @@ export default function AdminUserDetailPage() {
       <div className="glass-panel" style={{ padding: "2rem" }}>
         <h2 className="h2">Matches</h2>
 
-        {user.matches.length === 0 ? (
+        {matches.length === 0 ? (
           <div className="glass-card" style={{ padding: "1rem", marginTop: "1rem" }}>
             No matches found.
           </div>
         ) : (
           <div style={{ marginTop: "1rem" }}>
-            {user.matches.map((m) => (
+            {matches.map((m) => (
               <div
                 key={m.id}
                 className="glass-card"
