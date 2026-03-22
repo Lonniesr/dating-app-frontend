@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../../services/apiClient";
 
 const BASE = "/api/admin/users";
 
@@ -22,7 +22,7 @@ export interface AdminUserDetail {
 
 export const adminUserDetailService = {
   async get(id: string): Promise<AdminUserDetail> {
-    const res = await axios.get(`${BASE}/${id}`);
+    const res = await api.get(`${BASE}/${id}`); // ✅ FIXED
     return res.data as AdminUserDetail;
   },
 };
