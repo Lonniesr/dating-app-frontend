@@ -11,6 +11,8 @@ export default function AdminUserDetailPage() {
     queryFn: () => adminUserDetailService.get(id as string),
     enabled: !!id,
   });
+  
+  console.log("🔥 USER FROM API:", user);
 
   if (isLoading) {
     return <div className="glass-card">Loading user…</div>;
