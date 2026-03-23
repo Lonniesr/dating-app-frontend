@@ -131,7 +131,6 @@ export default function PhotoManagerSection() {
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-
     if (!files.length) return;
 
     if (items.length >= MAX_PHOTOS) {
@@ -162,7 +161,6 @@ export default function PhotoManagerSection() {
 
     const img = new Image();
     img.src = cropImage;
-
     await new Promise((resolve) => (img.onload = resolve));
 
     const canvas = document.createElement("canvas");
@@ -206,7 +204,6 @@ export default function PhotoManagerSection() {
         const url = data.publicUrl;
 
         const newPhotos = [...items, url];
-
         setItems(newPhotos);
 
         await fetch(`${import.meta.env.VITE_API_URL}/api/user/photos/upload`, {
@@ -228,18 +225,34 @@ export default function PhotoManagerSection() {
     }, "image/jpeg", 0.9);
   };
 
+  /* ✅ FIXED DELETE */
   const handleDelete = async (index: number) => {
-    const newPhotos = [...items];
-    newPhotos.splice(index, 1);
+    try {
+      const photoToDelete = items[index];
 
-    setItems(newPhotos);
+      console.log("🗑️ Deleting photo:", photoToDelete);
 
-    await fetch(`${import.meta.env.VITE_API_URL}/api/user/photos/${index}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+      // Optimistic UI
+      const newPhotos = [...items];
+      newPhotos.splice(index, 1);
+      setItems(newPhotos);
 
-    refreshUser();
+      await fetch(`${import.meta.env.VITE_API_URL}/api/user/photos`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: photoToDelete,
+        }),
+      });
+
+      await refreshUser();
+    } catch (err) {
+      console.error("❌ Delete failed:", err);
+      alert("Failed to delete photo");
+    }
   };
 
   const makeMainPhoto = async (index: number) => {
@@ -263,14 +276,12 @@ export default function PhotoManagerSection() {
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (!over || active.id === over.id) return;
 
     const oldIndex = items.findIndex((i) => i === active.id);
     const newIndex = items.findIndex((i) => i === over.id);
 
     const newOrder = arrayMove(items, oldIndex, newIndex);
-
     setItems(newOrder);
 
     await fetch(`${import.meta.env.VITE_API_URL}/api/user/photos/reorder`, {
@@ -288,13 +299,11 @@ export default function PhotoManagerSection() {
 
       <h2 className="text-xl font-bold mb-4">Your Photos</h2>
 
-      <label
-        className={`inline-block mb-4 px-4 py-2 rounded-lg font-semibold cursor-pointer transition ${
-          items.length >= MAX_PHOTOS
-            ? "bg-gray-500 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-700"
-        }`}
-      >
+      <label className={`inline-block mb-4 px-4 py-2 rounded-lg font-semibold cursor-pointer transition ${
+        items.length >= MAX_PHOTOS
+          ? "bg-gray-500 cursor-not-allowed"
+          : "bg-blue-600 hover:bg-blue-700"
+      }`}>
         {isUploading ? "Uploading…" : "Upload Photo"}
         <input
           type="file"
@@ -309,11 +318,7 @@ export default function PhotoManagerSection() {
         {items.length}/{MAX_PHOTOS} photos
       </p>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={items} strategy={rectSortingStrategy}>
           <div className="grid grid-cols-3 gap-3">
             {items.map((photo, index) => (
@@ -331,7 +336,6 @@ export default function PhotoManagerSection() {
 
       {cropImage && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
-
           <div className="bg-white/10 p-4 rounded-xl w-[400px]">
 
             <div className="relative h-[300px]">
@@ -366,7 +370,6 @@ export default function PhotoManagerSection() {
             </div>
 
           </div>
-
         </div>
       )}
 
