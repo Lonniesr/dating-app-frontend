@@ -63,8 +63,15 @@ function SortablePhoto({ photo, index, onDelete, onMakeMain }: SortablePhotoProp
         </div>
       )}
 
+      {/* ✅ FIXED DELETE BUTTON */}
       <button
-        onClick={() => onDelete(index)}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onDelete(index);
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
       >
         Delete
@@ -225,14 +232,12 @@ export default function PhotoManagerSection() {
     }, "image/jpeg", 0.9);
   };
 
-  /* ✅ FIXED DELETE */
   const handleDelete = async (index: number) => {
     try {
       const photoToDelete = items[index];
 
       console.log("🗑️ Deleting photo:", photoToDelete);
 
-      // Optimistic UI
       const newPhotos = [...items];
       newPhotos.splice(index, 1);
       setItems(newPhotos);
@@ -296,7 +301,6 @@ export default function PhotoManagerSection() {
 
   return (
     <div className="bg-white/5 p-5 rounded-xl border border-white/10 text-white mb-6">
-
       <h2 className="text-xl font-bold mb-4">Your Photos</h2>
 
       <label className={`inline-block mb-4 px-4 py-2 rounded-lg font-semibold cursor-pointer transition ${
@@ -337,7 +341,6 @@ export default function PhotoManagerSection() {
       {cropImage && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
           <div className="bg-white/10 p-4 rounded-xl w-[400px]">
-
             <div className="relative h-[300px]">
               <Cropper
                 image={cropImage}
@@ -368,11 +371,9 @@ export default function PhotoManagerSection() {
                 Crop & Upload
               </button>
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }
