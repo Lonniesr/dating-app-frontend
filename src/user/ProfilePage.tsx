@@ -47,7 +47,6 @@ export default function ProfilePage() {
   const viewingOtherUser = !!id;
   const profileUser = viewingOtherUser ? otherUser : authUser;
 
-  /* LOAD PROFILE */
   useEffect(() => {
     if (!id) return;
 
@@ -63,7 +62,6 @@ export default function ProfilePage() {
     loadProfile();
   }, [id]);
 
-  /* LOAD PROMPTS */
   useEffect(() => {
     if (viewingOtherUser) return;
 
@@ -74,7 +72,6 @@ export default function ProfilePage() {
     }
   }, [authUser, viewingOtherUser]);
 
-  /* INVITE */
   const createInviteMutation = useMutation({
     mutationFn: () => userInvitesService.create(),
     onSuccess: (invite) => setNewInvite(invite),
@@ -133,7 +130,7 @@ export default function ProfilePage() {
         {viewingOtherUser ? "User Profile" : "My Profile"}
       </h1>
 
-      {/* PROFILE HEADER */}
+      {/* HEADER */}
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
         <div className="flex items-center gap-5">
 
@@ -176,7 +173,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ✅ BIO (RESTORED) */}
+      {/* BIO */}
       {profileUser.bio && (
         <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
           <h2 className="font-semibold mb-2">Bio</h2>
@@ -184,7 +181,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* ✅ PROMPTS (NOW CORRECTLY PLACED) */}
+      {/* PROMPTS */}
       {prompts.length > 0 && (
         <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
           <h2 className="font-semibold mb-4">Personality</h2>
@@ -204,6 +201,30 @@ export default function ProfilePage() {
         <>
           <SwipeStatsSection />
           <MatchCountSection />
+
+          {/* ✅ INVITE STATS (SAFE ADD) */}
+          <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+            <h2 className="font-semibold mb-4">Invites</h2>
+
+            <div className="grid grid-cols-2 gap-4">
+
+              <div className="bg-black/30 p-4 rounded-lg text-center">
+                <p className="text-white/50 text-sm">Sent</p>
+                <p className="text-xl font-bold">
+                  {profileUser?.invitesSent ?? 0}
+                </p>
+              </div>
+
+              <div className="bg-black/30 p-4 rounded-lg text-center">
+                <p className="text-white/50 text-sm">Accepted</p>
+                <p className="text-xl font-bold text-green-400">
+                  {profileUser?.invitesAccepted ?? 0}
+                </p>
+              </div>
+
+            </div>
+          </div>
+
           <PhotoManagerSection />
         </>
       )}
