@@ -149,7 +149,6 @@ export default function ProfilePage() {
           </div>
 
           <div>
-
             <div className="flex items-center gap-2">
               <p className="font-bold text-xl">
                 {profileUser.username || profileUser.name}
@@ -165,7 +164,6 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* ✅ INVITE BUTTON RESTORED */}
             {!viewingOtherUser && (
               <button
                 onClick={() => createInviteMutation.mutate()}
@@ -174,16 +172,22 @@ export default function ProfilePage() {
                 Invite Friends
               </button>
             )}
-
           </div>
-
         </div>
       </div>
 
-      {/* ✅ PROMPTS RESTORED */}
+      {/* ✅ BIO (RESTORED) */}
+      {profileUser.bio && (
+        <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+          <h2 className="font-semibold mb-2">Bio</h2>
+          <p>{profileUser.bio}</p>
+        </div>
+      )}
+
+      {/* ✅ PROMPTS (NOW CORRECTLY PLACED) */}
       {prompts.length > 0 && (
         <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
-          <h2 className="font-semibold mb-4">About Me</h2>
+          <h2 className="font-semibold mb-4">Personality</h2>
 
           <div className="space-y-3">
             {prompts.map((p, i) => (
@@ -196,7 +200,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* KEEP ORIGINAL SECTIONS */}
       {!viewingOtherUser && (
         <>
           <SwipeStatsSection />
@@ -205,13 +208,12 @@ export default function ProfilePage() {
         </>
       )}
 
-      {/* ✅ QR MODAL (FIXED WITH LOGO) */}
+      {/* QR MODAL */}
       {newInvite && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
           <div className="bg-gray-900 p-8 rounded-xl border border-white/10 text-center w-[360px]">
 
             <div className="relative inline-block">
-
               <QRCodeSVG
                 id="invite-qr"
                 value={newInvite.inviteLink}
@@ -225,7 +227,6 @@ export default function ProfilePage() {
                 src={lynqlogo}
                 className="absolute top-1/2 left-1/2 w-14 h-14 -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-full"
               />
-
             </div>
 
             <p className="text-xs text-white/60 mt-4 break-all">
@@ -233,18 +234,10 @@ export default function ProfilePage() {
             </p>
 
             <div className="flex flex-col gap-2 mt-4">
-              <button onClick={copyInvite} className="bg-blue-600 py-2 rounded">
-                Copy
-              </button>
-              <button onClick={shareInvite} className="bg-green-600 py-2 rounded">
-                Share
-              </button>
-              <button onClick={downloadQR} className="bg-purple-600 py-2 rounded">
-                Download
-              </button>
-              <button onClick={() => setNewInvite(null)} className="bg-gray-700 py-2 rounded">
-                Close
-              </button>
+              <button onClick={copyInvite} className="bg-blue-600 py-2 rounded">Copy</button>
+              <button onClick={shareInvite} className="bg-green-600 py-2 rounded">Share</button>
+              <button onClick={downloadQR} className="bg-purple-600 py-2 rounded">Download</button>
+              <button onClick={() => setNewInvite(null)} className="bg-gray-700 py-2 rounded">Close</button>
             </div>
 
           </div>
