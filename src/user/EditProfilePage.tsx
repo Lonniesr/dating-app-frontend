@@ -20,16 +20,13 @@ export default function EditProfilePage() {
   const [minAge, setMinAge] = useState(18);
   const [maxAge, setMaxAge] = useState(40);
   const [locationRadius, setLocationRadius] = useState(50);
+  const [anywhere, setAnywhere] = useState(false);
 
   const [prompts, setPrompts] = useState<PromptItem[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  /* ===============================
-     LOAD USER DATA
-  =============================== */
 
   useEffect(() => {
     if (!authUser) return;
@@ -41,7 +38,10 @@ export default function EditProfilePage() {
     setInterestedIn(authUser.preferences?.interestedIn || "");
     setMinAge(authUser.preferences?.minAge || 18);
     setMaxAge(authUser.preferences?.maxAge || 40);
-    setLocationRadius(authUser.preferences?.locationRadius ?? 50);
+
+    const radius = authUser.preferences?.locationRadius;
+    setLocationRadius(radius ?? 50);
+    setAnywhere(radius === null);
 
     if (Array.isArray(authUser.prompts)) {
       setPrompts(authUser.prompts);
@@ -54,10 +54,6 @@ export default function EditProfilePage() {
     }
   }, [authUser]);
 
-  /* ===============================
-     PROMPTS
-  =============================== */
-
   const updatePrompt = (index: number, field: string, value: string) => {
     const updated = [...prompts];
     updated[index][field as keyof PromptItem] = value;
@@ -68,9 +64,9 @@ export default function EditProfilePage() {
     setPrompts([...prompts, { question: "", answer: "" }]);
   };
 
-  /* ===============================
-     SAVE PROFILE
-  =============================== */
+  const removePrompt = (index: number) => {
+    setPrompts(prompts.filter((_, i) => i !== index));
+  };
 
   const saveProfile = async () => {
     try {
@@ -78,7 +74,7 @@ export default function EditProfilePage() {
       setSaved(false);
       setError(null);
 
-      const res = await apiClient.put("/api/profile", {
+      await apiClient.put("/api/profile", {
         name,
         bio,
         gender,
@@ -86,14 +82,13 @@ export default function EditProfilePage() {
           interestedIn,
           minAge,
           maxAge,
-          locationRadius,
+          locationRadius: anywhere ? null : locationRadius,
         },
         prompts,
       });
 
       await refreshUser();
       setSaved(true);
-
       setTimeout(() => setSaved(false), 2500);
 
     } catch (err: any) {
@@ -111,7 +106,7 @@ export default function EditProfilePage() {
         Edit Profile
       </h1>
 
-      {/* ✅ VERIFICATION SECTION (NEW CLEAN VERSION) */}
+      {/* VERIFICATION */}
       {!authUser?.verified && (
         <div className="mb-6 bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl">
           <h2 className="font-semibold mb-2">Profile Verification</h2>
@@ -137,8 +132,7 @@ export default function EditProfilePage() {
         </div>
       )}
 
-      {/* SUCCESS / ERROR */}
-
+      {/* STATUS */}
       {saved && (
         <div className="mb-4 bg-green-500/20 text-green-400 p-3 rounded-lg text-sm">
           Profile saved successfully ✓
@@ -151,7 +145,7 @@ export default function EditProfilePage() {
         </div>
       )}
 
-      <div className="space-y-5">
+      <div className="space-y-6">
 
         {/* NAME */}
         <div>
@@ -189,11 +183,104 @@ export default function EditProfilePage() {
           </select>
         </div>
 
-        {/* SAVE BUTTON */}
+        {/* DATING PREFERENCES */}
+        <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+          <h2 className="font-semibold mb-4">Dating Preferences</h2>
+
+          <select
+            value={interestedIn}
+            onChange={(e) => setInterestedIn(e.target.value)}
+            className="w-full mb-3 p-3 rounded bg-white/10 border border-white/20"
+          >
+            <option value="">Interested In</option>
+            <option value="male">Men</option>
+            <option value="female">Women</option>
+            <option value="everyone">Everyone</option>
+          </select>
+
+          <div className="flex gap-3">
+            <input
+              type="number"
+              value={minAge}
+              onChange={(e) => setMinAge(Number(e.target.value))}
+              className="w-1/2 p-3 rounded bg-white/10 border border-white/20"
+              placeholder="Min Age"
+            />
+
+            <input
+              type="number"
+              value={maxAge}
+              onChange={(e) => setMaxAge(Number(e.target.value))}
+              className="w-1/2 p-3 rounded bg-white/10 border border-white/20"
+              placeholder="Max Age"
+            />
+          </div>
+
+          {/* ✅ ANYWHERE TOGGLE */}
+          <div className="flex items-center gap-2 mt-4">
+            <input
+              type="checkbox"
+              checked={anywhere}
+              onChange={(e) => setAnywhere(e.target.checked)}
+            />
+            <label className="text-sm text-white/70">
+              Match anywhere
+            </label>
+          </div>
+
+          {!anywhere && (
+            <input
+              type="number"
+              value={locationRadius}
+              onChange={(e) => setLocationRadius(Number(e.target.value))}
+              className="w-full mt-3 p-3 rounded bg-white/10 border border-white/20"
+              placeholder="Distance (miles)"
+            />
+          )}
+        </div>
+
+        {/* PROMPTS */}
+        <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+          <h2 className="font-semibold mb-4">Personality Prompts</h2>
+
+          {prompts.map((p, i) => (
+            <div key={i} className="mb-4 space-y-2">
+              <input
+                value={p.question}
+                onChange={(e) => updatePrompt(i, "question", e.target.value)}
+                placeholder="Question"
+                className="w-full p-3 rounded bg-white/10 border border-white/20"
+              />
+
+              <input
+                value={p.answer}
+                onChange={(e) => updatePrompt(i, "answer", e.target.value)}
+                placeholder="Answer"
+                className="w-full p-3 rounded bg-white/10 border border-white/20"
+              />
+
+              <button
+                onClick={() => removePrompt(i)}
+                className="text-red-400 text-sm"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+
+          <button
+            onClick={addPrompt}
+            className="bg-white/10 px-4 py-2 rounded text-sm"
+          >
+            Add Prompt
+          </button>
+        </div>
+
+        {/* SAVE */}
         <button
           onClick={saveProfile}
           disabled={loading}
-          className="w-full py-3 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-semibold disabled:opacity-50"
+          className="w-full py-3 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-semibold"
         >
           {loading ? "Saving..." : saved ? "Saved ✓" : "Save Changes"}
         </button>
