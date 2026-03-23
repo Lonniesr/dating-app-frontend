@@ -1,5 +1,3 @@
-// ✅ FULL PRODUCTION PROFILE PAGE (FIXED)
-
 import { useMutation } from "@tanstack/react-query";
 import { userInvitesService } from "./services/userInvitesService";
 import { useState, useEffect } from "react";
@@ -49,10 +47,7 @@ export default function ProfilePage() {
   const viewingOtherUser = !!id;
   const profileUser = viewingOtherUser ? otherUser : authUser;
 
-  /* =========================
-     LOAD PROFILE
-  ========================= */
-
+  /* LOAD PROFILE */
   useEffect(() => {
     if (!id) return;
 
@@ -68,10 +63,7 @@ export default function ProfilePage() {
     loadProfile();
   }, [id]);
 
-  /* =========================
-     PROMPTS (FIXED)
-  ========================= */
-
+  /* LOAD PROMPTS */
   useEffect(() => {
     if (viewingOtherUser) return;
 
@@ -82,10 +74,7 @@ export default function ProfilePage() {
     }
   }, [authUser, viewingOtherUser]);
 
-  /* =========================
-     INVITE
-  ========================= */
-
+  /* INVITE */
   const createInviteMutation = useMutation({
     mutationFn: () => userInvitesService.create(),
     onSuccess: (invite) => setNewInvite(invite),
@@ -103,7 +92,7 @@ export default function ProfilePage() {
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = "lynq-invite.svg";
+    link.download = `lynq-invite.svg`;
     link.click();
   };
 
@@ -127,7 +116,11 @@ export default function ProfilePage() {
   };
 
   if (isLoading || !profileUser) {
-    return <div className="p-6 text-white">Loading…</div>;
+    return (
+      <div className="p-6 text-white">
+        <p className="text-white/60">Loading profile…</p>
+      </div>
+    );
   }
 
   const photos = profileUser.photos ?? [];
@@ -136,30 +129,43 @@ export default function ProfilePage() {
   return (
     <div className="p-6 text-white pb-28">
 
-      {/* HEADER */}
+      <h1 className="text-2xl font-bold mb-6">
+        {viewingOtherUser ? "User Profile" : "My Profile"}
+      </h1>
+
+      {/* PROFILE HEADER */}
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
         <div className="flex items-center gap-5">
 
-          <div className="w-24 h-24 rounded-full overflow-hidden border border-white/20">
+          <div className="w-24 h-24 rounded-full overflow-hidden border border-white/20 bg-white/10">
             {photos.length ? (
-              <img src={resolvePhotoUrl(photos[0])} className="w-full h-full object-cover" />
+              <img
+                src={resolvePhotoUrl(photos[0])}
+                className="w-full h-full object-cover"
+              />
             ) : (
               <div className="w-full h-full bg-white/10" />
             )}
           </div>
 
           <div>
+
             <div className="flex items-center gap-2">
               <p className="font-bold text-xl">
                 {profileUser.username || profileUser.name}
                 {age && `, ${age}`}
               </p>
 
-              {profileUser.verified && <span className="text-blue-400">✔</span>}
-              {profileUser.gender && <GenderIcon gender={profileUser.gender} />}
+              {profileUser.verified && (
+                <span className="text-blue-400 text-sm">✔ Verified</span>
+              )}
+
+              {profileUser.gender && (
+                <GenderIcon gender={profileUser.gender} />
+              )}
             </div>
 
-            {/* INVITE BUTTON (RESTORED) */}
+            {/* ✅ INVITE BUTTON RESTORED */}
             {!viewingOtherUser && (
               <button
                 onClick={() => createInviteMutation.mutate()}
@@ -168,11 +174,13 @@ export default function ProfilePage() {
                 Invite Friends
               </button>
             )}
+
           </div>
+
         </div>
       </div>
 
-      {/* PROMPTS (RESTORED) */}
+      {/* ✅ PROMPTS RESTORED */}
       {prompts.length > 0 && (
         <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
           <h2 className="font-semibold mb-4">About Me</h2>
@@ -188,10 +196,19 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* QR MODAL (FIXED WITH LOGO) */}
+      {/* KEEP ORIGINAL SECTIONS */}
+      {!viewingOtherUser && (
+        <>
+          <SwipeStatsSection />
+          <MatchCountSection />
+          <PhotoManagerSection />
+        </>
+      )}
+
+      {/* ✅ QR MODAL (FIXED WITH LOGO) */}
       {newInvite && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-8 rounded-xl text-center w-[360px] relative">
+          <div className="bg-gray-900 p-8 rounded-xl border border-white/10 text-center w-[360px]">
 
             <div className="relative inline-block">
 
@@ -204,21 +221,30 @@ export default function ProfilePage() {
                 className="bg-white p-4 rounded-lg"
               />
 
-              {/* LOGO CENTER (NEW) */}
               <img
                 src={lynqlogo}
-                alt="lynq"
-                className="absolute top-1/2 left-1/2 w-16 h-16 -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-full"
+                className="absolute top-1/2 left-1/2 w-14 h-14 -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-full"
               />
+
             </div>
 
-            <p className="text-xs mt-4 break-all">{newInvite.inviteLink}</p>
+            <p className="text-xs text-white/60 mt-4 break-all">
+              {newInvite.inviteLink}
+            </p>
 
             <div className="flex flex-col gap-2 mt-4">
-              <button onClick={copyInvite} className="bg-blue-600 py-2 rounded">Copy</button>
-              <button onClick={shareInvite} className="bg-green-600 py-2 rounded">Share</button>
-              <button onClick={downloadQR} className="bg-purple-600 py-2 rounded">Download</button>
-              <button onClick={() => setNewInvite(null)} className="bg-gray-700 py-2 rounded">Close</button>
+              <button onClick={copyInvite} className="bg-blue-600 py-2 rounded">
+                Copy
+              </button>
+              <button onClick={shareInvite} className="bg-green-600 py-2 rounded">
+                Share
+              </button>
+              <button onClick={downloadQR} className="bg-purple-600 py-2 rounded">
+                Download
+              </button>
+              <button onClick={() => setNewInvite(null)} className="bg-gray-700 py-2 rounded">
+                Close
+              </button>
             </div>
 
           </div>
