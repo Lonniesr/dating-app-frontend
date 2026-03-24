@@ -68,6 +68,46 @@ export default function ProfilePage() {
     onSuccess: (invite) => setNewInvite(invite),
   });
 
+  /* =========================
+     NEW: BLOCK USER
+  ========================= */
+  const handleBlock = async () => {
+    if (!id) return;
+
+    const confirmBlock = window.confirm(
+      "Block this user? You will no longer see or interact with them."
+    );
+    if (!confirmBlock) return;
+
+    try {
+      await apiClient.post("/api/block", { targetId: id });
+      window.location.href = "/user";
+    } catch (err) {
+      console.error("Block failed", err);
+    }
+  };
+
+  /* =========================
+     NEW: REPORT USER
+  ========================= */
+  const handleReport = async () => {
+    if (!id) return;
+
+    const reason = prompt("Enter reason for report:");
+    if (!reason) return;
+
+    try {
+      await apiClient.post("/api/report", {
+        targetId: id,
+        reason,
+      });
+
+      alert("Report submitted.");
+    } catch (err) {
+      console.error("Report failed", err);
+    }
+  };
+
   if (isLoading || !profileUser) {
     return <div className="p-6 text-white">Loading…</div>;
   }
@@ -123,7 +163,6 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* ✅ EMAIL RESTORED */}
             <p className="text-white/60 text-sm">
               {profileUser.email}
             </p>
@@ -141,6 +180,27 @@ export default function ProfilePage() {
         )}
 
       </div>
+
+      {/* =========================
+           NEW: BLOCK + REPORT UI
+      ========================= */}
+      {viewingOtherUser && (
+        <div className="flex gap-3 mb-6">
+          <button
+            onClick={handleBlock}
+            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm"
+          >
+            Block
+          </button>
+
+          <button
+            onClick={handleReport}
+            className="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg text-sm"
+          >
+            Report
+          </button>
+        </div>
+      )}
 
       {/* BIO */}
       {profileUser.bio && (
@@ -195,7 +255,6 @@ export default function ProfilePage() {
         </>
       )}
 
-      {/* QR MODAL (UNCHANGED) */}
       {newInvite && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
           <div className="bg-gray-900 p-8 rounded-xl border border-white/10 text-center w-[360px]">

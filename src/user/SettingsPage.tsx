@@ -17,10 +17,6 @@ export default function SettingsPage() {
   const [password, setPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
 
-  /* ===============================
-     LOAD SETTINGS FROM AUTH USER
-  =============================== */
-
   useEffect(() => {
     if (!authUser) return;
 
@@ -34,10 +30,6 @@ export default function SettingsPage() {
 
   }, [authUser]);
 
-  /* ===============================
-     LOGOUT
-  =============================== */
-
   const handleLogout = async () => {
     try {
       await apiClient.post("/api/auth/logout");
@@ -46,10 +38,6 @@ export default function SettingsPage() {
       console.error("Logout failed", err);
     }
   };
-
-  /* ===============================
-     PASSWORD
-  =============================== */
 
   const changePassword = async () => {
     if (!password) {
@@ -67,10 +55,6 @@ export default function SettingsPage() {
       setPasswordMessage("Password update failed.");
     }
   };
-
-  /* ===============================
-     SAVE NOTIFICATIONS
-  =============================== */
 
   const saveNotifications = async () => {
     try {
@@ -106,8 +90,6 @@ export default function SettingsPage() {
 
       <div className="space-y-6">
 
-        {/* ACCOUNT */}
-
         <div className="bg-white/5 border border-white/10 rounded-xl p-4">
 
           <h2 className="font-semibold mb-3 text-white/70">
@@ -130,8 +112,9 @@ export default function SettingsPage() {
               Invite Friends
             </button>
 
+            {/* ✅ FIXED HERE */}
             <button
-              onClick={() => navigate("/user/verify")}
+              onClick={() => navigate("/user/profile")}
               className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg text-left"
             >
               Profile Verification
@@ -140,8 +123,6 @@ export default function SettingsPage() {
           </div>
 
         </div>
-
-        {/* NOTIFICATIONS */}
 
         <div className="bg-white/5 border border-white/10 rounded-xl p-4">
 
@@ -192,8 +173,6 @@ export default function SettingsPage() {
 
         </div>
 
-        {/* CHANGE PASSWORD */}
-
         <div className="bg-white/5 border border-white/10 rounded-xl p-4">
 
           <h2 className="font-semibold mb-3 text-white/70">
@@ -222,8 +201,6 @@ export default function SettingsPage() {
           )}
 
         </div>
-
-        {/* LOGOUT */}
 
         <button
           onClick={handleLogout}

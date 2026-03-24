@@ -34,7 +34,23 @@ function formatTime(dateString: string | undefined) {
 }
 
 export default function ChatList({ conversations, onSelect }: ChatListProps) {
-  if (!conversations.length) {
+
+  /* =========================
+     BLOCK FILTER (ADDED)
+  ========================= */
+  const blocked = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("blockedUsers") || "[]");
+    } catch {
+      return [];
+    }
+  })();
+
+  const visibleConversations = conversations.filter(
+    (c) => !blocked.includes(c.user.id)
+  );
+
+  if (!visibleConversations.length) {
     return (
       <div className="text-white/60 text-sm px-2">
         No conversations yet.
@@ -44,7 +60,7 @@ export default function ChatList({ conversations, onSelect }: ChatListProps) {
 
   return (
     <div className="space-y-2">
-      {conversations.map((c) => (
+      {visibleConversations.map((c) => (
         <motion.button
           key={c.conversationId}
           onClick={() => onSelect(c.user.id)}
@@ -53,7 +69,6 @@ export default function ChatList({ conversations, onSelect }: ChatListProps) {
           transition={{ duration: 0.15 }}
           className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition text-left"
         >
-          {/* Avatar + Presence */}
           <div className="relative">
             <div className="w-12 h-12 rounded-full bg-white/10 overflow-hidden border border-white/20 flex items-center justify-center text-sm">
               {c.user.avatar ? (
@@ -74,7 +89,6 @@ export default function ChatList({ conversations, onSelect }: ChatListProps) {
             />
           </div>
 
-          {/* Text content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <p className="font-semibold truncate">{c.user.name}</p>

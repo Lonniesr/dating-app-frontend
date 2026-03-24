@@ -43,14 +43,24 @@ export function useDiscover() {
     refetchOnWindowFocus: false,
   });
 
-  /* Memoize flattened pages so reference stays stable */
-
   const profiles = useMemo(() => {
     return query.data?.pages.flatMap((page) => page.profiles) ?? [];
   }, [query.data]);
 
+  /* =========================
+     BLOCK FILTER (ADDED)
+  ========================= */
+  const filteredProfiles = useMemo(() => {
+    try {
+      const blocked = JSON.parse(localStorage.getItem("blockedUsers") || "[]");
+      return profiles.filter((p) => !blocked.includes(p.id));
+    } catch {
+      return profiles;
+    }
+  }, [profiles]);
+
   return {
     ...query,
-    data: profiles,
+    data: filteredProfiles,
   };
 }
