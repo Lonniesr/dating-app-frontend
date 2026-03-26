@@ -44,7 +44,11 @@ export default function ProfilePage() {
   const [prompts, setPrompts] = useState<any[]>([]);
 
   const viewingOtherUser = !!id;
-  const profileUser = viewingOtherUser ? otherUser : authUser;
+
+  // ✅ FIXED (safe assignment)
+  const profileUser = viewingOtherUser
+    ? otherUser ?? null
+    : authUser;
 
   useEffect(() => {
     if (!id) return;
@@ -57,9 +61,20 @@ export default function ProfilePage() {
     loadProfile();
   }, [id]);
 
+  // ✅ FIXED (normalize prompts)
   useEffect(() => {
-    if (!viewingOtherUser && Array.isArray(authUser?.prompts)) {
-      setPrompts(authUser.prompts);
+    if (!viewingOtherUser && authUser?.prompts) {
+      const p = authUser.prompts;
+
+      if (Array.isArray(p)) {
+        setPrompts(p);
+      } else {
+        const mapped = Object.entries(p).map(([question, answer]) => ({
+          question,
+          answer,
+        }));
+        setPrompts(mapped);
+      }
     }
   }, [authUser, viewingOtherUser]);
 
@@ -102,8 +117,13 @@ export default function ProfilePage() {
     }
   };
 
-  if (isLoading || !profileUser) {
+  // ✅ FIXED (prevent silent UI block)
+  if (isLoading) {
     return <div className="p-6 text-white">Loading…</div>;
+  }
+
+  if (!profileUser) {
+    return <div className="p-6 text-white">No profile data</div>;
   }
 
   const photos = profileUser.photos ?? [];
@@ -112,7 +132,7 @@ export default function ProfilePage() {
   return (
     <div className="p-6 text-white pb-28">
 
-      {/* HEADER (FIXED ONLY) */}
+      {/* HEADER */}
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6 flex flex-col md:flex-row md:justify-between items-center gap-4">
 
         <div className="flex flex-col md:flex-row items-center gap-5 w-full">
@@ -173,7 +193,60 @@ export default function ProfilePage() {
 
       </div>
 
-      {/* INVITE MODAL (UNCHANGED FUNCTIONALLY) */}
+      {/* BIO */}
+      {profileUser.bio && (
+        <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+          <h2 className="font-semibold mb-2">Bio</h2>
+          <p>{profileUser.bio}</p>
+        </div>
+      )}
+
+      {/* PROMPTS */}
+      {prompts.length > 0 && (
+        <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+          <h2 className="font-semibold mb-4">Personality</h2>
+
+          <div className="space-y-3">
+            {prompts.map((p, i) => (
+              <div key={i}>
+                <p className="text-white/60 text-sm">{p.question}</p>
+                <p className="font-medium">{p.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!viewingOtherUser && (
+        <>
+          <SwipeStatsSection />
+          <MatchCountSection />
+
+          <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+            <h2 className="font-semibold mb-4">Invites</h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-black/30 p-4 rounded-lg text-center">
+                <p className="text-white/50 text-sm">Sent</p>
+                <p className="text-xl font-bold">
+                  {profileUser?.invitesSent ?? 0}
+                </p>
+              </div>
+
+              <div className="bg-black/30 p-4 rounded-lg text-center">
+                <p className="text-white/50 text-sm">Accepted</p>
+                <p className="text-xl font-bold text-green-400">
+                  {profileUser?.invitesAccepted ?? 0}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <PhotoManagerSection />
+        </>
+      )}
+
+      {/* INVITE MODAL (unchanged) */}
       {newInvite && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 p-6 rounded-xl border border-white/10 text-center w-full max-w-sm relative">
@@ -197,7 +270,6 @@ export default function ProfilePage() {
             </p>
 
             <div className="mt-4 flex flex-col gap-2">
-
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(newInvite.inviteLink);
@@ -216,8 +288,6 @@ export default function ProfilePage() {
                       text: "Join me on Lynq",
                       url: newInvite.inviteLink,
                     });
-                  } else {
-                    alert("Sharing not supported on this device");
                   }
                 }}
                 className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg font-semibold w-full"
@@ -254,7 +324,6 @@ export default function ProfilePage() {
               >
                 Close
               </button>
-
             </div>
 
           </div>
