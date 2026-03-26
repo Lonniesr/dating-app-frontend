@@ -159,9 +159,6 @@ export default function EditProfilePage() {
           {loading ? "Saving..." : saved ? "Saved ✓" : "Save Changes"}
         </button>
 
-        {/* 🔥 DELETE ACCOUNT SECTION (PLACED AT BOTTOM) */}
-        <DeleteAccountSection />
-
       </div>
     </div>
   );
