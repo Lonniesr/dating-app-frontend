@@ -112,10 +112,10 @@ export default function ProfilePage() {
   return (
     <div className="p-6 text-white pb-28">
 
-      {/* HEADER */}
-      <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6 flex justify-between items-center">
+      {/* HEADER (FIXED ONLY) */}
+      <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6 flex flex-col md:flex-row md:justify-between items-center gap-4">
 
-        <div className="flex gap-5">
+        <div className="flex flex-col md:flex-row items-center gap-5 w-full">
 
           <div className="flex flex-col items-center">
             <div className="w-24 h-24 rounded-full overflow-hidden border border-white/20 bg-white/10">
@@ -139,7 +139,7 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <div className="flex flex-col justify-center">
+          <div className="flex flex-col justify-center items-center md:items-start text-center md:text-left">
             <div className="flex items-center gap-2">
               <p className="font-bold text-xl">
                 {profileUser.username || profileUser.name}
@@ -173,7 +173,7 @@ export default function ProfilePage() {
 
       </div>
 
-      {/* INVITE MODAL (UPDATED ONLY) */}
+      {/* INVITE MODAL (UNCHANGED FUNCTIONALLY) */}
       {newInvite && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 p-6 rounded-xl border border-white/10 text-center w-full max-w-sm relative">
