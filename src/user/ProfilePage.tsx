@@ -173,9 +173,7 @@ export default function ProfilePage() {
 
       </div>
 
-      {/* ...everything unchanged above... */}
-
-      {/* ✅ FIXED INVITE MODAL */}
+      {/* INVITE MODAL (UPDATED ONLY) */}
       {newInvite && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 p-6 rounded-xl border border-white/10 text-center w-full max-w-sm relative">
@@ -198,22 +196,66 @@ export default function ProfilePage() {
               {newInvite.inviteLink}
             </p>
 
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(newInvite.inviteLink);
-                alert("Invite link copied!");
-              }}
-              className="mt-4 bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-lg font-semibold w-full"
-            >
-              Copy Invite Link
-            </button>
+            <div className="mt-4 flex flex-col gap-2">
 
-            <button
-              onClick={() => setNewInvite(null)}
-              className="mt-3 text-white/60 text-sm underline"
-            >
-              Close
-            </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(newInvite.inviteLink);
+                  alert("Invite link copied!");
+                }}
+                className="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-lg font-semibold w-full"
+              >
+                Copy Invite Link
+              </button>
+
+              <button
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({
+                      title: "Join me on Lynq",
+                      text: "Join me on Lynq",
+                      url: newInvite.inviteLink,
+                    });
+                  } else {
+                    alert("Sharing not supported on this device");
+                  }
+                }}
+                className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg font-semibold w-full"
+              >
+                Share Invite
+              </button>
+
+              <button
+                onClick={() => {
+                  const svg = document.getElementById("invite-qr");
+                  if (!svg) return;
+
+                  const serializer = new XMLSerializer();
+                  const source = serializer.serializeToString(svg);
+
+                  const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+                  const url = URL.createObjectURL(blob);
+
+                  const link = document.createElement("a");
+                  link.href = url;
+                  link.download = "lynq-invite.svg";
+                  link.click();
+
+                  URL.revokeObjectURL(url);
+                }}
+                className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-semibold w-full"
+              >
+                Download QR
+              </button>
+
+              <button
+                onClick={() => setNewInvite(null)}
+                className="text-white/60 text-sm underline mt-1"
+              >
+                Close
+              </button>
+
+            </div>
 
           </div>
         </div>
