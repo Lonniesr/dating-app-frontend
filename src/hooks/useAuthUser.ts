@@ -5,7 +5,7 @@ export function useAuthUser() {
     queryKey: ["authUser"],
     queryFn: async () => {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/me`, // ✅ FIXED
+        `${import.meta.env.VITE_API_URL}/api/auth/me`, // ✅ FIXED
         {
           credentials: "include",
         }
@@ -17,8 +17,8 @@ export function useAuthUser() {
 
       const data = await res.json();
 
-      // backend returns { working: true, user: {...} }
-      return data.user ?? null;
+      // backend returns user directly (NOT { user: ... })
+      return data ?? null;
     },
     staleTime: 1000 * 60 * 5,
   });
