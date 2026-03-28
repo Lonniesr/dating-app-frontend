@@ -19,6 +19,11 @@ type Preferences = {
   maxAge?: number;
   locationRadius?: number | null;
 
+  // ✅ NEW (safe additions)
+  onlyVerified?: boolean;
+  boostVerified?: boolean;
+  prioritizeLikedYou?: boolean;
+
   /* Notification settings */
 
   messageNotifications?: boolean;

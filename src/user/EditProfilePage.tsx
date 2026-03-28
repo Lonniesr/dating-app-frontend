@@ -21,7 +21,9 @@ export default function EditProfilePage() {
   const [minAge, setMinAge] = useState(18);
   const [maxAge, setMaxAge] = useState(40);
   const [locationRadius, setLocationRadius] = useState(50);
-  const [anywhere, setAnywhere] = useState(false);
+
+  const [anywhere, setAnywhere] = useState(false); // ✅ EXISTING (kept)
+  const [onlyVerified, setOnlyVerified] = useState(false); // ✅ NEW
 
   const [prompts, setPrompts] = useState<PromptItem[]>([]);
 
@@ -43,6 +45,9 @@ export default function EditProfilePage() {
     const radius = authUser.preferences?.locationRadius;
     setLocationRadius(radius ?? 50);
     setAnywhere(radius === null);
+
+    // ✅ NEW: load onlyVerified safely
+    setOnlyVerified(authUser.preferences?.onlyVerified ?? false);
 
     if (Array.isArray(authUser.prompts)) {
       setPrompts(authUser.prompts);
@@ -84,6 +89,7 @@ export default function EditProfilePage() {
           minAge,
           maxAge,
           locationRadius: anywhere ? null : locationRadius,
+          onlyVerified, // ✅ NEW (safe add)
         },
         prompts,
       });
@@ -147,6 +153,31 @@ export default function EditProfilePage() {
       )}
 
       <div className="space-y-6">
+
+        {/* ✅ DATING PREFERENCES ADDITIONS */}
+        <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+          <h2 className="font-semibold mb-3">Dating Preferences</h2>
+
+          {/* ANY LOCATION */}
+          <label className="flex items-center gap-2 mb-2">
+            <input
+              type="checkbox"
+              checked={anywhere}
+              onChange={(e) => setAnywhere(e.target.checked)}
+            />
+            Any location
+          </label>
+
+          {/* ONLY VERIFIED USERS */}
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={onlyVerified}
+              onChange={(e) => setOnlyVerified(e.target.checked)}
+            />
+            Only show verified users
+          </label>
+        </div>
 
         {/* ALL YOUR EXISTING FORM SECTIONS UNCHANGED */}
 
