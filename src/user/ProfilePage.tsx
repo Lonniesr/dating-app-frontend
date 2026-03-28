@@ -45,7 +45,6 @@ export default function ProfilePage() {
 
   const viewingOtherUser = !!id;
 
-  // ✅ FIXED (safe assignment)
   const profileUser = viewingOtherUser
     ? otherUser ?? null
     : authUser;
@@ -61,7 +60,6 @@ export default function ProfilePage() {
     loadProfile();
   }, [id]);
 
-  // ✅ FIXED (normalize prompts)
   useEffect(() => {
     if (!viewingOtherUser && authUser?.prompts) {
       const p = authUser.prompts;
@@ -117,7 +115,6 @@ export default function ProfilePage() {
     }
   };
 
-  // ✅ FIXED (prevent silent UI block)
   if (isLoading) {
     return <div className="p-6 text-white">Loading…</div>;
   }
@@ -131,6 +128,28 @@ export default function ProfilePage() {
 
   return (
     <div className="p-6 text-white pb-28">
+
+      {/* ✅ REPORT ISSUE BUTTON (MOBILE PERFECT + AUTO-FILL) */}
+      <div className="fixed top-2 right-2 md:top-3 md:right-4 z-[9999]">
+        <a
+          href={`mailto:support@letslynq.com?subject=${encodeURIComponent(
+            "Lynq App Issue"
+          )}&body=${encodeURIComponent(
+            `User ID: ${authUser?.id ?? "unknown"}
+Email: ${authUser?.email ?? "unknown"}
+Page: ${window.location.pathname}
+Time: ${new Date().toISOString()}
+Device: ${/Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop"}
+
+Describe the issue below:
+
+`
+          )}`}
+          className="text-[11px] md:text-xs text-white/60 hover:text-white active:scale-95 transition bg-black/40 backdrop-blur px-2 py-1 rounded-md border border-white/10"
+        >
+          Report
+        </a>
+      </div>
 
       {/* HEADER */}
       <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6 flex flex-col md:flex-row md:justify-between items-center gap-4">
@@ -246,7 +265,7 @@ export default function ProfilePage() {
         </>
       )}
 
-      {/* INVITE MODAL (unchanged) */}
+      {/* INVITE MODAL */}
       {newInvite && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 p-6 rounded-xl border border-white/10 text-center w-full max-w-sm relative">
