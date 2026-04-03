@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useUserAuth } from "./context/UserAuthContext";
 import apiClient from "../services/apiClient";
 import { useNavigate } from "react-router-dom";
-import DeleteAccountSection from "./settings/DeleteAccountSection"; // ✅ ADDED
+import DeleteAccountSection from "./settings/DeleteAccountSection";
 
 type PromptItem = {
   question: string;
@@ -22,8 +22,8 @@ export default function EditProfilePage() {
   const [maxAge, setMaxAge] = useState(40);
   const [locationRadius, setLocationRadius] = useState(50);
 
-  const [anywhere, setAnywhere] = useState(false); // ✅ EXISTING (kept)
-  const [onlyVerified, setOnlyVerified] = useState(false); // ✅ NEW
+  const [anywhere, setAnywhere] = useState(false);
+  const [onlyVerified, setOnlyVerified] = useState(false);
 
   const [prompts, setPrompts] = useState<PromptItem[]>([]);
 
@@ -46,7 +46,6 @@ export default function EditProfilePage() {
     setLocationRadius(radius ?? 50);
     setAnywhere(radius === null);
 
-    // ✅ NEW: load onlyVerified safely
     setOnlyVerified(authUser.preferences?.onlyVerified ?? false);
 
     if (Array.isArray(authUser.prompts)) {
@@ -60,9 +59,9 @@ export default function EditProfilePage() {
     }
   }, [authUser]);
 
-  const updatePrompt = (index: number, field: string, value: string) => {
+  const updatePrompt = (index: number, field: keyof PromptItem, value: string) => {
     const updated = [...prompts];
-    updated[index][field as keyof PromptItem] = value;
+    updated[index][field] = value;
     setPrompts(updated);
   };
 
@@ -89,7 +88,7 @@ export default function EditProfilePage() {
           minAge,
           maxAge,
           locationRadius: anywhere ? null : locationRadius,
-          onlyVerified, // ✅ NEW (safe add)
+          onlyVerified,
         },
         prompts,
       });
@@ -99,8 +98,8 @@ export default function EditProfilePage() {
       setTimeout(() => setSaved(false), 2500);
 
     } catch (err: any) {
-      console.error("❌ Save failed", err);
-      setError(err?.response?.data?.error || "Failed to save changes");
+      console.error(err);
+      setError("Failed to save changes");
     } finally {
       setLoading(false);
     }
@@ -109,88 +108,118 @@ export default function EditProfilePage() {
   return (
     <div className="p-6 text-white max-w-xl mx-auto pb-28">
 
-      <h1 className="text-2xl font-bold mb-6">
-        Edit Profile
-      </h1>
+      <h1 className="text-2xl font-bold mb-6">Edit Profile</h1>
 
-      {/* VERIFICATION */}
-      {!authUser?.verified && (
-        <div className="mb-6 bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl">
-          <h2 className="font-semibold mb-2">Profile Verification</h2>
+      {saved && <div className="text-green-400 mb-4">Saved ✓</div>}
+      {error && <div className="text-red-400 mb-4">{error}</div>}
 
-          {authUser?.verification_status === "pending" ? (
-            <p className="text-yellow-400 text-sm">
-              Your verification is under review ⏳
-            </p>
-          ) : (
-            <>
-              <p className="text-white/70 text-sm mb-3">
-                Verify your profile to build trust and get more matches.
-              </p>
+      {/* NAME */}
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Name"
+        className="w-full mb-3 p-3 rounded bg-black/40"
+      />
 
-              <button
-                onClick={() => navigate("/user/verify-selfie")}
-                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm"
-              >
-                Start Verification
-              </button>
-            </>
-          )}
-        </div>
-      )}
+      {/* BIO */}
+      <textarea
+        value={bio}
+        onChange={(e) => setBio(e.target.value)}
+        placeholder="Bio"
+        className="w-full mb-3 p-3 rounded bg-black/40"
+      />
 
-      {/* STATUS */}
-      {saved && (
-        <div className="mb-4 bg-green-500/20 text-green-400 p-3 rounded-lg text-sm">
-          Profile saved successfully ✓
-        </div>
-      )}
+      {/* GENDER */}
+      <select
+        value={gender}
+        onChange={(e) => setGender(e.target.value)}
+        className="w-full mb-3 p-3 rounded bg-black/40"
+      >
+        <option value="">Select Gender</option>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
 
-      {error && (
-        <div className="mb-4 bg-red-500/20 text-red-400 p-3 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
+      {/* PREFERENCES */}
+      <div className="bg-white/5 p-4 rounded mb-4">
+        <h2 className="font-semibold mb-2">Dating Preferences</h2>
 
-      <div className="space-y-6">
+        <input
+          value={interestedIn}
+          onChange={(e) => setInterestedIn(e.target.value)}
+          placeholder="Interested In"
+          className="w-full mb-2 p-2 bg-black/40 rounded"
+        />
 
-        {/* ✅ DATING PREFERENCES ADDITIONS */}
-        <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-          <h2 className="font-semibold mb-3">Dating Preferences</h2>
+        <input
+          type="number"
+          value={minAge}
+          onChange={(e) => setMinAge(Number(e.target.value))}
+          className="w-full mb-2 p-2 bg-black/40 rounded"
+        />
 
-          {/* ANY LOCATION */}
-          <label className="flex items-center gap-2 mb-2">
-            <input
-              type="checkbox"
-              checked={anywhere}
-              onChange={(e) => setAnywhere(e.target.checked)}
-            />
-            Any location
-          </label>
+        <input
+          type="number"
+          value={maxAge}
+          onChange={(e) => setMaxAge(Number(e.target.value))}
+          className="w-full mb-2 p-2 bg-black/40 rounded"
+        />
 
-          {/* ONLY VERIFIED USERS */}
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={onlyVerified}
-              onChange={(e) => setOnlyVerified(e.target.checked)}
-            />
-            Only show verified users
-          </label>
-        </div>
+        {/* NEW TOGGLES */}
+        <label className="flex gap-2 mt-2">
+          <input
+            type="checkbox"
+            checked={anywhere}
+            onChange={(e) => setAnywhere(e.target.checked)}
+          />
+          Any location
+        </label>
 
-        {/* ALL YOUR EXISTING FORM SECTIONS UNCHANGED */}
-
-        {/* SAVE */}
-        <button
-          onClick={saveProfile}
-          disabled={loading}
-          className="w-full py-3 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-semibold"
-        >
-          {loading ? "Saving..." : saved ? "Saved ✓" : "Save Changes"}
-        </button>
-
+        <label className="flex gap-2">
+          <input
+            type="checkbox"
+            checked={onlyVerified}
+            onChange={(e) => setOnlyVerified(e.target.checked)}
+          />
+          Only verified users
+        </label>
       </div>
+
+      {/* PROMPTS */}
+      <div className="mb-4">
+        <h2 className="font-semibold mb-2">Prompts</h2>
+
+        {prompts.map((p, i) => (
+          <div key={i} className="mb-2">
+            <input
+              value={p.question}
+              onChange={(e) => updatePrompt(i, "question", e.target.value)}
+              placeholder="Question"
+              className="w-full mb-1 p-2 bg-black/40 rounded"
+            />
+            <input
+              value={p.answer}
+              onChange={(e) => updatePrompt(i, "answer", e.target.value)}
+              placeholder="Answer"
+              className="w-full p-2 bg-black/40 rounded"
+            />
+            <button onClick={() => removePrompt(i)}>Remove</button>
+          </div>
+        ))}
+
+        <button onClick={addPrompt}>Add Prompt</button>
+      </div>
+
+      {/* SAVE */}
+      <button
+        onClick={saveProfile}
+        className="w-full bg-yellow-500 p-3 rounded"
+      >
+        Save Changes
+      </button>
+
+      <DeleteAccountSection />
+
     </div>
   );
 }
