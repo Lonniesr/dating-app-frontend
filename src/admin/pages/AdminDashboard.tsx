@@ -13,29 +13,62 @@ import {
   Bar,
 } from "recharts";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
 export default function AdminDashboard() {
   const [data, setData] = useState<any>(null);
   const [range, setRange] = useState("7d");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/admin/swipe?limit=200&range=${range}`)
-      .then((res) => res.json())
+    fetch(`${API_URL}/api/admin/swipe?limit=200&range=${range}`, {
+      credentials: "include", // 🔥 REQUIRED
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || "Request failed");
+        }
+        return res.json();
+      })
       .then(setData)
-      .catch(console.error);
+      .catch((err) => {
+        console.error(err);
+        setError("Unauthorized or failed to load dashboard");
+      });
   }, [range]);
 
-  if (!data) {
-    return <div className="p-10 text-white/60">Loading...</div>;
+  /* ===============================
+     ERROR STATE
+  =============================== */
+  if (error) {
+    return (
+      <div className="p-10 text-red-400">
+        {error}
+      </div>
+    );
+  }
+
+  /* ===============================
+     LOADING STATE
+  =============================== */
+  if (!data || !data.swipes) {
+    return (
+      <div className="p-10 text-white/60">
+        Loading dashboard...
+      </div>
+    );
   }
 
   const { swipes, analytics } = data;
 
   /* ===============================
-     📊 SWIPE GROUPING
+     📊 SAFE GROUPING
   =============================== */
   const grouped: Record<string, number> = {};
 
-  swipes.forEach((s: any) => {
+  (swipes || []).forEach((s: any) => {
+    if (!s?.createdAt) return;
     const day = new Date(s.createdAt).toLocaleDateString();
     grouped[day] = (grouped[day] || 0) + 1;
   });
@@ -46,13 +79,15 @@ export default function AdminDashboard() {
   }));
 
   /* ===============================
-     📊 LIKE VS PASS
+     📊 PIE
   =============================== */
   const pieData = [
-    { name: "Likes", value: analytics.likedSwipes },
+    { name: "Likes", value: analytics?.likedSwipes || 0 },
     {
       name: "Passes",
-      value: analytics.totalSwipes - analytics.likedSwipes,
+      value:
+        (analytics?.totalSwipes || 0) -
+        (analytics?.likedSwipes || 0),
     },
   ];
 
@@ -61,7 +96,7 @@ export default function AdminDashboard() {
   =============================== */
   const eloBuckets: Record<string, number> = {};
 
-  swipes.forEach((s: any) => {
+  (swipes || []).forEach((s: any) => {
     const users = [s.swiper, s.target];
 
     users.forEach((u) => {
@@ -81,7 +116,7 @@ export default function AdminDashboard() {
   =============================== */
   const usersMap: Record<string, any> = {};
 
-  swipes.forEach((s: any) => {
+  (swipes || []).forEach((s: any) => {
     if (s.swiper) usersMap[s.swiper.id] = s.swiper;
     if (s.target) usersMap[s.target.id] = s.target;
   });
@@ -91,17 +126,16 @@ export default function AdminDashboard() {
     .slice(0, 6);
 
   /* ===============================
-     💘 MATCH CONVERSION
+     💘 MATCH RATE
   =============================== */
   const matchRate =
-    analytics.totalSwipes > 0
-      ? ((analytics.matches || 0) / analytics.totalSwipes) * 100
+    analytics?.totalSwipes > 0
+      ? ((analytics?.matches || 0) / analytics.totalSwipes) * 100
       : 0;
 
   return (
     <div className="p-8 text-white space-y-10">
 
-      {/* HEADER */}
       <motion.h1
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -110,7 +144,6 @@ export default function AdminDashboard() {
         Lynq Analytics
       </motion.h1>
 
-      {/* FILTER */}
       <select
         value={range}
         onChange={(e) => setRange(e.target.value)}
@@ -121,7 +154,6 @@ export default function AdminDashboard() {
         <option value="30d">Last 30 days</option>
       </select>
 
-      {/* KPI */}
       <div className="flex gap-6 flex-wrap">
         <KPI title="Total Swipes" value={analytics.totalSwipes} />
         <KPI title="Likes" value={analytics.likedSwipes} />
@@ -129,7 +161,6 @@ export default function AdminDashboard() {
         <KPI title="Match Rate %" value={matchRate.toFixed(2)} />
       </div>
 
-      {/* SWIPE ACTIVITY */}
       <motion.div className="glass-panel">
         <h2>Swipe Activity</h2>
         <LineChart width={800} height={300} data={lineData}>
@@ -141,7 +172,6 @@ export default function AdminDashboard() {
         </LineChart>
       </motion.div>
 
-      {/* PIE */}
       <motion.div className="glass-panel">
         <h2>Likes vs Passes</h2>
         <PieChart width={500} height={300}>
@@ -150,7 +180,6 @@ export default function AdminDashboard() {
         </PieChart>
       </motion.div>
 
-      {/* ELO DISTRIBUTION */}
       <motion.div className="glass-panel">
         <h2>Elo Distribution</h2>
         <BarChart width={800} height={300} data={eloData}>
@@ -161,7 +190,6 @@ export default function AdminDashboard() {
         </BarChart>
       </motion.div>
 
-      {/* TOP PICKS */}
       <motion.div className="glass-panel">
         <h2>🔥 Top Picks</h2>
 
@@ -172,11 +200,7 @@ export default function AdminDashboard() {
               whileHover={{ scale: 1.05 }}
               className="glass-panel p-4 w-44 text-center"
             >
-              <img
-                src={user.photo || "/placeholder.jpg"}
-                className="rounded-lg mb-2"
-              />
-              <h3>{user.username || user.name}</h3>
+              <h3>{user.name || "User"}</h3>
               <p className="text-sm opacity-60">
                 ⭐ {user.eloScore || 1000}
               </p>
@@ -189,7 +213,6 @@ export default function AdminDashboard() {
   );
 }
 
-/* KPI CARD */
 function KPI({ title, value }: any) {
   return (
     <motion.div
