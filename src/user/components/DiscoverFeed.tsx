@@ -7,6 +7,7 @@ import { getProfilePhoto } from "../../utils/getProfilePhoto";
 import apiClient from "../../services/apiClient";
 
 const SWIPE_THRESHOLD = 120;
+const TOP_PICK_COUNT = 3; // ⭐ NEW
 
 type DiscoverUser = {
   id: string;
@@ -53,7 +54,6 @@ function calculateDistance(
 }
 
 export default function DiscoverFeed() {
-
   const { data, isLoading } = useDiscover();
   const { swipe } = useSwipe();
 
@@ -109,6 +109,8 @@ export default function DiscoverFeed() {
           current.longitude
         ).toFixed(1)
       : null;
+
+  const isTopPick = feed.length > 0 && feed.indexOf(current) < TOP_PICK_COUNT;
 
   async function handleSwipe(direction: "left" | "right") {
     if (!current || busy) return;
@@ -173,7 +175,9 @@ export default function DiscoverFeed() {
 
         <motion.div
           key={current.id}
-          className="absolute w-full h-full rounded-2xl overflow-hidden shadow-xl"
+          className={`absolute w-full h-full rounded-2xl overflow-hidden shadow-xl ${
+            isTopPick ? "top-pick-glow" : ""
+          }`}
           style={{ x, rotate }}
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
@@ -186,6 +190,13 @@ export default function DiscoverFeed() {
             else x.set(0);
           }}
         >
+
+          {/* ⭐ TOP PICK BADGE */}
+          {isTopPick && (
+            <div className="absolute top-4 left-4 z-10 bg-gradient-to-r from-yellow-400 to-yellow-200 text-black px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+              ⭐ Top Pick
+            </div>
+          )}
 
           <img src={photo} className="w-full h-full object-cover" />
 
@@ -295,8 +306,6 @@ export default function DiscoverFeed() {
 
             </div>
 
-            {/* PROMPTS MOVED UP */}
-
             {Array.isArray(profileData.prompts) && profileData.prompts.length > 0 && (
 
               <div className="px-4 space-y-4 mb-6">
@@ -323,8 +332,6 @@ export default function DiscoverFeed() {
               </div>
 
             )}
-
-            {/* PHOTOS */}
 
             {Array.isArray(profileData.photos) && (
               <div className="space-y-3 px-4">
