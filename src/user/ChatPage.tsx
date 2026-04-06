@@ -20,6 +20,10 @@ interface Message {
   receiverId: string;
   createdAt: string;
   read: boolean;
+
+  // 🔥 NEW STATUS FIELD
+  status?: "sending" | "sent" | "seen";
+
   replyTo?: Message | null;
 }
 
@@ -59,7 +63,7 @@ export default function ChatPage() {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* =========================
-     SYNC MESSAGES (SAFE)
+     SYNC MESSAGES
   ========================= */
 
   useEffect(() => {
@@ -77,7 +81,7 @@ export default function ChatPage() {
   }, [liveMessages]);
 
   /* =========================
-     SOCKET (NO DUPLICATES)
+     SOCKET
   ========================= */
 
   useEffect(() => {
@@ -95,7 +99,7 @@ export default function ChatPage() {
   }, [socket, userId]);
 
   /* =========================
-     TYPING
+     TYPING (SMOOTHED)
   ========================= */
 
   function handleTyping(value: string) {
@@ -111,11 +115,11 @@ export default function ChatPage() {
 
     typingTimeoutRef.current = setTimeout(() => {
       socket.emit("typing:stop", { toUserId: userId });
-    }, 1200);
+    }, 2000); // 🔥 smoother
   }
 
   /* =========================
-     IMAGE HANDLING
+     IMAGE
   ========================= */
 
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -132,7 +136,7 @@ export default function ChatPage() {
   }
 
   /* =========================
-     SEND MESSAGE (FIXED UX)
+     SEND MESSAGE (UPGRADED)
   ========================= */
 
   async function sendMessage() {
@@ -141,7 +145,6 @@ export default function ChatPage() {
     try {
       let imageUrl: string | null = null;
 
-      /* STEP 1: Upload image */
       if (selectedImage) {
         const uploadData = new FormData();
         uploadData.append("image", selectedImage);
@@ -149,19 +152,10 @@ export default function ChatPage() {
         const uploadRes = await axios.post(
           `${API}/upload/chat`,
           uploadData,
-          {
-            withCredentials: true,
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
+          { withCredentials: true }
         );
 
         console.log("UPLOAD RESPONSE:", uploadRes.data);
-
-        if (!uploadRes.data?.url) {
-          throw new Error("Upload failed — no URL returned");
-        }
 
         imageUrl = uploadRes.data.url;
       }
@@ -175,17 +169,11 @@ export default function ChatPage() {
         receiverId: userId!,
         createdAt: new Date().toISOString(),
         read: false,
+        status: "sending",
       };
 
       setLiveMessages((prev) => [...prev, tempMessage]);
 
-      console.log("FINAL MESSAGE PAYLOAD:", {
-        text: text.trim(),
-        imageUrl,
-        replyToId: replyTo?.id,
-      });
-
-      /* STEP 2: Send message */
       const res = await axios.post(
         `${API}/messages/${userId}`,
         {
@@ -196,10 +184,12 @@ export default function ChatPage() {
         { withCredentials: true }
       );
 
-      /* 🔥 REPLACE TEMP MESSAGE */
+      /* 🔥 REPLACE TEMP */
       setLiveMessages((prev) =>
         prev.map((msg) =>
-          msg.id === tempMessage.id ? res.data : msg
+          msg.id === tempMessage.id
+            ? { ...res.data, status: "sent" }
+            : msg
         )
       );
 
@@ -209,7 +199,7 @@ export default function ChatPage() {
 
       socket?.emit("typing:stop", { toUserId: userId });
 
-    } catch (err: any) {
+    } catch (err) {
       console.error("Send message failed", err);
     }
   }
@@ -224,7 +214,14 @@ export default function ChatPage() {
     socket.emit("message:read", {
       otherUserId: userId,
     });
-  }, [socket, userId, liveMessages]);
+
+    // 🔥 mark messages as seen locally
+    setLiveMessages((prev) =>
+      prev.map((msg) =>
+        msg.senderId !== meId ? { ...msg, read: true, status: "seen" } : msg
+      )
+    );
+  }, [socket, userId]);
 
   const lastMessage =
     liveMessages?.[liveMessages.length - 1];
@@ -237,7 +234,7 @@ export default function ChatPage() {
         <div className="w-10 h-10 rounded-full bg-white/20" />
         <div>
           <p className="text-sm font-semibold">Chat</p>
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-white/40 transition-opacity duration-300">
             {isTyping ? "Typing..." : "Online"}
           </p>
         </div>
@@ -245,7 +242,6 @@ export default function ChatPage() {
 
       {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
-
         {liveMessages?.map((msg: Message) => {
           const mine = isMine(msg, meId);
 
@@ -261,7 +257,6 @@ export default function ChatPage() {
               }}
             >
               <div className="max-w-[70%]">
-
                 <div
                   className={`px-4 py-2 rounded-2xl text-sm ${
                     mine
@@ -286,13 +281,16 @@ export default function ChatPage() {
                 <div className="text-[10px] text-white/40 mt-1 flex gap-2">
                   <span>{formatTime(msg.createdAt)}</span>
 
-                  {mine &&
-                    msg.read &&
-                    msg.id === lastMessage?.id && (
-                      <span>Seen</span>
-                    )}
+                  {mine && msg.id === lastMessage?.id && (
+                    <span>
+                      {msg.read
+                        ? "✓✓ Seen"
+                        : msg.status === "sending"
+                        ? "⏳ Sending"
+                        : "✓ Sent"}
+                    </span>
+                  )}
                 </div>
-
               </div>
             </motion.div>
           );
@@ -301,7 +299,7 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* IMAGE PREVIEW */}
+      {/* PREVIEW */}
       {preview && (
         <div className="px-4 py-2">
           <div className="relative w-32">
@@ -347,7 +345,6 @@ export default function ChatPage() {
         >
           Send
         </button>
-
       </div>
     </div>
   );
