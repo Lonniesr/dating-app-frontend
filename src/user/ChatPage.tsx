@@ -59,11 +59,11 @@ export default function ChatPage() {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* =========================
-     SYNC MESSAGES
+     SYNC MESSAGES (SAFE)
   ========================= */
 
   useEffect(() => {
-    if (messages) {
+    if (messages && liveMessages.length === 0) {
       setLiveMessages(messages);
     }
   }, [messages]);
@@ -77,7 +77,7 @@ export default function ChatPage() {
   }, [liveMessages]);
 
   /* =========================
-     SOCKET
+     SOCKET (NO DUPLICATES)
   ========================= */
 
   useEffect(() => {
@@ -88,14 +88,9 @@ export default function ChatPage() {
     socket.on("typing:start", () => setIsTyping(true));
     socket.on("typing:stop", () => setIsTyping(false));
 
-    socket.on("message:new", (message: Message) => {
-      setLiveMessages((prev) => [...prev, message]);
-    });
-
     return () => {
       socket.off("typing:start");
       socket.off("typing:stop");
-      socket.off("message:new");
     };
   }, [socket, userId]);
 
@@ -137,7 +132,7 @@ export default function ChatPage() {
   }
 
   /* =========================
-     SEND MESSAGE (FIXED FLOW)
+     SEND MESSAGE (FIXED UX)
   ========================= */
 
   async function sendMessage() {
@@ -149,7 +144,7 @@ export default function ChatPage() {
       /* STEP 1: Upload image */
       if (selectedImage) {
         const uploadData = new FormData();
-        uploadData.append("file", selectedImage);
+        uploadData.append("image", selectedImage);
 
         const uploadRes = await axios.post(
           `${API}/upload/chat`,
@@ -162,8 +157,33 @@ export default function ChatPage() {
           }
         );
 
+        console.log("UPLOAD RESPONSE:", uploadRes.data);
+
+        if (!uploadRes.data?.url) {
+          throw new Error("Upload failed — no URL returned");
+        }
+
         imageUrl = uploadRes.data.url;
       }
+
+      /* 🔥 OPTIMISTIC MESSAGE */
+      const tempMessage: Message = {
+        id: "temp-" + Date.now(),
+        text: text.trim() || undefined,
+        imageUrl: imageUrl || undefined,
+        senderId: meId!,
+        receiverId: userId!,
+        createdAt: new Date().toISOString(),
+        read: false,
+      };
+
+      setLiveMessages((prev) => [...prev, tempMessage]);
+
+      console.log("FINAL MESSAGE PAYLOAD:", {
+        text: text.trim(),
+        imageUrl,
+        replyToId: replyTo?.id,
+      });
 
       /* STEP 2: Send message */
       const res = await axios.post(
@@ -176,9 +196,12 @@ export default function ChatPage() {
         { withCredentials: true }
       );
 
-      const newMessage = res.data;
-
-      setLiveMessages((prev) => [...prev, newMessage]);
+      /* 🔥 REPLACE TEMP MESSAGE */
+      setLiveMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === tempMessage.id ? res.data : msg
+        )
+      );
 
       setText("");
       setReplyTo(null);
@@ -246,15 +269,13 @@ export default function ChatPage() {
                       : "bg-white/10 text-white rounded-bl-none"
                   }`}
                 >
-                  {msg.replyTo && (
-                    <div className="text-xs text-white/60 mb-1 border-l-2 pl-2 border-pink-400">
-                      {msg.replyTo.text}
-                    </div>
-                  )}
-
                   {msg.imageUrl && (
                     <img
-                      src={`https://api.letslynq.com${msg.imageUrl}`}
+                      src={
+                        msg.imageUrl.startsWith("http")
+                          ? msg.imageUrl
+                          : `${API_RAW}${msg.imageUrl}`
+                      }
                       className="rounded-lg mb-2 max-h-60"
                     />
                   )}
@@ -292,16 +313,6 @@ export default function ChatPage() {
               ✕
             </button>
           </div>
-        </div>
-      )}
-
-      {/* REPLY BAR */}
-      {replyTo && (
-        <div className="px-4 py-2 bg-white/10 text-xs flex justify-between">
-          <span>
-            Replying to: {replyTo.text?.slice(0, 40)}
-          </span>
-          <button onClick={() => setReplyTo(null)}>✕</button>
         </div>
       )}
 
