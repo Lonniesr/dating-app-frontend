@@ -15,10 +15,12 @@ import { useUserAuth } from "./context/UserAuthContext";
 interface Message {
   id: string;
   text?: string;
+  imageUrl?: string;
   senderId: string;
   receiverId: string;
   createdAt: string;
   read: boolean;
+  replyTo?: Message | null;
 }
 
 function formatTime(date: string) {
@@ -33,7 +35,6 @@ function isMine(m: Message, meId: string | null) {
 }
 
 export default function ChatPage() {
-
   const { id: otherUserId } = useParams<{ id: string }>();
   const userId = otherUserId ?? null;
 
@@ -44,25 +45,28 @@ export default function ChatPage() {
   const { authUser } = useUserAuth();
   const meId = authUser?.id ?? null;
 
-  const { data: messages, refetch } = useUserChat(userId);
-
-  /* =========================
-     LIVE MESSAGE STATE
-  ========================= */
+  const { data: messages } = useUserChat(userId);
 
   const [liveMessages, setLiveMessages] = useState<Message[]>([]);
+  const [text, setText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* =========================
+     SYNC MESSAGES
+  ========================= */
 
   useEffect(() => {
     if (messages) {
       setLiveMessages(messages);
     }
   }, [messages]);
-
-  const [text, setText] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* =========================
      AUTO SCROLL
@@ -73,7 +77,7 @@ export default function ChatPage() {
   }, [liveMessages]);
 
   /* =========================
-     SOCKET ROOM JOIN
+     SOCKET
   ========================= */
 
   useEffect(() => {
@@ -83,8 +87,6 @@ export default function ChatPage() {
 
     socket.on("typing:start", () => setIsTyping(true));
     socket.on("typing:stop", () => setIsTyping(false));
-
-    /* LIVE MESSAGE RECEIVE */
 
     socket.on("message:new", (message: Message) => {
       setLiveMessages((prev) => [...prev, message]);
@@ -98,7 +100,7 @@ export default function ChatPage() {
   }, [socket, userId]);
 
   /* =========================
-     TYPING HANDLER
+     TYPING
   ========================= */
 
   function handleTyping(value: string) {
@@ -118,44 +120,79 @@ export default function ChatPage() {
   }
 
   /* =========================
-     SEND MESSAGE
+     IMAGE HANDLING
+  ========================= */
+
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSelectedImage(file);
+    setPreview(URL.createObjectURL(file));
+  }
+
+  function removeImage() {
+    setSelectedImage(null);
+    setPreview(null);
+  }
+
+  /* =========================
+     SEND MESSAGE (FIXED FLOW)
   ========================= */
 
   async function sendMessage() {
-    if (!text.trim() || !userId) return;
+    if ((!text.trim() && !selectedImage) || !userId) return;
 
     try {
+      let imageUrl: string | null = null;
 
-      const url = `${API}/messages/${userId}`;
+      /* STEP 1: Upload image */
+      if (selectedImage) {
+        const uploadData = new FormData();
+        uploadData.append("file", selectedImage);
 
+        const uploadRes = await axios.post(
+          `${API}/upload/chat`,
+          uploadData,
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        imageUrl = uploadRes.data.url;
+      }
+
+      /* STEP 2: Send message */
       const res = await axios.post(
-        url,
-        { text: text.trim() },
+        `${API}/messages/${userId}`,
+        {
+          text: text.trim() || null,
+          imageUrl,
+          replyToId: replyTo?.id || null,
+        },
         { withCredentials: true }
       );
 
       const newMessage = res.data;
 
-      /* instantly add locally */
-
       setLiveMessages((prev) => [...prev, newMessage]);
 
       setText("");
+      setReplyTo(null);
+      removeImage();
 
       socket?.emit("typing:stop", { toUserId: userId });
 
     } catch (err: any) {
-
       console.error("Send message failed", err);
-
-      if (err.response) {
-        console.error("Server response:", err.response.data);
-      }
     }
   }
 
   /* =========================
-     MARK MESSAGES AS READ
+     READ RECEIPTS
   ========================= */
 
   useEffect(() => {
@@ -164,7 +201,6 @@ export default function ChatPage() {
     socket.emit("message:read", {
       otherUserId: userId,
     });
-
   }, [socket, userId, liveMessages]);
 
   const lastMessage =
@@ -173,6 +209,18 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
+      {/* HEADER */}
+      <div className="px-4 py-3 border-b border-white/10 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-white/20" />
+        <div>
+          <p className="text-sm font-semibold">Chat</p>
+          <p className="text-xs text-white/40">
+            {isTyping ? "Typing..." : "Online"}
+          </p>
+        </div>
+      </div>
+
+      {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
 
         {liveMessages?.map((msg: Message) => {
@@ -181,13 +229,12 @@ export default function ChatPage() {
           return (
             <motion.div
               key={msg.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
               className={`flex mb-3 ${
                 mine ? "justify-end" : "justify-start"
               }`}
               onContextMenu={(e: MouseEvent) => {
                 e.preventDefault();
+                setReplyTo(msg);
               }}
             >
               <div className="max-w-[70%]">
@@ -199,15 +246,30 @@ export default function ChatPage() {
                       : "bg-white/10 text-white rounded-bl-none"
                   }`}
                 >
+                  {msg.replyTo && (
+                    <div className="text-xs text-white/60 mb-1 border-l-2 pl-2 border-pink-400">
+                      {msg.replyTo.text}
+                    </div>
+                  )}
+
+                  {msg.imageUrl && (
+                    <img
+                      src={`https://api.letslynq.com${msg.imageUrl}`}
+                      className="rounded-lg mb-2 max-h-60"
+                    />
+                  )}
+
                   {msg.text && <p>{msg.text}</p>}
                 </div>
 
-                <div className="flex items-center gap-2 text-[10px] text-white/40 mt-1">
+                <div className="text-[10px] text-white/40 mt-1 flex gap-2">
                   <span>{formatTime(msg.createdAt)}</span>
 
-                  {mine && msg.read && msg.id === lastMessage?.id && (
-                    <span>Seen</span>
-                  )}
+                  {mine &&
+                    msg.read &&
+                    msg.id === lastMessage?.id && (
+                      <span>Seen</span>
+                    )}
                 </div>
 
               </div>
@@ -215,17 +277,51 @@ export default function ChatPage() {
           );
         })}
 
-        {isTyping && (
-          <div className="text-xs text-white/40 mt-2">
-            Typing…
-          </div>
-        )}
-
         <div ref={bottomRef} />
-
       </div>
 
+      {/* IMAGE PREVIEW */}
+      {preview && (
+        <div className="px-4 py-2">
+          <div className="relative w-32">
+            <img src={preview} className="rounded-lg" />
+            <button
+              onClick={removeImage}
+              className="absolute top-1 right-1 bg-black/70 px-2 rounded"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* REPLY BAR */}
+      {replyTo && (
+        <div className="px-4 py-2 bg-white/10 text-xs flex justify-between">
+          <span>
+            Replying to: {replyTo.text?.slice(0, 40)}
+          </span>
+          <button onClick={() => setReplyTo(null)}>✕</button>
+        </div>
+      )}
+
+      {/* INPUT */}
       <div className="p-4 border-t border-white/10 flex items-center gap-3">
+
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="text-white/60 text-xl"
+        >
+          📎
+        </button>
+
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={handleImageSelect}
+          className="hidden"
+        />
 
         <input
           value={text}
@@ -242,7 +338,6 @@ export default function ChatPage() {
         </button>
 
       </div>
-
     </div>
   );
 }
