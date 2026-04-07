@@ -18,7 +18,7 @@ export function useChatSocket() {
 
     const socket = io(import.meta.env.VITE_API_URL, {
       path: "/socket.io",
-      transports: ["polling", "websocket"], // ✅ Render-safe
+      transports: ["polling", "websocket"],
       withCredentials: true,
       autoConnect: true,
       reconnection: true,
@@ -54,6 +54,8 @@ export function useChatSocket() {
     ========================= */
 
     socket.on("message:new", () => {
+      console.log("📩 message:new received");
+
       queryClient.invalidateQueries({ queryKey: ["chat"] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     });
@@ -67,17 +69,15 @@ export function useChatSocket() {
     });
 
     /* =========================
-       CLEANUP
+       CLEANUP (ONLY ON UNMOUNT)
     ========================= */
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
-      setReady(false);
+      // ❌ DO NOT disconnect here (causes message loss)
     };
-  }, [authUser?.id, queryClient]);
+
+    // ✅ ONLY depend on user id
+  }, [authUser?.id]);
 
   return {
     socket: socketRef.current,
