@@ -5,26 +5,23 @@ import {
   useState,
   ReactNode,
 } from "react";
+import { getPushToken } from "../../firebase"; // 🔥 NEW
+import axios from "axios"; // 🔥 NEW
 
 /* =========================
    USER TYPES
 ========================= */
 
 type Preferences = {
-  /* Dating preferences */
-
   interestedIn?: string;
   racePreference?: string | null;
   minAge?: number;
   maxAge?: number;
   locationRadius?: number | null;
 
-  // ✅ NEW (safe additions)
   onlyVerified?: boolean;
   boostVerified?: boolean;
   prioritizeLikedYou?: boolean;
-
-  /* Notification settings */
 
   messageNotifications?: boolean;
   matchNotifications?: boolean;
@@ -91,16 +88,36 @@ export function UserAuthProvider({
 }: {
   children: ReactNode;
 }) {
-
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  /* =========================
+     🔥 PUSH SETUP (NEW)
+  ========================= */
+
+  async function setupPush() {
+    try {
+      const token = await getPushToken();
+
+      if (!token) return;
+
+      console.log("🔥 Sending push token to backend:", token);
+
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/user/push-token`,
+        { token },
+        { withCredentials: true }
+      );
+    } catch (err) {
+      console.error("Push setup failed:", err);
+    }
+  }
 
   /* =========================
      DETERMINE ONBOARDING STEP
   ========================= */
 
   function getOnboardingStep(user: AuthUser): string | null {
-
     if (user.role === "admin") return null;
 
     const hasBasic =
@@ -139,9 +156,7 @@ export function UserAuthProvider({
   ========================= */
 
   async function loadProfile(): Promise<AuthUser | null> {
-
     try {
-
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/profile`,
         {
@@ -160,17 +175,12 @@ export function UserAuthProvider({
       setAuthUser(data);
 
       return data;
-
     } catch (err) {
-
       console.error("Auth load failed:", err);
       setAuthUser(null);
       return null;
-
     } finally {
-
       setIsLoading(false);
-
     }
   }
 
@@ -183,13 +193,21 @@ export function UserAuthProvider({
   }, []);
 
   /* =========================
+     🔥 TRIGGER PUSH AFTER LOGIN (NEW)
+  ========================= */
+
+  useEffect(() => {
+    if (authUser) {
+      setupPush();
+    }
+  }, [authUser]);
+
+  /* =========================
      LOGOUT
   ========================= */
 
   async function logout(): Promise<void> {
-
     try {
-
       await fetch(
         `${import.meta.env.VITE_API_URL}/api/auth/logout`,
         {
@@ -197,7 +215,6 @@ export function UserAuthProvider({
           credentials: "include",
         }
       );
-
     } catch {}
 
     setAuthUser(null);
@@ -208,9 +225,7 @@ export function UserAuthProvider({
   ========================= */
 
   async function refreshUser(): Promise<AuthUser | null> {
-
     setIsLoading(true);
-
     return loadProfile();
   }
 
@@ -234,7 +249,6 @@ export function UserAuthProvider({
 ========================= */
 
 export function useUserAuth() {
-
   const context = useContext(UserAuthContext);
 
   if (!context) {
