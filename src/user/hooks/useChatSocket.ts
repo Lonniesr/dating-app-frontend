@@ -13,42 +13,28 @@ export function useChatSocket() {
   useEffect(() => {
     if (!authUser?.id) return;
 
-    const socket = io(`${import.meta.env.VITE_API_URL}/chat`, {
+    const socket = io(import.meta.env.VITE_API_URL, {
       withCredentials: true,
-      transports: ["websocket"], // 🔥 helps avoid polling issues
-      // ❌ REMOVED query: { userId }
+      transports: ["polling", "websocket"], // ✅ FIX
     });
 
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      console.log("💬 Socket connected");
-      socket.emit("chat:join", authUser.id); // ✅ still fine
+      console.log("💬 Socket connected:", socket.id);
+
+      socket.emit("chat:join", authUser.id);
       setReady(true);
     });
 
-    /* =========================
-       NEW MESSAGE RECEIVED
-    ========================= */
+    socket.on("connect_error", (err) => {
+      console.error("❌ SOCKET ERROR:", err.message);
+    });
 
     socket.on("message:new", () => {
+      console.log("📩 New message received");
+
       queryClient.invalidateQueries({ queryKey: ["chat"] });
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-    });
-
-    /* =========================
-       CONVERSATION UPDATE
-    ========================= */
-
-    socket.on("conversation:update", () => {
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-    });
-
-    /* =========================
-       NOTIFICATION UPDATE
-    ========================= */
-
-    socket.on("notifications:update", () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     });
 
