@@ -1,0 +1,20 @@
+importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js");
+
+firebase.initializeApp({
+  apiKey: "AIzaSyCuaQAKF0pXrKWWrdRObhV158dNbIzQn4U",
+  authDomain: "lynq-3ba2d.firebaseapp.com",
+  projectId: "lynq-3ba2d",
+  messagingSenderId: "667931253340",
+  appId: "1:667931253340:web:f2905cb18779b90e222499"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage(function (payload) {
+  console.log("🔥 Background message received:", payload);
+
+  self.registration.showNotification(payload.notification.title, {
+    body: payload.notification.body,
+  });
+});
