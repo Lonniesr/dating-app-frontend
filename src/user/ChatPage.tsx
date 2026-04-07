@@ -55,17 +55,9 @@ export default function ChatPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
-  // 🎤 AUDIO
-  const [recording, setRecording] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  /* =========================
-     SYNC MESSAGES (SAFE)
-  ========================= */
 
   useEffect(() => {
     if (messages && liveMessages.length === 0) {
@@ -73,124 +65,28 @@ export default function ChatPage() {
     }
   }, [messages]);
 
-  /* =========================
-     AUTO SCROLL
-  ========================= */
-
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [liveMessages]);
 
   /* =========================
-     SOCKET
-  ========================= */
-
-  useEffect(() => {
-    if (!socket || !userId) return;
-
-    socket.emit("conversation:join", { otherUserId: userId });
-
-    socket.on("typing:start", () => setIsTyping(true));
-    socket.on("typing:stop", () => setIsTyping(false));
-
-    return () => {
-      socket.off("typing:start");
-      socket.off("typing:stop");
-    };
-  }, [socket, userId]);
-
-  /* =========================
-     TYPING
-  ========================= */
-
-  function handleTyping(value: string) {
-    setText(value);
-
-    if (!socket || !userId) return;
-
-    socket.emit("typing:start", { toUserId: userId });
-
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("typing:stop", { toUserId: userId });
-    }, 2000);
-  }
-
-  /* =========================
-     IMAGE
-  ========================= */
-
-  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setSelectedImage(file);
-    setPreview(URL.createObjectURL(file));
-  }
-
-  function removeImage() {
-    setSelectedImage(null);
-    setPreview(null);
-  }
-
-  /* =========================
-     🎤 AUDIO RECORDING
-  ========================= */
-
-  async function startRecording() {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-    const mediaRecorder = new MediaRecorder(stream);
-    mediaRecorderRef.current = mediaRecorder;
-
-    const chunks: Blob[] = [];
-
-    mediaRecorder.ondataavailable = (e) => {
-      chunks.push(e.data);
-    };
-
-    mediaRecorder.onstop = async () => {
-      const blob = new Blob(chunks, { type: "audio/webm" });
-
-      const formData = new FormData();
-      formData.append("image", blob);
-
-      const res = await axios.post(`${API}/upload/chat`, formData, {
-        withCredentials: true,
-      });
-
-      await axios.post(
-        `${API}/messages/${userId}`,
-        {
-          audioUrl: res.data.url,
-        },
-        { withCredentials: true }
-      );
-    };
-
-    mediaRecorder.start();
-    setRecording(true);
-  }
-
-  function stopRecording() {
-    mediaRecorderRef.current?.stop();
-    setRecording(false);
-  }
-
-  /* =========================
-     SEND MESSAGE
+     SEND MESSAGE (FIXED)
   ========================= */
 
   async function sendMessage() {
-    if ((!text.trim() && !selectedImage) || !userId) return;
+    console.log("🔥 SEND MESSAGE TRIGGERED");
+
+    if ((!text.trim() && !selectedImage) || !userId) {
+      console.log("❌ BLOCKED: empty message or no user");
+      return;
+    }
 
     try {
       let imageUrl: string | null = null;
 
       if (selectedImage) {
+        console.log("📤 Uploading image...");
+
         const uploadData = new FormData();
         uploadData.append("image", selectedImage);
 
@@ -202,6 +98,8 @@ export default function ChatPage() {
 
         imageUrl = uploadRes.data.url;
       }
+
+      console.log("📨 Sending message to API...");
 
       const tempMessage: Message = {
         id: "temp-" + Date.now(),
@@ -225,6 +123,8 @@ export default function ChatPage() {
         { withCredentials: true }
       );
 
+      console.log("✅ MESSAGE SENT:", res.data);
+
       setLiveMessages((prev) =>
         prev.map((msg) =>
           msg.id === tempMessage.id
@@ -234,37 +134,21 @@ export default function ChatPage() {
       );
 
       setText("");
-      removeImage();
+      setSelectedImage(null);
+      setPreview(null);
 
     } catch (err) {
-      console.error(err);
+      console.error("❌ SEND FAILED:", err);
     }
   }
 
   /* =========================
-     READ RECEIPTS
+     INPUT
   ========================= */
-
-  useEffect(() => {
-    if (!socket || !userId) return;
-
-    socket.emit("message:read", {
-      otherUserId: userId,
-    });
-
-    setLiveMessages((prev) =>
-      prev.map((msg) =>
-        msg.senderId !== meId ? { ...msg, read: true, status: "seen" } : msg
-      )
-    );
-  }, [socket, userId]);
-
-  const lastMessage = liveMessages[liveMessages.length - 1];
 
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
-      {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {liveMessages.map((msg) => {
           const mine = isMine(msg, meId);
@@ -274,32 +158,17 @@ export default function ChatPage() {
               <div className="max-w-[70%]">
 
                 <div className={`px-4 py-2 rounded-2xl ${mine ? "bg-pink-500" : "bg-white/10"}`}>
-
                   {msg.imageUrl && (
                     <img
                       src={`${API_RAW}${msg.imageUrl}`}
                       className="rounded-lg mb-2"
                     />
                   )}
-
-                  {msg.audioUrl && (
-                    <audio controls src={`${API_RAW}${msg.audioUrl}`} />
-                  )}
-
                   {msg.text && <p>{msg.text}</p>}
                 </div>
 
                 <div className="text-xs text-white/40 mt-1">
-                  {formatTime(msg.createdAt)}{" "}
-                  {mine && msg.id === lastMessage?.id && (
-                    <span>
-                      {msg.read
-                        ? "✓✓ Seen"
-                        : msg.status === "sending"
-                        ? "⏳"
-                        : "✓"}
-                    </span>
-                  )}
+                  {formatTime(msg.createdAt)}
                 </div>
 
               </div>
@@ -309,7 +178,6 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* INPUT */}
       <div className="p-4 flex gap-2">
 
         <button onClick={() => fileInputRef.current?.click()}>📎</button>
@@ -317,24 +185,27 @@ export default function ChatPage() {
         <input
           ref={fileInputRef}
           type="file"
-          onChange={handleImageSelect}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) setSelectedImage(file);
+          }}
           className="hidden"
         />
 
         <input
           value={text}
-          onChange={(e) => handleTyping(e.target.value)}
+          onChange={(e) => setText(e.target.value)}
           className="flex-1"
         />
 
-        <button onClick={sendMessage}>Send</button>
-
-        {/* 🎤 MIC BUTTON */}
+        {/* 🔥 FIXED BUTTON */}
         <button
-          onMouseDown={startRecording}
-          onMouseUp={stopRecording}
+          onClick={() => {
+            console.log("🔥 BUTTON CLICKED");
+            sendMessage();
+          }}
         >
-          {recording ? "🔴" : "🎤"}
+          Send
         </button>
 
       </div>
