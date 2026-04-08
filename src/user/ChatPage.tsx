@@ -35,6 +35,15 @@ function isMine(m: Message, meId: string | null) {
   return m.senderId === meId;
 }
 
+/* 🔥 FIX: image resolver */
+function resolveImage(url?: string, API_RAW?: string) {
+  if (!url) return "";
+
+  if (url.startsWith("http")) return url;
+
+  return `${API_RAW}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
 export default function ChatPage() {
   const { id: otherUserId } = useParams<{ id: string }>();
   const userId = otherUserId ?? null;
@@ -161,10 +170,10 @@ export default function ChatPage() {
                     mine ? "bg-pink-500" : "bg-white/10"
                   }`}
                 >
-                  {/* IMAGE */}
+                  {/* ✅ FIXED IMAGE */}
                   {msg.imageUrl && (
                     <img
-                      src={`${API_RAW}${msg.imageUrl}`}
+                      src={resolveImage(msg.imageUrl, API_RAW)}
                       className="rounded-lg mb-2 max-h-60"
                     />
                   )}
