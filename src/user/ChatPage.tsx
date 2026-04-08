@@ -10,6 +10,7 @@ import axios from "axios";
 import { useUserChat } from "./hooks/useUserChat";
 import { useChatSocket } from "./hooks/useChatSocket";
 import { useUserAuth } from "./context/UserAuthContext";
+import { supabase } from "../lib/supabaseClient"; // ✅ NEW
 
 interface Message {
   id: string;
@@ -33,15 +34,6 @@ function formatTime(date: string) {
 
 function isMine(m: Message, meId: string | null) {
   return m.senderId === meId;
-}
-
-/* 🔥 FIX: image resolver */
-function resolveImage(url?: string, API_RAW?: string) {
-  if (!url) return "";
-
-  if (url.startsWith("http")) return url;
-
-  return `${API_RAW}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
 export default function ChatPage() {
@@ -76,7 +68,7 @@ export default function ChatPage() {
   }, [liveMessages]);
 
   /* =========================
-     SEND MESSAGE
+     SEND MESSAGE (SUPABASE)
   ========================= */
 
   async function sendMessage() {
@@ -85,17 +77,26 @@ export default function ChatPage() {
     try {
       let imageUrl: string | null = null;
 
+      /* 🔥 UPLOAD TO SUPABASE */
       if (selectedImage) {
-        const uploadData = new FormData();
-        uploadData.append("image", selectedImage);
+        const fileExt = selectedImage.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+        const filePath = `chat-images/${fileName}`;
 
-        const uploadRes = await axios.post(
-          `${API}/upload/chat`,
-          uploadData,
-          { withCredentials: true }
-        );
+        const { error } = await supabase.storage
+          .from("photos")
+          .upload(filePath, selectedImage);
 
-        imageUrl = uploadRes.data.url;
+        if (error) {
+          console.error("UPLOAD ERROR:", error);
+          return;
+        }
+
+        const { data } = supabase.storage
+          .from("photos")
+          .getPublicUrl(filePath);
+
+        imageUrl = data.publicUrl;
       }
 
       const tempMessage: Message = {
@@ -137,10 +138,6 @@ export default function ChatPage() {
     }
   }
 
-  /* =========================
-     UI
-  ========================= */
-
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
@@ -156,7 +153,6 @@ export default function ChatPage() {
                 mine ? "justify-end" : "justify-start"
               }`}
             >
-              {/* OTHER USER */}
               {!mine && (
                 <img
                   src={"/default-avatar.png"}
@@ -170,26 +166,16 @@ export default function ChatPage() {
                     mine ? "bg-pink-500" : "bg-white/10"
                   }`}
                 >
-                  {/* ✅ FIXED IMAGE */}
+                  {/* ✅ DIRECT SUPABASE IMAGE */}
                   {msg.imageUrl && (
                     <img
-                      src={resolveImage(msg.imageUrl, API_RAW)}
-                      className="rounded-lg mb-2 max-h-60"
+                      src={msg.imageUrl}
+                      className="rounded-lg mb-2 max-h-60 cursor-pointer"
+                      onClick={() => window.open(msg.imageUrl, "_blank")}
                     />
                   )}
 
-                  {/* TEXT + REACTIONS */}
-                  {msg.text && (
-                    <div className="relative group">
-                      <p>{msg.text}</p>
-
-                      <div className="absolute -top-6 hidden group-hover:flex gap-1 bg-black px-2 py-1 rounded">
-                        {["❤️", "😂", "🔥"].map((emoji) => (
-                          <button key={emoji}>{emoji}</button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {msg.text && <p>{msg.text}</p>}
                 </div>
 
                 <div className="text-xs text-white/40 mt-1">
@@ -197,7 +183,6 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              {/* YOU */}
               {mine && (
                 <img
                   src={"/default-avatar.png"}
@@ -210,25 +195,20 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* IMAGE PREVIEW */}
+      {/* PREVIEW */}
       {preview && (
         <div className="px-4 pb-2">
-          <img
-            src={preview}
-            className="max-h-40 rounded-lg"
-          />
+          <img src={preview} className="max-h-40 rounded-lg" />
         </div>
       )}
 
-      {/* INPUT BAR */}
+      {/* INPUT */}
       <div className="p-4 flex items-center gap-2 border-t border-white/10 bg-black">
 
-        {/* FILE */}
         <button onClick={() => fileInputRef.current?.click()}>
           📎
         </button>
 
-        {/* MIC */}
         <button className="text-xl">🎤</button>
 
         <input
@@ -244,7 +224,6 @@ export default function ChatPage() {
           className="hidden"
         />
 
-        {/* INPUT */}
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -253,7 +232,6 @@ export default function ChatPage() {
           style={{ caretColor: "white" }}
         />
 
-        {/* SEND */}
         <button
           onClick={sendMessage}
           className="bg-pink-500 px-4 py-2 rounded-xl"
