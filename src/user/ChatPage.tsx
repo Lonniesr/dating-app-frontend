@@ -2,7 +2,6 @@ import {
   useState,
   useEffect,
   useRef,
-  type MouseEvent,
 } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -51,13 +50,11 @@ export default function ChatPage() {
 
   const [liveMessages, setLiveMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (messages && liveMessages.length === 0) {
@@ -70,23 +67,16 @@ export default function ChatPage() {
   }, [liveMessages]);
 
   /* =========================
-     SEND MESSAGE (FIXED)
+     SEND MESSAGE
   ========================= */
 
   async function sendMessage() {
-    console.log("🔥 SEND MESSAGE TRIGGERED");
-
-    if ((!text.trim() && !selectedImage) || !userId) {
-      console.log("❌ BLOCKED: empty message or no user");
-      return;
-    }
+    if ((!text.trim() && !selectedImage) || !userId) return;
 
     try {
       let imageUrl: string | null = null;
 
       if (selectedImage) {
-        console.log("📤 Uploading image...");
-
         const uploadData = new FormData();
         uploadData.append("image", selectedImage);
 
@@ -98,8 +88,6 @@ export default function ChatPage() {
 
         imageUrl = uploadRes.data.url;
       }
-
-      console.log("📨 Sending message to API...");
 
       const tempMessage: Message = {
         id: "temp-" + Date.now(),
@@ -123,8 +111,6 @@ export default function ChatPage() {
         { withCredentials: true }
       );
 
-      console.log("✅ MESSAGE SENT:", res.data);
-
       setLiveMessages((prev) =>
         prev.map((msg) =>
           msg.id === tempMessage.id
@@ -138,72 +124,130 @@ export default function ChatPage() {
       setPreview(null);
 
     } catch (err) {
-      console.error("❌ SEND FAILED:", err);
+      console.error("SEND FAILED:", err);
     }
   }
 
   /* =========================
-     INPUT
+     UI
   ========================= */
 
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
+      {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {liveMessages.map((msg) => {
           const mine = isMine(msg, meId);
 
           return (
-            <motion.div key={msg.id} className={`flex mb-3 ${mine ? "justify-end" : ""}`}>
-              <div className="max-w-[70%]">
+            <motion.div
+              key={msg.id}
+              className={`flex mb-3 items-end gap-2 ${
+                mine ? "justify-end" : "justify-start"
+              }`}
+            >
+              {/* OTHER USER */}
+              {!mine && (
+                <img
+                  src={"/default-avatar.png"}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              )}
 
-                <div className={`px-4 py-2 rounded-2xl ${mine ? "bg-pink-500" : "bg-white/10"}`}>
+              <div className="max-w-[70%]">
+                <div
+                  className={`px-4 py-2 rounded-2xl ${
+                    mine ? "bg-pink-500" : "bg-white/10"
+                  }`}
+                >
+                  {/* IMAGE */}
                   {msg.imageUrl && (
                     <img
                       src={`${API_RAW}${msg.imageUrl}`}
-                      className="rounded-lg mb-2"
+                      className="rounded-lg mb-2 max-h-60"
                     />
                   )}
-                  {msg.text && <p>{msg.text}</p>}
+
+                  {/* TEXT + REACTIONS */}
+                  {msg.text && (
+                    <div className="relative group">
+                      <p>{msg.text}</p>
+
+                      <div className="absolute -top-6 hidden group-hover:flex gap-1 bg-black px-2 py-1 rounded">
+                        {["❤️", "😂", "🔥"].map((emoji) => (
+                          <button key={emoji}>{emoji}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="text-xs text-white/40 mt-1">
                   {formatTime(msg.createdAt)}
                 </div>
-
               </div>
+
+              {/* YOU */}
+              {mine && (
+                <img
+                  src={"/default-avatar.png"}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              )}
             </motion.div>
           );
         })}
         <div ref={bottomRef} />
       </div>
 
-      <div className="p-4 flex gap-2">
+      {/* IMAGE PREVIEW */}
+      {preview && (
+        <div className="px-4 pb-2">
+          <img
+            src={preview}
+            className="max-h-40 rounded-lg"
+          />
+        </div>
+      )}
 
-        <button onClick={() => fileInputRef.current?.click()}>📎</button>
+      {/* INPUT BAR */}
+      <div className="p-4 flex items-center gap-2 border-t border-white/10 bg-black">
+
+        {/* FILE */}
+        <button onClick={() => fileInputRef.current?.click()}>
+          📎
+        </button>
+
+        {/* MIC */}
+        <button className="text-xl">🎤</button>
 
         <input
           ref={fileInputRef}
           type="file"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) setSelectedImage(file);
+            if (file) {
+              setSelectedImage(file);
+              setPreview(URL.createObjectURL(file));
+            }
           }}
           className="hidden"
         />
 
+        {/* INPUT */}
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="flex-1"
+          placeholder="Type a message..."
+          className="flex-1 px-4 py-3 bg-[#1a1a1a] text-white rounded-xl outline-none"
+          style={{ caretColor: "white" }}
         />
 
-        {/* 🔥 FIXED BUTTON */}
+        {/* SEND */}
         <button
-          onClick={() => {
-            console.log("🔥 BUTTON CLICKED");
-            sendMessage();
-          }}
+          onClick={sendMessage}
+          className="bg-pink-500 px-4 py-2 rounded-xl"
         >
           Send
         </button>
