@@ -18,12 +18,8 @@ export function useChatSocket() {
 
     const socket = io(import.meta.env.VITE_API_URL, {
       path: "/socket.io",
-      transports: ["polling", "websocket"],
+      transports: ["websocket"], // 🔥 FIX: force stable connection
       withCredentials: true,
-      autoConnect: true,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
     });
 
     socketRef.current = socket;
@@ -73,10 +69,10 @@ export function useChatSocket() {
     ========================= */
 
     return () => {
-      // ❌ DO NOT disconnect here (causes message loss)
+      // ❌ DO NOT disconnect here
+      // prevents message loss due to reconnect loop
     };
 
-    // ✅ ONLY depend on user id
   }, [authUser?.id]);
 
   return {
