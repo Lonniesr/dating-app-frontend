@@ -10,7 +10,7 @@ import axios from "axios";
 import { useUserChat } from "./hooks/useUserChat";
 import { useChatSocket } from "./hooks/useChatSocket";
 import { useUserAuth } from "./context/UserAuthContext";
-import { supabase } from "../lib/supabaseClient"; // ✅ NEW
+import { supabase } from "../lib/supabaseClient";
 
 interface Message {
   id: string;
@@ -77,7 +77,6 @@ export default function ChatPage() {
     try {
       let imageUrl: string | null = null;
 
-      /* 🔥 UPLOAD TO SUPABASE */
       if (selectedImage) {
         const fileExt = selectedImage.name.split(".").pop();
         const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
@@ -97,6 +96,7 @@ export default function ChatPage() {
           .getPublicUrl(filePath);
 
         imageUrl = data.publicUrl;
+        console.log("📤 UPLOADED IMAGE URL:", imageUrl); // 🔥 LOG HERE
       }
 
       const tempMessage: Message = {
@@ -141,10 +141,11 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
-      {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {liveMessages.map((msg) => {
           const mine = isMine(msg, meId);
+
+          console.log("🖼️ IMAGE URL:", msg.imageUrl); // 🔥 MAIN DEBUG LOG
 
           return (
             <motion.div
@@ -166,7 +167,6 @@ export default function ChatPage() {
                     mine ? "bg-pink-500" : "bg-white/10"
                   }`}
                 >
-                  {/* ✅ DIRECT SUPABASE IMAGE */}
                   {msg.imageUrl && (
                     <img
                       src={msg.imageUrl}
@@ -195,14 +195,12 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* PREVIEW */}
       {preview && (
         <div className="px-4 pb-2">
           <img src={preview} className="max-h-40 rounded-lg" />
         </div>
       )}
 
-      {/* INPUT */}
       <div className="p-4 flex items-center gap-2 border-t border-white/10 bg-black">
 
         <button onClick={() => fileInputRef.current?.click()}>
