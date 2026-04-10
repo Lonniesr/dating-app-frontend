@@ -61,6 +61,8 @@ export type AuthUser = {
   onboardingComplete?: boolean;
 
   lastActiveAt?: string;
+
+  photoUrl?: string; // 🔥 FIX ADDED HERE
 };
 
 /* =========================
