@@ -16,6 +16,12 @@ export type Message = {
   createdAt: string;
 };
 
+/* 🔥 NEW TYPE */
+export type ChatResponse = {
+  messages: Message[];
+  isBlocked: boolean;
+};
+
 export type ConversationPreview = {
   userId: string;
   lastMessage: Message;
@@ -52,7 +58,8 @@ export const messagesService = {
     return handle(res);
   },
 
-  async getChatWith(userId: string): Promise<Message[]> {
+  /* 🔥 FIXED RETURN TYPE */
+  async getChatWith(userId: string): Promise<ChatResponse> {
     const res = await fetch(`${API_URL}/api/messages/${userId}`, {
       credentials: "include",
     });

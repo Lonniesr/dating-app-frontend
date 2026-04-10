@@ -36,7 +36,6 @@ function isMine(m: Message, meId: string | null) {
   return m.senderId === meId;
 }
 
-/* 🔥 FIXED AVATAR LOGIC */
 function getAvatar(user?: any) {
   return (
     user?.photoUrl ||
@@ -56,7 +55,10 @@ export default function ChatPage() {
   const { authUser } = useUserAuth();
   const meId = authUser?.id ?? null;
 
-  const { data: messages } = useUserChat(userId);
+  /* 🔥 FIX: destructure properly */
+  const { data } = useUserChat(userId);
+  const messages = data?.messages || [];
+  const isBlocked = data?.isBlocked;
 
   const [liveMessages, setLiveMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
@@ -66,8 +68,9 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /* 🔥 FIX: use messages array only */
   useEffect(() => {
-    if (messages && liveMessages.length === 0) {
+    if (messages.length && liveMessages.length === 0) {
       setLiveMessages(messages);
     }
   }, [messages]);
@@ -77,7 +80,7 @@ export default function ChatPage() {
   }, [liveMessages]);
 
   async function sendMessage() {
-    if ((!text.trim() && !selectedImage) || !userId) return;
+    if ((!text.trim() && !selectedImage) || !userId || isBlocked) return;
 
     try {
       let imageUrl: string | null = null;
@@ -148,6 +151,13 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full bg-black text-white">
+
+      {/* 🔥 BLOCK BANNER */}
+      {isBlocked && (
+        <div className="bg-red-600 text-center py-2 text-sm">
+          You cannot message this user
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {liveMessages.map((msg) => {
@@ -228,17 +238,24 @@ export default function ChatPage() {
           className="hidden"
         />
 
+        {/* 🔥 DISABLED INPUT WHEN BLOCKED */}
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Type a message..."
+          placeholder={
+            isBlocked
+              ? "You cannot message this user"
+              : "Type a message..."
+          }
+          disabled={isBlocked}
           className="flex-1 px-4 py-3 bg-[#1a1a1a] text-white rounded-xl outline-none"
           style={{ caretColor: "white" }}
         />
 
         <button
           onClick={sendMessage}
-          className="bg-pink-500 px-4 py-2 rounded-xl"
+          disabled={isBlocked}
+          className="bg-pink-500 px-4 py-2 rounded-xl disabled:opacity-50"
         >
           Send
         </button>

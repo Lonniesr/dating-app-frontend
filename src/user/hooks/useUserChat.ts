@@ -1,11 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { messagesService, Message } from "../services/messageService";
 
+/* ✅ DEFINE CORRECT RESPONSE TYPE */
+type ChatResponse = {
+  messages: Message[];
+  isBlocked: boolean;
+};
+
 export function useUserChat(otherUserId: string | null) {
-  return useQuery<Message[]>({
+  return useQuery<ChatResponse>({
     queryKey: ["chat", otherUserId],
 
-    // ✅ Safe guard — will never run if null
     queryFn: () => {
       if (!otherUserId) {
         throw new Error("No user ID provided");
@@ -14,7 +19,6 @@ export function useUserChat(otherUserId: string | null) {
       return messagesService.getChatWith(otherUserId);
     },
 
-    // ✅ Prevents ghost fetch like /null
     enabled: !!otherUserId,
   });
 }
