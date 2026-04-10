@@ -55,7 +55,6 @@ export default function ChatPage() {
   const { authUser } = useUserAuth();
   const meId = authUser?.id ?? null;
 
-  /* 🔥 FIX: destructure properly */
   const { data } = useUserChat(userId);
   const messages = data?.messages || [];
   const isBlocked = data?.isBlocked;
@@ -68,7 +67,6 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /* 🔥 FIX: use messages array only */
   useEffect(() => {
     if (messages.length && liveMessages.length === 0) {
       setLiveMessages(messages);
@@ -78,6 +76,45 @@ export default function ChatPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [liveMessages]);
+
+  /* =========================
+     BLOCK / UNBLOCK
+  ========================= */
+
+  async function handleBlockUser() {
+    if (!userId) return;
+
+    try {
+      await axios.post(
+        `${API}/block`,
+        { targetId: userId },
+        { withCredentials: true }
+      );
+
+      window.location.reload();
+    } catch (err) {
+      console.error("BLOCK FAILED:", err);
+    }
+  }
+
+  async function handleUnblockUser() {
+    if (!userId) return;
+
+    try {
+      await axios.delete(
+        `${API}/block/${userId}`,
+        { withCredentials: true }
+      );
+
+      window.location.reload();
+    } catch (err) {
+      console.error("UNBLOCK FAILED:", err);
+    }
+  }
+
+  /* =========================
+     SEND MESSAGE
+  ========================= */
 
   async function sendMessage() {
     if ((!text.trim() && !selectedImage) || !userId || isBlocked) return;
@@ -151,6 +188,27 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full bg-black text-white">
+
+      {/* 🔥 HEADER WITH BLOCK BUTTON */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <div className="font-semibold">Chat</div>
+
+        {!isBlocked ? (
+          <button
+            onClick={handleBlockUser}
+            className="text-sm text-red-400 hover:text-red-500"
+          >
+            Block
+          </button>
+        ) : (
+          <button
+            onClick={handleUnblockUser}
+            className="text-sm text-green-400 hover:text-green-500"
+          >
+            Unblock
+          </button>
+        )}
+      </div>
 
       {/* 🔥 BLOCK BANNER */}
       {isBlocked && (
@@ -238,7 +296,6 @@ export default function ChatPage() {
           className="hidden"
         />
 
-        {/* 🔥 DISABLED INPUT WHEN BLOCKED */}
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
