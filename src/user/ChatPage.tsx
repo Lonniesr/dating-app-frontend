@@ -36,6 +36,15 @@ function isMine(m: Message, meId: string | null) {
   return m.senderId === meId;
 }
 
+/* 🔥 FIXED AVATAR LOGIC */
+function getAvatar(user?: any) {
+  return (
+    user?.photoUrl ||
+    user?.photos?.[0] ||
+    "https://ui-avatars.com/api/?background=222&color=fff&name=U"
+  );
+}
+
 export default function ChatPage() {
   const { id: otherUserId } = useParams<{ id: string }>();
   const userId = otherUserId ?? null;
@@ -67,10 +76,6 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [liveMessages]);
 
-  /* =========================
-     SEND MESSAGE (SUPABASE)
-  ========================= */
-
   async function sendMessage() {
     if ((!text.trim() && !selectedImage) || !userId) return;
 
@@ -96,7 +101,6 @@ export default function ChatPage() {
           .getPublicUrl(filePath);
 
         imageUrl = data.publicUrl;
-        console.log("📤 UPLOADED IMAGE URL:", imageUrl); // 🔥 LOG HERE
       }
 
       const tempMessage: Message = {
@@ -124,7 +128,11 @@ export default function ChatPage() {
       setLiveMessages((prev) =>
         prev.map((msg) =>
           msg.id === tempMessage.id
-            ? { ...res.data, status: "sent" }
+            ? {
+                ...res.data,
+                imageUrl: res.data.imageUrl || imageUrl,
+                status: "sent",
+              }
             : msg
         )
       );
@@ -145,8 +153,6 @@ export default function ChatPage() {
         {liveMessages.map((msg) => {
           const mine = isMine(msg, meId);
 
-          console.log("🖼️ IMAGE URL:", msg.imageUrl); // 🔥 MAIN DEBUG LOG
-
           return (
             <motion.div
               key={msg.id}
@@ -156,7 +162,7 @@ export default function ChatPage() {
             >
               {!mine && (
                 <img
-                  src={"/default-avatar.png"}
+                  src="https://ui-avatars.com/api/?background=333&color=fff&name=U"
                   className="w-8 h-8 rounded-full object-cover"
                 />
               )}
@@ -185,7 +191,7 @@ export default function ChatPage() {
 
               {mine && (
                 <img
-                  src={"/default-avatar.png"}
+                  src={getAvatar(authUser)}
                   className="w-8 h-8 rounded-full object-cover"
                 />
               )}
