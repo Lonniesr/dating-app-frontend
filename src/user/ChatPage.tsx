@@ -88,17 +88,18 @@ export default function ChatPage() {
     socket.emit("message:read", { otherUserId: userId });
   }, [socket, ready, userId]);
 
+  /* 🔥 FIXED LISTENER BLOCK (ONLY CHANGE) */
   useEffect(() => {
     if (!socket || !ready) return;
 
-    socket.on("message:new", (msg) => {
+    const handleMessage = (msg: Message) => {
       setLiveMessages((prev) => {
         if (prev.find((m) => m.id === msg.id)) return prev;
         return [...prev, msg];
       });
-    });
+    };
 
-    socket.on("message:read:update", () => {
+    const handleRead = () => {
       setLiveMessages((prev) =>
         prev.map((msg) =>
           msg.senderId === meId
@@ -106,21 +107,26 @@ export default function ChatPage() {
             : msg
         )
       );
-    });
+    };
 
-    socket.on("typing:start", ({ fromUserId }) => {
+    const handleTypingStart = ({ fromUserId }: any) => {
       if (fromUserId === userId) setIsTyping(true);
-    });
+    };
 
-    socket.on("typing:stop", ({ fromUserId }) => {
+    const handleTypingStop = ({ fromUserId }: any) => {
       if (fromUserId === userId) setIsTyping(false);
-    });
+    };
+
+    socket.on("message:new", handleMessage);
+    socket.on("message:read:update", handleRead);
+    socket.on("typing:start", handleTypingStart);
+    socket.on("typing:stop", handleTypingStop);
 
     return () => {
-      socket.off("message:new");
-      socket.off("message:read:update");
-      socket.off("typing:start");
-      socket.off("typing:stop");
+      socket.off("message:new", handleMessage);
+      socket.off("message:read:update", handleRead);
+      socket.off("typing:start", handleTypingStart);
+      socket.off("typing:stop", handleTypingStop);
     };
   }, [socket, ready, userId, meId]);
 
@@ -257,7 +263,7 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* INPUT BAR (RESTORED) */}
+      {/* INPUT BAR */}
       <div className="p-4 flex items-center gap-2">
 
         <button onClick={() => fileInputRef.current?.click()}>
