@@ -15,7 +15,7 @@ const app = initializeApp(firebaseConfig);
 /**
  * 🔥 SAFELY GET MESSAGING INSTANCE
  */
-async function getMessagingInstance() {
+export async function getMessagingInstance() { // ✅ FIXED (export added)
   const supported = await isSupported();
 
   if (!supported) {
