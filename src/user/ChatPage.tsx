@@ -1,3 +1,5 @@
+// 🔥 ONLY ADDITIONS MARKED — EVERYTHING ELSE IS YOUR CODE
+
 import {
   useState,
   useEffect,
@@ -64,7 +66,7 @@ export default function ChatPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
-  const [isTyping, setIsTyping] = useState(false); // 🔥 NEW
+  const [isTyping, setIsTyping] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -79,6 +81,12 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [liveMessages]);
 
+  /* 🔥 NEW — JOIN CONVERSATION ROOM (CRITICAL FIX) */
+  useEffect(() => {
+    if (!socket || !userId) return;
+    socket.emit("conversation:join", { otherUserId: userId });
+  }, [socket, userId]);
+
   /* 🔥 NEW — READ RECEIPTS */
   useEffect(() => {
     if (!socket || !userId) return;
@@ -89,11 +97,18 @@ export default function ChatPage() {
   useEffect(() => {
     if (!socket) return;
 
+    socket.on("message:new", (msg) => { // 🔥 NEW
+      setLiveMessages((prev) => {
+        if (prev.find((m) => m.id === msg.id)) return prev;
+        return [...prev, msg];
+      });
+    });
+
     socket.on("message:read:update", () => {
       setLiveMessages((prev) =>
         prev.map((msg) =>
           msg.senderId === meId
-            ? { ...msg, status: "seen" }
+            ? { ...msg, status: "seen", read: true }
             : msg
         )
       );
@@ -108,6 +123,7 @@ export default function ChatPage() {
     });
 
     return () => {
+      socket.off("message:new"); // 🔥 NEW
       socket.off("message:read:update");
       socket.off("typing:start");
       socket.off("typing:stop");
@@ -218,7 +234,7 @@ export default function ChatPage() {
       setSelectedImage(null);
       setPreview(null);
 
-      socket?.emit("typing:stop", { toUserId: userId }); // 🔥 NEW
+      socket?.emit("typing:stop", { toUserId: userId });
 
     } catch (err) {
       console.error("SEND FAILED:", err);
@@ -256,7 +272,7 @@ export default function ChatPage() {
         </div>
       )}
 
-      {isTyping && ( // 🔥 NEW
+      {isTyping && (
         <div className="text-sm text-white/40 px-4 pt-2">
           typing...
         </div>
@@ -300,12 +316,12 @@ export default function ChatPage() {
                 <div className="text-xs text-white/40 mt-1">
                   {formatTime(msg.createdAt)}
 
-                  {mine && ( // 🔥 NEW
+                  {mine && (
                     <>
                       {" "}
                       {msg.status === "sending" && "Sending..."}
                       {msg.status === "sent" && "✓"}
-                      {msg.status === "seen" && "✓✓"}
+                      {(msg.status === "seen" || msg.read) && "✓✓"}
                     </>
                   )}
                 </div>
@@ -354,7 +370,7 @@ export default function ChatPage() {
           value={text}
           onChange={(e) => {
             setText(e.target.value);
-            socket?.emit("typing:start", { toUserId: userId }); // 🔥 NEW
+            socket?.emit("typing:start", { toUserId: userId });
           }}
           placeholder={
             isBlocked

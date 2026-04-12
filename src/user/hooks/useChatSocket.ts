@@ -13,9 +13,12 @@ export function useChatSocket() {
   useEffect(() => {
     if (!authUser?.id) return;
 
+    // 🔥 NEW — prevent duplicate sockets
+    if (socketRef.current) return;
+
     const socket = io(import.meta.env.VITE_API_URL, {
       withCredentials: true,
-      transports: ["polling", "websocket"], // ✅ FIX
+      transports: ["polling", "websocket"],
     });
 
     socketRef.current = socket;
@@ -38,7 +41,12 @@ export function useChatSocket() {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     });
 
+    // 🔥 NEW — cleanup listeners properly
     return () => {
+      socket.off("connect");
+      socket.off("connect_error");
+      socket.off("message:new");
+
       socket.disconnect();
       socketRef.current = null;
       setReady(false);
