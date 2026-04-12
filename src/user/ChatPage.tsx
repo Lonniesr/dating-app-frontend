@@ -1,5 +1,3 @@
-// 🔥 ONLY ADDITIONS MARKED — EVERYTHING ELSE IS YOUR CODE
-
 import {
   useState,
   useEffect,
@@ -53,7 +51,7 @@ export default function ChatPage() {
   const API_RAW = import.meta.env.VITE_API_URL || "";
   const API = API_RAW.endsWith("/api") ? API_RAW : `${API_RAW}/api`;
 
-  const { socket, ready } = useChatSocket(); // 🔥 FIXED
+  const { socket, ready } = useChatSocket();
   const { authUser } = useUserAuth();
   const meId = authUser?.id ?? null;
 
@@ -65,7 +63,6 @@ export default function ChatPage() {
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-
   const [isTyping, setIsTyping] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -81,22 +78,19 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [liveMessages]);
 
-  /* 🔥 FIXED — JOIN ROOM (WAIT FOR READY) */
+  /* JOIN ROOM */
   useEffect(() => {
     if (!socket || !ready || !userId) return;
-
     socket.emit("conversation:join", { otherUserId: userId });
-    console.log("🔥 Joined conversation:", userId);
   }, [socket, ready, userId]);
 
-  /* 🔥 FIXED — READ RECEIPTS */
+  /* READ RECEIPTS */
   useEffect(() => {
     if (!socket || !ready || !userId) return;
-
     socket.emit("message:read", { otherUserId: userId });
   }, [socket, ready, userId]);
 
-  /* 🔥 FIXED — SOCKET EVENTS */
+  /* SOCKET EVENTS */
   useEffect(() => {
     if (!socket || !ready) return;
 
@@ -133,45 +127,6 @@ export default function ChatPage() {
     };
   }, [socket, ready, userId, meId]);
 
-  /* =========================
-     BLOCK / UNBLOCK
-  ========================= */
-
-  async function handleBlockUser() {
-    if (!userId) return;
-
-    try {
-      await axios.post(
-        `${API}/block`,
-        { targetId: userId },
-        { withCredentials: true }
-      );
-
-      window.location.reload();
-    } catch (err) {
-      console.error("BLOCK FAILED:", err);
-    }
-  }
-
-  async function handleUnblockUser() {
-    if (!userId) return;
-
-    try {
-      await axios.delete(
-        `${API}/block/${userId}`,
-        { withCredentials: true }
-      );
-
-      window.location.reload();
-    } catch (err) {
-      console.error("UNBLOCK FAILED:", err);
-    }
-  }
-
-  /* =========================
-     SEND MESSAGE
-  ========================= */
-
   async function sendMessage() {
     if ((!text.trim() && !selectedImage) || !userId || isBlocked) return;
 
@@ -187,10 +142,7 @@ export default function ChatPage() {
           .from("photos")
           .upload(filePath, selectedImage);
 
-        if (error) {
-          console.error("UPLOAD ERROR:", error);
-          return;
-        }
+        if (error) return;
 
         const { data } = supabase.storage
           .from("photos")
@@ -224,11 +176,7 @@ export default function ChatPage() {
       setLiveMessages((prev) =>
         prev.map((msg) =>
           msg.id === tempMessage.id
-            ? {
-                ...res.data,
-                imageUrl: res.data.imageUrl || imageUrl,
-                status: "sent",
-              }
+            ? { ...res.data, status: "sent" }
             : msg
         )
       );
@@ -246,7 +194,85 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full bg-black text-white">
-      {/* UI unchanged */}
+
+      {/* HEADER */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <div className="font-semibold">Chat</div>
+      </div>
+
+      {/* BLOCK */}
+      {isBlocked && (
+        <div className="bg-red-600 text-center py-2 text-sm">
+          You cannot message this user
+        </div>
+      )}
+
+      {/* TYPING */}
+      {isTyping && (
+        <div className="text-sm text-white/40 px-4 pt-2">
+          typing...
+        </div>
+      )}
+
+      {/* MESSAGES */}
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        {liveMessages.map((msg) => {
+          const mine = isMine(msg, meId);
+
+          return (
+            <motion.div
+              key={msg.id}
+              className={`flex mb-3 items-end gap-2 ${
+                mine ? "justify-end" : "justify-start"
+              }`}
+            >
+              <div className="max-w-[70%]">
+                <div
+                  className={`px-4 py-2 rounded-2xl ${
+                    mine ? "bg-pink-500" : "bg-white/10"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+
+                <div className="text-xs text-white/40 mt-1">
+                  {formatTime(msg.createdAt)}
+
+                  {mine && (
+                    <>
+                      {" "}
+                      {msg.status === "sending" && "Sending..."}
+                      {msg.status === "sent" && "✓"}
+                      {(msg.status === "seen" || msg.read) && "✓✓"}
+                    </>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* INPUT */}
+      <div className="p-4 flex gap-2">
+        <input
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            socket?.emit("typing:start", { toUserId: userId });
+          }}
+          className="flex-1 bg-[#1a1a1a] px-4 py-3 rounded-xl"
+        />
+
+        <button
+          onClick={sendMessage}
+          className="bg-pink-500 px-4 rounded-xl"
+        >
+          Send
+        </button>
+      </div>
+
     </div>
   );
 }
