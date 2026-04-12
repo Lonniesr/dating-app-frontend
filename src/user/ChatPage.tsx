@@ -78,19 +78,16 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [liveMessages]);
 
-  /* JOIN ROOM */
   useEffect(() => {
     if (!socket || !ready || !userId) return;
     socket.emit("conversation:join", { otherUserId: userId });
   }, [socket, ready, userId]);
 
-  /* READ RECEIPTS */
   useEffect(() => {
     if (!socket || !ready || !userId) return;
     socket.emit("message:read", { otherUserId: userId });
   }, [socket, ready, userId]);
 
-  /* SOCKET EVENTS */
   useEffect(() => {
     if (!socket || !ready) return;
 
@@ -226,12 +223,29 @@ export default function ChatPage() {
                 mine ? "justify-end" : "justify-start"
               }`}
             >
+              {/* 🔥 LEFT AVATAR */}
+              {!mine && (
+                <img
+                  src="https://ui-avatars.com/api/?background=333&color=fff&name=U"
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              )}
+
               <div className="max-w-[70%]">
                 <div
                   className={`px-4 py-2 rounded-2xl ${
                     mine ? "bg-pink-500" : "bg-white/10"
                   }`}
                 >
+                  {/* 🔥 IMAGE RESTORED */}
+                  {msg.imageUrl && (
+                    <img
+                      src={msg.imageUrl}
+                      className="rounded-lg mb-2 max-h-60 cursor-pointer"
+                      onClick={() => window.open(msg.imageUrl, "_blank")}
+                    />
+                  )}
+
                   {msg.text}
                 </div>
 
@@ -248,6 +262,14 @@ export default function ChatPage() {
                   )}
                 </div>
               </div>
+
+              {/* 🔥 RIGHT AVATAR */}
+              {mine && (
+                <img
+                  src={getAvatar(authUser)}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              )}
             </motion.div>
           );
         })}
