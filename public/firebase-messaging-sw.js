@@ -11,9 +11,16 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+/* 🔥 BACKGROUND HANDLER (SAFE) */
 messaging.onBackgroundMessage(function (payload) {
-  self.registration.showNotification(payload.notification.title, {
-    body: payload.notification.body,
+  console.log("🔥 Background message:", payload);
+
+  const title = payload.notification?.title || "New message";
+  const body = payload.notification?.body || "";
+
+  self.registration.showNotification(title, {
+    body,
     icon: "/icon.png",
+    badge: "/icon.png",
   });
 });
