@@ -192,18 +192,6 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
-      {/* HEADER */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-        <div className="font-semibold">Chat</div>
-      </div>
-
-      {/* BLOCK */}
-      {isBlocked && (
-        <div className="bg-red-600 text-center py-2 text-sm">
-          You cannot message this user
-        </div>
-      )}
-
       {/* TYPING */}
       {isTyping && (
         <div className="text-sm text-white/40 px-4 pt-2">
@@ -223,51 +211,37 @@ export default function ChatPage() {
                 mine ? "justify-end" : "justify-start"
               }`}
             >
-              {/* 🔥 LEFT AVATAR */}
               {!mine && (
                 <img
                   src="https://ui-avatars.com/api/?background=333&color=fff&name=U"
-                  className="w-8 h-8 rounded-full object-cover"
+                  className="w-8 h-8 rounded-full"
                 />
               )}
 
               <div className="max-w-[70%]">
-                <div
-                  className={`px-4 py-2 rounded-2xl ${
-                    mine ? "bg-pink-500" : "bg-white/10"
-                  }`}
-                >
-                  {/* 🔥 IMAGE RESTORED */}
+                <div className={`px-4 py-2 rounded-2xl ${mine ? "bg-pink-500" : "bg-white/10"}`}>
                   {msg.imageUrl && (
-                    <img
-                      src={msg.imageUrl}
-                      className="rounded-lg mb-2 max-h-60 cursor-pointer"
-                      onClick={() => window.open(msg.imageUrl, "_blank")}
-                    />
+                    <img src={msg.imageUrl} className="mb-2 rounded-lg" />
                   )}
-
                   {msg.text}
                 </div>
 
                 <div className="text-xs text-white/40 mt-1">
                   {formatTime(msg.createdAt)}
-
                   {mine && (
                     <>
-                      {" "}
-                      {msg.status === "sending" && "Sending..."}
-                      {msg.status === "sent" && "✓"}
-                      {(msg.status === "seen" || msg.read) && "✓✓"}
+                      {msg.status === "sending" && " Sending..."}
+                      {msg.status === "sent" && " ✓"}
+                      {(msg.status === "seen" || msg.read) && " ✓✓"}
                     </>
                   )}
                 </div>
               </div>
 
-              {/* 🔥 RIGHT AVATAR */}
               {mine && (
                 <img
                   src={getAvatar(authUser)}
-                  className="w-8 h-8 rounded-full object-cover"
+                  className="w-8 h-8 rounded-full"
                 />
               )}
             </motion.div>
@@ -276,8 +250,37 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* INPUT */}
-      <div className="p-4 flex gap-2">
+      {/* PREVIEW */}
+      {preview && (
+        <div className="px-4 pb-2">
+          <img src={preview} className="max-h-40 rounded-lg" />
+        </div>
+      )}
+
+      {/* INPUT BAR (RESTORED) */}
+      <div className="p-4 flex items-center gap-2">
+
+        <button onClick={() => fileInputRef.current?.click()}>
+          📎
+        </button>
+
+        <button>🎤</button>
+
+        <button>😊</button>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              setSelectedImage(file);
+              setPreview(URL.createObjectURL(file));
+            }
+          }}
+          className="hidden"
+        />
+
         <input
           value={text}
           onChange={(e) => {
@@ -293,6 +296,7 @@ export default function ChatPage() {
         >
           Send
         </button>
+
       </div>
 
     </div>
