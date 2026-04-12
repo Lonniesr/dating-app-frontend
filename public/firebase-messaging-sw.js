@@ -11,16 +11,36 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-/* 🔥 BACKGROUND HANDLER (SAFE) */
+/* 🔥 BACKGROUND HANDLER */
 messaging.onBackgroundMessage(function (payload) {
   console.log("🔥 Background message:", payload);
 
   const title = payload.notification?.title || "New message";
   const body = payload.notification?.body || "";
+  const url = payload.data?.url || "/chat";
 
   self.registration.showNotification(title, {
     body,
     icon: "/icon.png",
     badge: "/icon.png",
+    data: { url },
   });
+});
+
+/* 🔥 CLICK HANDLER */
+self.addEventListener("notificationclick", function (event) {
+  event.notification.close();
+
+  const url = event.notification.data?.url || "/chat";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientsArr) => {
+      for (const client of clientsArr) {
+        if (client.url.includes(url) && "focus" in client) {
+          return client.focus();
+        }
+      }
+      return clients.openWindow(url);
+    })
+  );
 });

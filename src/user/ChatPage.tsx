@@ -64,6 +64,8 @@ export default function ChatPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
+  const [isTyping, setIsTyping] = useState(false); // 🔥 NEW
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -76,6 +78,41 @@ export default function ChatPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [liveMessages]);
+
+  /* 🔥 NEW — READ RECEIPTS */
+  useEffect(() => {
+    if (!socket || !userId) return;
+    socket.emit("message:read", { otherUserId: userId });
+  }, [socket, userId]);
+
+  /* 🔥 NEW — SOCKET EVENTS */
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("message:read:update", () => {
+      setLiveMessages((prev) =>
+        prev.map((msg) =>
+          msg.senderId === meId
+            ? { ...msg, status: "seen" }
+            : msg
+        )
+      );
+    });
+
+    socket.on("typing:start", ({ fromUserId }) => {
+      if (fromUserId === userId) setIsTyping(true);
+    });
+
+    socket.on("typing:stop", ({ fromUserId }) => {
+      if (fromUserId === userId) setIsTyping(false);
+    });
+
+    return () => {
+      socket.off("message:read:update");
+      socket.off("typing:start");
+      socket.off("typing:stop");
+    };
+  }, [socket, userId, meId]);
 
   /* =========================
      BLOCK / UNBLOCK
@@ -181,6 +218,8 @@ export default function ChatPage() {
       setSelectedImage(null);
       setPreview(null);
 
+      socket?.emit("typing:stop", { toUserId: userId }); // 🔥 NEW
+
     } catch (err) {
       console.error("SEND FAILED:", err);
     }
@@ -214,6 +253,12 @@ export default function ChatPage() {
       {isBlocked && (
         <div className="bg-red-600 text-center py-2 text-sm">
           You cannot message this user
+        </div>
+      )}
+
+      {isTyping && ( // 🔥 NEW
+        <div className="text-sm text-white/40 px-4 pt-2">
+          typing...
         </div>
       )}
 
@@ -254,6 +299,15 @@ export default function ChatPage() {
 
                 <div className="text-xs text-white/40 mt-1">
                   {formatTime(msg.createdAt)}
+
+                  {mine && ( // 🔥 NEW
+                    <>
+                      {" "}
+                      {msg.status === "sending" && "Sending..."}
+                      {msg.status === "sent" && "✓"}
+                      {msg.status === "seen" && "✓✓"}
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -298,7 +352,10 @@ export default function ChatPage() {
 
         <input
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            socket?.emit("typing:start", { toUserId: userId }); // 🔥 NEW
+          }}
           placeholder={
             isBlocked
               ? "You cannot message this user"
