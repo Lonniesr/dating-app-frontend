@@ -6,6 +6,8 @@ import { useQueryClient } from "@tanstack/react-query";
 export function useChatSocket() {
   const { authUser } = useUserAuth();
   const socketRef = useRef<Socket | null>(null);
+
+  const [socket, setSocket] = useState<Socket | null>(null); // 🔥 ADD THIS
   const [ready, setReady] = useState(false);
 
   const queryClient = useQueryClient();
@@ -13,48 +15,49 @@ export function useChatSocket() {
   useEffect(() => {
     if (!authUser?.id) return;
 
-    // 🔥 NEW — prevent duplicate sockets
+    // 🔥 prevent duplicate sockets
     if (socketRef.current) return;
 
-    const socket = io(import.meta.env.VITE_API_URL, {
+    const s = io(import.meta.env.VITE_API_URL, {
       withCredentials: true,
       transports: ["polling", "websocket"],
     });
 
-    socketRef.current = socket;
+    socketRef.current = s;
+    setSocket(s); // 🔥 THIS IS THE FIX
 
-    socket.on("connect", () => {
-      console.log("💬 Socket connected:", socket.id);
+    s.on("connect", () => {
+      console.log("💬 Socket connected:", s.id);
 
-      socket.emit("chat:join", authUser.id);
+      s.emit("chat:join", authUser.id);
       setReady(true);
     });
 
-    socket.on("connect_error", (err) => {
+    s.on("connect_error", (err) => {
       console.error("❌ SOCKET ERROR:", err.message);
     });
 
-    socket.on("message:new", () => {
+    s.on("message:new", () => {
       console.log("📩 New message received");
 
       queryClient.invalidateQueries({ queryKey: ["chat"] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     });
 
-    // 🔥 NEW — cleanup listeners properly
     return () => {
-      socket.off("connect");
-      socket.off("connect_error");
-      socket.off("message:new");
+      s.off("connect");
+      s.off("connect_error");
+      s.off("message:new");
 
-      socket.disconnect();
+      s.disconnect();
       socketRef.current = null;
+      setSocket(null); // 🔥 ADD THIS
       setReady(false);
     };
   }, [authUser?.id, queryClient]);
 
   return {
-    socket: socketRef.current,
+    socket, // 🔥 RETURN STATE INSTEAD
     ready,
   };
 }
