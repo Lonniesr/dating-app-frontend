@@ -21,7 +21,7 @@ export default function BasicStep({ next }: BasicStepProps) {
   const [gender, setGender] = useState("");
   const [race, setRace] = useState("");
 
-  const [locationName, setLocationName] = useState(""); // ✅ FIXED
+  const [locationName, setLocationName] = useState("");
   const [bio, setBio] = useState("");
 
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
@@ -47,6 +47,34 @@ export default function BasicStep({ next }: BasicStepProps) {
   };
 
   /* =========================
+     REVERSE GEOCODE
+  ========================= */
+
+  const reverseGeocode = async (lat: number, lon: number) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+      );
+      const data = await res.json();
+
+      const city =
+        data.address.city ||
+        data.address.town ||
+        data.address.village ||
+        data.address.state;
+
+      const state = data.address.state;
+
+      if (city && state) {
+        const formatted = `${city}, ${state}`;
+        setLocationName(formatted);
+      }
+    } catch (err) {
+      console.error("Reverse geocode failed:", err);
+    }
+  };
+
+  /* =========================
      IP LOCATION FALLBACK
   ========================= */
 
@@ -63,6 +91,7 @@ export default function BasicStep({ next }: BasicStepProps) {
       console.log("🌐 IP LOCATION:", loc);
 
       setLocation(loc);
+      await reverseGeocode(loc.lat, loc.lon);
     } catch (err) {
       console.error("IP location failed:", err);
       setError("Unable to determine your location.");
@@ -80,7 +109,7 @@ export default function BasicStep({ next }: BasicStepProps) {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const loc = {
           lat: pos.coords.latitude,
           lon: pos.coords.longitude,
@@ -89,6 +118,7 @@ export default function BasicStep({ next }: BasicStepProps) {
         console.log("📍 GPS LOCATION:", loc);
 
         setLocation(loc);
+        await reverseGeocode(loc.lat, loc.lon);
       },
       async () => {
         await getIPLocation();
@@ -124,8 +154,6 @@ export default function BasicStep({ next }: BasicStepProps) {
         );
 
         const data = await res.json();
-
-        console.log("🔍 USERNAME CHECK:", value, data);
 
         setUsernameAvailable(data.available);
       } catch (err) {
@@ -171,12 +199,12 @@ export default function BasicStep({ next }: BasicStepProps) {
     }
 
     if (!location) {
-      setError("Please enable location.");
+      setError("Tap 'Enable Location' to continue.");
       return;
     }
 
-    if (!locationName) {
-      setError("Please enter your city.");
+    if (!locationName.trim() || locationName.trim().length < 3) {
+      setError("Please enable location to autofill your city.");
       return;
     }
 
@@ -189,12 +217,10 @@ export default function BasicStep({ next }: BasicStepProps) {
         gender,
         race,
         bio: bio.trim() || null,
-        location: locationName.trim(), // ✅ FIXED
+        location: locationName.trim(),
         latitude: location.lat,
         longitude: location.lon,
       };
-
-      console.log("🚨 BASIC STEP PAYLOAD:", payload);
 
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/onboarding/basic`,
@@ -266,7 +292,6 @@ export default function BasicStep({ next }: BasicStepProps) {
 
   return (
     <div className="bg-[#111] p-8 rounded-2xl border border-white/10 shadow-xl">
-
       <h1 className="text-2xl font-bold mb-2">Basic Information</h1>
 
       <div className="text-xs text-white/40 mb-6">
@@ -289,9 +314,7 @@ export default function BasicStep({ next }: BasicStepProps) {
             onChange={(e) => {
               let value = e.target.value.toLowerCase();
               value = value.replace(/[^a-z0-9_]/g, "");
-
               if (value.length > 20) return;
-
               setUsername(value);
               checkUsername(value);
             }}
@@ -377,10 +400,10 @@ export default function BasicStep({ next }: BasicStepProps) {
 
           <input
             type="text"
-            placeholder="Your city (e.g. Atlanta, GA)"
+            placeholder="Enable location to autofill"
             className="w-full p-3 mb-4 rounded bg-white/10 border border-white/20"
             value={locationName}
-            onChange={(e) => setLocationName(e.target.value)}
+            readOnly
           />
 
           <textarea
