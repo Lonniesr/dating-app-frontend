@@ -36,20 +36,13 @@ export function useChatSocket() {
         console.error("❌ SOCKET ERROR:", err.message);
       });
 
-      s.on("message:new", () => {
-        console.log("📩 New message received");
-
-        queryClient.invalidateQueries({ queryKey: ["chat"] });
-        queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      });
+      // ❌ REMOVED message:new invalidation (THIS WAS CAUSING DUPLICATES)
     }
 
-    // ❌ DO NOT disconnect on dependency changes
     return () => {};
     
   }, [authUser?.id, queryClient]);
 
-  // ✅ separate cleanup ONLY on unmount
   useEffect(() => {
     return () => {
       if (socketRef.current) {
