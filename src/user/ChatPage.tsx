@@ -109,12 +109,13 @@ export default function ChatPage() {
       );
     };
 
-    const handleTypingStart = ({ fromUserId }: any) => {
-      if (fromUserId === userId) setIsTyping(true);
+    // ✅ FIX: do not rely on fromUserId
+    const handleTypingStart = () => {
+      setIsTyping(true);
     };
 
-    const handleTypingStop = ({ fromUserId }: any) => {
-      if (fromUserId === userId) setIsTyping(false);
+    const handleTypingStop = () => {
+      setIsTyping(false);
     };
 
     socket.on("message:new", handleMessage);
@@ -188,7 +189,7 @@ export default function ChatPage() {
       setSelectedImage(null);
       setPreview(null);
 
-      socket?.emit("typing:stop", { toUserId: userId });
+      socket?.emit("typing:stop", { to: userId, fromUserId: meId });
 
     } catch (err) {
       console.error("SEND FAILED:", err);
@@ -291,7 +292,21 @@ export default function ChatPage() {
           value={text}
           onChange={(e) => {
             setText(e.target.value);
-            socket?.emit("typing:start", { toUserId: userId });
+
+            // ✅ FIXED typing emit
+            socket?.emit("typing:start", {
+              to: userId,
+              fromUserId: meId,
+            });
+
+            clearTimeout((window as any).typingTimeout);
+
+            (window as any).typingTimeout = setTimeout(() => {
+              socket?.emit("typing:stop", {
+                to: userId,
+                fromUserId: meId,
+              });
+            }, 1000);
           }}
           className="flex-1 bg-[#1a1a1a] px-4 py-3 rounded-xl"
         />
