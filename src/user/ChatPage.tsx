@@ -68,7 +68,6 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ ADDED
   const isTypingRef = useRef(false);
 
   useEffect(() => {
@@ -77,7 +76,6 @@ export default function ChatPage() {
     }
   }, [messages]);
 
-  // ✅ FIXED (guard scroll)
   useEffect(() => {
     if (!isTypingRef.current) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -133,7 +131,9 @@ export default function ChatPage() {
       socket.off("typing:start", handleTypingStart);
       socket.off("typing:stop", handleTypingStop);
     };
-  }, [socket, ready, userId, meId]);
+
+  // ✅ ONLY CHANGE HERE
+  }, [socket, ready]);
 
   async function sendMessage() {
     if ((!text.trim() && !selectedImage) || !userId || isBlocked) return;
@@ -266,13 +266,11 @@ export default function ChatPage() {
       )}
 
       <div className="p-4 flex items-center gap-2">
-
         <button onClick={() => fileInputRef.current?.click()}>
           📎
         </button>
 
         <button>🎤</button>
-
         <button>😊</button>
 
         <input
@@ -293,7 +291,6 @@ export default function ChatPage() {
           onChange={(e) => {
             setText(e.target.value);
 
-            // ✅ ADDED
             isTypingRef.current = true;
 
             if (!(window as any).isTyping) {
@@ -309,8 +306,6 @@ export default function ChatPage() {
 
             (window as any).typingTimeout = setTimeout(() => {
               (window as any).isTyping = false;
-
-              // ✅ ADDED
               isTypingRef.current = false;
 
               socket?.emit("typing:stop", {
@@ -328,7 +323,6 @@ export default function ChatPage() {
         >
           Send
         </button>
-
       </div>
 
     </div>
