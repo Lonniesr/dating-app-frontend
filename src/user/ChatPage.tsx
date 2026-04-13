@@ -68,14 +68,20 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ✅ ADDED
+  const isTypingRef = useRef(false);
+
   useEffect(() => {
     if (messages.length && liveMessages.length === 0) {
       setLiveMessages(messages);
     }
   }, [messages]);
 
+  // ✅ FIXED (guard scroll)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!isTypingRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [liveMessages]);
 
   useEffect(() => {
@@ -287,7 +293,9 @@ export default function ChatPage() {
           onChange={(e) => {
             setText(e.target.value);
 
-            // ✅ FIX: throttle typing (ONLY CHANGE)
+            // ✅ ADDED
+            isTypingRef.current = true;
+
             if (!(window as any).isTyping) {
               (window as any).isTyping = true;
 
@@ -301,6 +309,9 @@ export default function ChatPage() {
 
             (window as any).typingTimeout = setTimeout(() => {
               (window as any).isTyping = false;
+
+              // ✅ ADDED
+              isTypingRef.current = false;
 
               socket?.emit("typing:stop", {
                 to: userId,
