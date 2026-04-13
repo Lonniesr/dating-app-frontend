@@ -88,7 +88,6 @@ export default function ChatPage() {
     socket.emit("message:read", { otherUserId: userId });
   }, [socket, ready, userId]);
 
-  /* 🔥 FIXED LISTENER BLOCK (ONLY CHANGE) */
   useEffect(() => {
     if (!socket || !ready) return;
 
@@ -109,7 +108,6 @@ export default function ChatPage() {
       );
     };
 
-    // ✅ FIX: do not rely on fromUserId
     const handleTypingStart = () => {
       setIsTyping(true);
     };
@@ -199,14 +197,12 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
-      {/* TYPING */}
       {isTyping && (
         <div className="text-sm text-white/40 px-4 pt-2">
           typing...
         </div>
       )}
 
-      {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {liveMessages.map((msg) => {
           const mine = isMine(msg, meId);
@@ -257,14 +253,12 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* PREVIEW */}
       {preview && (
         <div className="px-4 pb-2">
           <img src={preview} className="max-h-40 rounded-lg" />
         </div>
       )}
 
-      {/* INPUT BAR */}
       <div className="p-4 flex items-center gap-2">
 
         <button onClick={() => fileInputRef.current?.click()}>
@@ -293,15 +287,21 @@ export default function ChatPage() {
           onChange={(e) => {
             setText(e.target.value);
 
-            // ✅ FIXED typing emit
-            socket?.emit("typing:start", {
-              to: userId,
-              fromUserId: meId,
-            });
+            // ✅ FIX: throttle typing (ONLY CHANGE)
+            if (!(window as any).isTyping) {
+              (window as any).isTyping = true;
+
+              socket?.emit("typing:start", {
+                to: userId,
+                fromUserId: meId,
+              });
+            }
 
             clearTimeout((window as any).typingTimeout);
 
             (window as any).typingTimeout = setTimeout(() => {
+              (window as any).isTyping = false;
+
               socket?.emit("typing:stop", {
                 to: userId,
                 fromUserId: meId,
