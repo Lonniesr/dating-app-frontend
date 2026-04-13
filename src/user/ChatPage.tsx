@@ -55,11 +55,16 @@ export default function ChatPage() {
   const { authUser } = useUserAuth();
   const meId = authUser?.id ?? null;
 
+  // ✅ MOVED THIS UP (ONLY CHANGE)
+  const [liveMessages, setLiveMessages] = useState<Message[]>([]);
+
   const { data } = useUserChat(userId);
-  const messages = data?.messages || [];
+
+  const messages =
+    liveMessages.length === 0 ? data?.messages || [] : [];
+
   const isBlocked = data?.isBlocked;
 
-  const [liveMessages, setLiveMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -132,7 +137,6 @@ export default function ChatPage() {
       socket.off("typing:stop", handleTypingStop);
     };
 
-  // ✅ ONLY CHANGE HERE
   }, [socket, ready]);
 
   async function sendMessage() {
