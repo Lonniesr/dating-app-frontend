@@ -55,7 +55,6 @@ export default function ChatPage() {
   const { authUser } = useUserAuth();
   const meId = authUser?.id ?? null;
 
-  // ✅ MOVED THIS UP (ONLY CHANGE)
   const [liveMessages, setLiveMessages] = useState<Message[]>([]);
 
   const { data } = useUserChat(userId);
@@ -117,12 +116,17 @@ export default function ChatPage() {
       );
     };
 
-    const handleTypingStart = () => {
-      setIsTyping(true);
+    // ✅ ONLY CHANGE IS HERE
+    const handleTypingStart = ({ fromUserId }: any) => {
+      if (fromUserId === userId) {
+        setIsTyping(true);
+      }
     };
 
-    const handleTypingStop = () => {
-      setIsTyping(false);
+    const handleTypingStop = ({ fromUserId }: any) => {
+      if (fromUserId === userId) {
+        setIsTyping(false);
+      }
     };
 
     socket.on("message:new", handleMessage);
