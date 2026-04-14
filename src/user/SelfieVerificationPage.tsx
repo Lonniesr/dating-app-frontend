@@ -9,10 +9,6 @@ export default function SelfieVerificationPage() {
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  /* =========================
-     CAMERA HELPERS
-  ========================= */
-
   const stopCamera = () => {
     const video = videoRef.current;
 
@@ -28,10 +24,6 @@ export default function SelfieVerificationPage() {
       console.log("🛑 Camera stopped");
     }
   };
-
-  /* =========================
-     CAMERA
-  ========================= */
 
   const startCamera = async () => {
     try {
@@ -80,13 +72,26 @@ export default function SelfieVerificationPage() {
     console.log("✅ Photo captured");
     setImage(dataUrl);
 
-    // ✅ Stop camera after capture (best UX)
     stopCamera();
   };
 
-  /* =========================
-     SUBMIT FLOW
-  ========================= */
+  // ✅ FIXED CONVERSION FUNCTION
+  function dataURLtoBlob(dataurl: string) {
+    const arr = dataurl.split(",");
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    if (!mimeMatch) throw new Error("Invalid base64");
+
+    const mime = mimeMatch[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+
+    return new Blob([u8arr], { type: mime });
+  }
 
   const handleSubmit = async () => {
     if (!image) return;
@@ -95,7 +100,10 @@ export default function SelfieVerificationPage() {
 
     try {
       console.log("1️⃣ Converting base64 → blob...");
-      const blob = await (await fetch(image)).blob();
+
+      // ✅ FIXED HERE
+      const blob = dataURLtoBlob(image);
+
       console.log("✅ Blob created:", blob.size, "bytes");
 
       const fileName = `selfie-${Date.now()}.jpg`;
@@ -103,7 +111,9 @@ export default function SelfieVerificationPage() {
       console.log("2️⃣ Uploading to Supabase...");
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("selfies")
-        .upload(fileName, blob);
+        .upload(fileName, blob, {
+          contentType: "image/jpeg", // ✅ IMPORTANT
+        });
 
       if (uploadError) {
         console.error("❌ UPLOAD ERROR:", uploadError);
@@ -127,7 +137,6 @@ export default function SelfieVerificationPage() {
 
       console.log("✅ API RESPONSE:", res);
 
-      // ✅ EXTRA SAFETY (in case camera still running)
       stopCamera();
 
       alert("Verification submitted ✅");
@@ -135,13 +144,7 @@ export default function SelfieVerificationPage() {
 
     } catch (err: any) {
       console.error("🔥 FULL ERROR:", err);
-      console.error("🔥 RESPONSE:", err?.response?.data);
-
-      alert(
-        err?.response?.data?.message ||
-        err?.message ||
-        "Verification failed"
-      );
+      alert("Verification failed");
     } finally {
       setLoading(false);
     }
