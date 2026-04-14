@@ -99,9 +99,21 @@ export default function ChatPage() {
   useEffect(() => {
     if (!socket || !ready) return;
 
+    // ✅ ONLY CHANGE IS HERE
     const handleMessage = (msg: Message) => {
       setLiveMessages((prev) => {
-        if (prev.find((m) => m.id === msg.id)) return prev;
+        if (
+          prev.find(
+            (m) =>
+              m.id === msg.id ||
+              (m.id.startsWith("temp-") &&
+                m.text === msg.text &&
+                m.senderId === msg.senderId)
+          )
+        ) {
+          return prev;
+        }
+
         return [...prev, msg];
       });
     };
@@ -116,7 +128,6 @@ export default function ChatPage() {
       );
     };
 
-    // ✅ ONLY CHANGE IS HERE
     const handleTypingStart = ({ fromUserId }: any) => {
       if (fromUserId === userId) {
         setIsTyping(true);
