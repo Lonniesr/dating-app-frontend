@@ -10,12 +10,14 @@ export function useChatSocket() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [ready, setReady] = useState(false);
 
+  // ✅ NEW: typing state
+  const [typingUsers, setTypingUsers] = useState<Record<string, boolean>>({});
+
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!authUser?.id) return;
 
-    // ✅ create ONLY once
     if (!socketRef.current) {
       const s = io(import.meta.env.VITE_API_URL, {
         withCredentials: true,
@@ -36,11 +38,26 @@ export function useChatSocket() {
         console.error("❌ SOCKET ERROR:", err.message);
       });
 
-      // ❌ REMOVED message:new invalidation (THIS WAS CAUSING DUPLICATES)
+      /* =========================
+         ✅ TYPING LISTENERS (THIS WAS MISSING)
+      ========================= */
+
+      s.on("typing:start", ({ fromUserId }) => {
+        setTypingUsers((prev) => ({
+          ...prev,
+          [fromUserId]: true,
+        }));
+      });
+
+      s.on("typing:stop", ({ fromUserId }) => {
+        setTypingUsers((prev) => ({
+          ...prev,
+          [fromUserId]: false,
+        }));
+      });
     }
 
     return () => {};
-    
   }, [authUser?.id, queryClient]);
 
   useEffect(() => {
@@ -57,5 +74,6 @@ export function useChatSocket() {
   return {
     socket,
     ready,
+    typingUsers, // ✅ expose this
   };
 }

@@ -74,6 +74,9 @@ export default function ChatPage() {
 
   const isTypingRef = useRef(false);
 
+  // ✅ ADDED (fix)
+  const typingTimeoutRef = useRef<any>(null);
+
   useEffect(() => {
     if (messages.length && liveMessages.length === 0) {
       setLiveMessages(messages);
@@ -99,7 +102,6 @@ export default function ChatPage() {
   useEffect(() => {
     if (!socket || !ready) return;
 
-    // ✅ ONLY CHANGE IS HERE
     const handleMessage = (msg: Message) => {
       setLiveMessages((prev) => {
         if (
@@ -310,27 +312,25 @@ export default function ChatPage() {
           onChange={(e) => {
             setText(e.target.value);
 
-            isTypingRef.current = true;
-
-            if (!(window as any).isTyping) {
-              (window as any).isTyping = true;
-
+            // ✅ FIXED TYPING LOGIC
+            if (!isTypingRef.current) {
               socket?.emit("typing:start", {
                 to: userId,
                 fromUserId: meId,
               });
+              isTypingRef.current = true;
             }
 
-            clearTimeout((window as any).typingTimeout);
+            if (typingTimeoutRef.current) {
+              clearTimeout(typingTimeoutRef.current);
+            }
 
-            (window as any).typingTimeout = setTimeout(() => {
-              (window as any).isTyping = false;
-              isTypingRef.current = false;
-
+            typingTimeoutRef.current = setTimeout(() => {
               socket?.emit("typing:stop", {
                 to: userId,
                 fromUserId: meId,
               });
+              isTypingRef.current = false;
             }, 1000);
           }}
           className="flex-1 bg-[#1a1a1a] px-4 py-3 rounded-xl"
