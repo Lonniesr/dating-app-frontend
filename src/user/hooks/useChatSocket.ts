@@ -10,7 +10,6 @@ export function useChatSocket() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [ready, setReady] = useState(false);
 
-  // ✅ NEW: typing state
   const [typingUsers, setTypingUsers] = useState<Record<string, boolean>>({});
 
   const queryClient = useQueryClient();
@@ -22,6 +21,28 @@ export function useChatSocket() {
       const s = io(import.meta.env.VITE_API_URL, {
         withCredentials: true,
         transports: ["polling", "websocket"],
+      });
+
+      // ✅ SAFE EMIT OVERRIDE (TS-CORRECT)
+      const originalEmit = s.emit.bind(s);
+
+      s.emit = ((event: any, ...args: any[]) => {
+        if (
+          (event === "typing:start" || event === "typing:stop") &&
+          (!args[0] || !args[0].to)
+        ) {
+          console.log("🚫 BLOCKED BAD EMIT:", event, args);
+          return s; // ✅ always return socket (fixes TS error)
+        }
+
+        return originalEmit(event, ...args);
+      }) as typeof s.emit;
+
+      // 🔍 DEBUG OUTGOING EVENTS
+      s.onAnyOutgoing((event, ...args) => {
+        if (event === "typing:start" || event === "typing:stop") {
+          console.log("🚀 OUTGOING:", event, args);
+        }
       });
 
       socketRef.current = s;
@@ -39,14 +60,14 @@ export function useChatSocket() {
       });
 
       /* =========================
-         ✅ FINAL FIXED TYPING LISTENERS
+         ✅ SAFE TYPING LISTENERS
       ========================= */
 
       s.on("typing:start", (...args: any[]) => {
         const data = args[0];
 
         if (!data || typeof data !== "object" || !data.fromUserId) {
-          return; // 🔥 completely ignore
+          return;
         }
 
         setTypingUsers((prev) => ({
@@ -59,7 +80,7 @@ export function useChatSocket() {
         const data = args[0];
 
         if (!data || typeof data !== "object" || !data.fromUserId) {
-          return; // 🔥 completely ignore
+          return;
         }
 
         setTypingUsers((prev) => ({
@@ -86,6 +107,6 @@ export function useChatSocket() {
   return {
     socket,
     ready,
-    typingUsers, // ✅ expose this
+    typingUsers,
   };
 }
