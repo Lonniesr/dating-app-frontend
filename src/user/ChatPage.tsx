@@ -73,7 +73,6 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isTypingRef = useRef(false);
-
   const typingTimeoutRef = useRef<any>(null);
 
   useEffect(() => {
@@ -129,7 +128,6 @@ export default function ChatPage() {
       );
     };
 
-    // ✅ FIXED (safe destructure)
     const handleTypingStart = (data: any) => {
       if (!data || !data.fromUserId) return;
 
@@ -218,7 +216,9 @@ export default function ChatPage() {
       setSelectedImage(null);
       setPreview(null);
 
-      socket?.emit("typing:stop", { to: userId, fromUserId: meId });
+      if (socket && userId && meId) {
+        socket.emit("typing:stop", { to: userId });
+      }
 
     } catch (err) {
       console.error("SEND FAILED:", err);
@@ -316,11 +316,10 @@ export default function ChatPage() {
           onChange={(e) => {
             setText(e.target.value);
 
+            if (!socket || !userId || !meId) return;
+
             if (!isTypingRef.current) {
-              socket?.emit("typing:start", {
-                to: userId,
-                fromUserId: meId,
-              });
+              socket.emit("typing:start", { to: userId });
               isTypingRef.current = true;
             }
 
@@ -329,10 +328,7 @@ export default function ChatPage() {
             }
 
             typingTimeoutRef.current = setTimeout(() => {
-              socket?.emit("typing:stop", {
-                to: userId,
-                fromUserId: meId,
-              });
+              socket.emit("typing:stop", { to: userId });
               isTypingRef.current = false;
             }, 1000);
           }}
