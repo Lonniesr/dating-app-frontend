@@ -74,7 +74,6 @@ export default function ChatPage() {
 
   const isTypingRef = useRef(false);
 
-  // ✅ ADDED (fix)
   const typingTimeoutRef = useRef<any>(null);
 
   useEffect(() => {
@@ -130,14 +129,19 @@ export default function ChatPage() {
       );
     };
 
-    const handleTypingStart = ({ fromUserId }: any) => {
-      if (fromUserId === userId) {
+    // ✅ FIXED (safe destructure)
+    const handleTypingStart = (data: any) => {
+      if (!data || !data.fromUserId) return;
+
+      if (data.fromUserId === userId) {
         setIsTyping(true);
       }
     };
 
-    const handleTypingStop = ({ fromUserId }: any) => {
-      if (fromUserId === userId) {
+    const handleTypingStop = (data: any) => {
+      if (!data || !data.fromUserId) return;
+
+      if (data.fromUserId === userId) {
         setIsTyping(false);
       }
     };
@@ -312,7 +316,6 @@ export default function ChatPage() {
           onChange={(e) => {
             setText(e.target.value);
 
-            // ✅ FIXED TYPING LOGIC
             if (!isTypingRef.current) {
               socket?.emit("typing:start", {
                 to: userId,
