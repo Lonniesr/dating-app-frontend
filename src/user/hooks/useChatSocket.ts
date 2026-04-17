@@ -39,20 +39,30 @@ export function useChatSocket() {
       });
 
       /* =========================
-         ✅ TYPING LISTENERS (THIS WAS MISSING)
+         ✅ FIXED TYPING LISTENERS
       ========================= */
 
-      s.on("typing:start", ({ fromUserId }) => {
+      s.on("typing:start", (data: any) => {
+        if (!data || !data.fromUserId) {
+          console.log("⚠️ BAD typing:start payload:", data);
+          return;
+        }
+
         setTypingUsers((prev) => ({
           ...prev,
-          [fromUserId]: true,
+          [data.fromUserId]: true,
         }));
       });
 
-      s.on("typing:stop", ({ fromUserId }) => {
+      s.on("typing:stop", (data: any) => {
+        if (!data || !data.fromUserId) {
+          console.log("⚠️ BAD typing:stop payload:", data);
+          return;
+        }
+
         setTypingUsers((prev) => ({
           ...prev,
-          [fromUserId]: false,
+          [data.fromUserId]: false,
         }));
       });
     }
