@@ -39,13 +39,14 @@ export function useChatSocket() {
       });
 
       /* =========================
-         ✅ FIXED TYPING LISTENERS
+         ✅ FINAL FIXED TYPING LISTENERS
       ========================= */
 
-      s.on("typing:start", (data: any) => {
-        if (!data || !data.fromUserId) {
-          console.log("⚠️ BAD typing:start payload:", data);
-          return;
+      s.on("typing:start", (...args: any[]) => {
+        const data = args[0];
+
+        if (!data || typeof data !== "object" || !data.fromUserId) {
+          return; // 🔥 completely ignore
         }
 
         setTypingUsers((prev) => ({
@@ -54,10 +55,11 @@ export function useChatSocket() {
         }));
       });
 
-      s.on("typing:stop", (data: any) => {
-        if (!data || !data.fromUserId) {
-          console.log("⚠️ BAD typing:stop payload:", data);
-          return;
+      s.on("typing:stop", (...args: any[]) => {
+        const data = args[0];
+
+        if (!data || typeof data !== "object" || !data.fromUserId) {
+          return; // 🔥 completely ignore
         }
 
         setTypingUsers((prev) => ({
