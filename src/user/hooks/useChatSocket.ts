@@ -12,6 +12,8 @@ export function useChatSocket() {
 
   const [typingUsers, setTypingUsers] = useState<Record<string, boolean>>({});
 
+  const currentRoomRef = useRef<string | null>(null);
+
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -20,21 +22,26 @@ export function useChatSocket() {
     if (!socketRef.current) {
       const s = io(import.meta.env.VITE_API_URL, {
         withCredentials: true,
-
-        // 🔥 CRITICAL FIX FOR MOBILE
         transports: ["websocket"],
-
-        // 🔥 KEEP CONNECTION ALIVE
         reconnection: true,
-        reconnectionAttempts: 10,
-        reconnectionDelay: 1000,
       });
 
-      // 🔍 CONNECTION DEBUG
+      socketRef.current = s;
+      setSocket(s);
+
       s.on("connect", () => {
         console.log("💬 Socket connected:", s.id);
 
         s.emit("chat:join", authUser.id);
+
+        // 🔥 REJOIN ROOM AFTER RECONNECT
+        if (currentRoomRef.current) {
+          console.log("🔁 Rejoining room:", currentRoomRef.current);
+          s.emit("conversation:join", {
+            otherUserId: currentRoomRef.current,
+          });
+        }
+
         setReady(true);
       });
 
@@ -42,53 +49,13 @@ export function useChatSocket() {
         console.log("❌ SOCKET DISCONNECTED:", reason);
       });
 
-      s.on("reconnect_attempt", () => {
-        console.log("🔄 RECONNECTING...");
-      });
-
-      s.on("reconnect", () => {
-        console.log("✅ RECONNECTED");
-      });
-
       s.on("connect_error", (err) => {
         console.error("❌ SOCKET ERROR:", err.message);
       });
 
-      // ✅ SAFE EMIT OVERRIDE
-      const originalEmit = s.emit.bind(s);
-
-      s.emit = ((event: any, ...args: any[]) => {
-        if (
-          (event === "typing:start" || event === "typing:stop") &&
-          (!args[0] || !args[0].to)
-        ) {
-          console.log("🚫 BLOCKED BAD EMIT:", event, args);
-          return s;
-        }
-
-        return originalEmit(event, ...args);
-      }) as typeof s.emit;
-
-      // 🔍 DEBUG OUTGOING EVENTS
-      s.onAnyOutgoing((event, ...args) => {
-        if (event === "typing:start" || event === "typing:stop") {
-          console.log("🚀 OUTGOING:", event, args);
-        }
-      });
-
-      socketRef.current = s;
-      setSocket(s);
-
-      /* =========================
-         ✅ SAFE TYPING LISTENERS
-      ========================= */
-
-      s.on("typing:start", (...args: any[]) => {
-        const data = args[0];
-
-        if (!data || typeof data !== "object" || !data.fromUserId) {
-          return;
-        }
+      // ✅ typing listeners
+      s.on("typing:start", (data: any) => {
+        if (!data?.fromUserId) return;
 
         setTypingUsers((prev) => ({
           ...prev,
@@ -96,12 +63,8 @@ export function useChatSocket() {
         }));
       });
 
-      s.on("typing:stop", (...args: any[]) => {
-        const data = args[0];
-
-        if (!data || typeof data !== "object" || !data.fromUserId) {
-          return;
-        }
+      s.on("typing:stop", (data: any) => {
+        if (!data?.fromUserId) return;
 
         setTypingUsers((prev) => ({
           ...prev,
@@ -124,9 +87,23 @@ export function useChatSocket() {
     };
   }, []);
 
+  // 🔥 NEW: JOIN ROOM FUNCTION
+  const joinConversation = (otherUserId: string) => {
+    if (!socketRef.current) return;
+
+    currentRoomRef.current = otherUserId;
+
+    console.log("🚪 JOIN (FORCED):", otherUserId);
+
+    socketRef.current.emit("conversation:join", {
+      otherUserId,
+    });
+  };
+
   return {
     socket,
     ready,
     typingUsers,
+    joinConversation, // 🔥 expose this
   };
 }
