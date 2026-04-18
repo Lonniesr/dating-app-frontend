@@ -20,10 +20,41 @@ export function useChatSocket() {
     if (!socketRef.current) {
       const s = io(import.meta.env.VITE_API_URL, {
         withCredentials: true,
-        transports: ["polling", "websocket"],
+
+        // 🔥 CRITICAL FIX FOR MOBILE
+        transports: ["websocket"],
+
+        // 🔥 KEEP CONNECTION ALIVE
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
       });
 
-      // ✅ SAFE EMIT OVERRIDE (TS-CORRECT)
+      // 🔍 CONNECTION DEBUG
+      s.on("connect", () => {
+        console.log("💬 Socket connected:", s.id);
+
+        s.emit("chat:join", authUser.id);
+        setReady(true);
+      });
+
+      s.on("disconnect", (reason) => {
+        console.log("❌ SOCKET DISCONNECTED:", reason);
+      });
+
+      s.on("reconnect_attempt", () => {
+        console.log("🔄 RECONNECTING...");
+      });
+
+      s.on("reconnect", () => {
+        console.log("✅ RECONNECTED");
+      });
+
+      s.on("connect_error", (err) => {
+        console.error("❌ SOCKET ERROR:", err.message);
+      });
+
+      // ✅ SAFE EMIT OVERRIDE
       const originalEmit = s.emit.bind(s);
 
       s.emit = ((event: any, ...args: any[]) => {
@@ -32,7 +63,7 @@ export function useChatSocket() {
           (!args[0] || !args[0].to)
         ) {
           console.log("🚫 BLOCKED BAD EMIT:", event, args);
-          return s; // ✅ always return socket (fixes TS error)
+          return s;
         }
 
         return originalEmit(event, ...args);
@@ -47,17 +78,6 @@ export function useChatSocket() {
 
       socketRef.current = s;
       setSocket(s);
-
-      s.on("connect", () => {
-        console.log("💬 Socket connected:", s.id);
-
-        s.emit("chat:join", authUser.id);
-        setReady(true);
-      });
-
-      s.on("connect_error", (err) => {
-        console.error("❌ SOCKET ERROR:", err.message);
-      });
 
       /* =========================
          ✅ SAFE TYPING LISTENERS
