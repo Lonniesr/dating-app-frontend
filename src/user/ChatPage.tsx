@@ -87,9 +87,6 @@ export default function ChatPage() {
     }
   }, [liveMessages]);
 
-  /* =========================
-     🔥 FINAL ROOM JOIN FIX
-  ========================= */
   useEffect(() => {
     if (!socket || !userId) return;
 
@@ -105,7 +102,6 @@ export default function ChatPage() {
       socket.emit("conversation:join", { otherUserId: userId });
     };
 
-    // 🔥 retry loop (mobile-safe)
     const interval = setInterval(() => {
       attempts++;
       tryJoin();
@@ -115,7 +111,6 @@ export default function ChatPage() {
       }
     }, 500);
 
-    // 🔥 handle reconnect
     socket.on("connect", tryJoin);
 
     return () => {
@@ -161,6 +156,8 @@ export default function ChatPage() {
     };
 
     const handleTypingStart = (data: any) => {
+      console.log("👀 RECEIVED typing:start:", data); // 🔥 DEBUG LOG
+
       if (!data || !data.fromUserId) return;
 
       if (data.fromUserId === userId) {
