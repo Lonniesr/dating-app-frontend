@@ -87,23 +87,40 @@ export default function ChatPage() {
     }
   }, [liveMessages]);
 
-  // ✅ FIXED ROOM JOIN (CRITICAL)
+  /* =========================
+     🔥 FINAL ROOM JOIN FIX
+  ========================= */
   useEffect(() => {
     if (!socket || !userId) return;
 
-    const joinRoom = () => {
-      console.log("🚪 JOINING ROOM:", userId);
+    let attempts = 0;
+
+    const tryJoin = () => {
+      if (!socket.connected) {
+        console.log("⏳ waiting for socket...");
+        return;
+      }
+
+      console.log("🚪 FORCE JOIN:", userId);
       socket.emit("conversation:join", { otherUserId: userId });
     };
 
-    if (socket.connected) {
-      joinRoom();
-    }
+    // 🔥 retry loop (mobile-safe)
+    const interval = setInterval(() => {
+      attempts++;
+      tryJoin();
 
-    socket.on("connect", joinRoom);
+      if (socket.connected || attempts > 5) {
+        clearInterval(interval);
+      }
+    }, 500);
+
+    // 🔥 handle reconnect
+    socket.on("connect", tryJoin);
 
     return () => {
-      socket.off("connect", joinRoom);
+      clearInterval(interval);
+      socket.off("connect", tryJoin);
     };
   }, [socket, userId]);
 
