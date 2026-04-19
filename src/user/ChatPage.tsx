@@ -51,7 +51,9 @@ export default function ChatPage() {
   const API_RAW = import.meta.env.VITE_API_URL || "";
   const API = API_RAW.endsWith("/api") ? API_RAW : `${API_RAW}/api`;
 
-  const { socket, ready } = useChatSocket();
+  // ✅ FIX: use joinConversation
+  const { socket, ready, joinConversation } = useChatSocket();
+
   const { authUser } = useUserAuth();
   const meId = authUser?.id ?? null;
 
@@ -87,37 +89,20 @@ export default function ChatPage() {
     }
   }, [liveMessages]);
 
+  /* =========================
+     🔥 FIXED JOIN (THIS WAS THE BUG)
+  ========================= */
+
   useEffect(() => {
-    if (!socket || !userId) return;
+    if (!ready || !userId) return;
 
-    let attempts = 0;
+    console.log("🚪 JOINING CONVERSATION:", userId);
 
-    const tryJoin = () => {
-      if (!socket.connected) {
-        console.log("⏳ waiting for socket...");
-        return;
-      }
+    joinConversation(userId);
 
-      console.log("🚪 FORCE JOIN:", userId);
-      socket.emit("conversation:join", { otherUserId: userId });
-    };
+  }, [ready, userId]);
 
-    const interval = setInterval(() => {
-      attempts++;
-      tryJoin();
-
-      if (socket.connected || attempts > 5) {
-        clearInterval(interval);
-      }
-    }, 500);
-
-    socket.on("connect", tryJoin);
-
-    return () => {
-      clearInterval(interval);
-      socket.off("connect", tryJoin);
-    };
-  }, [socket, userId]);
+  /* ========================= */
 
   useEffect(() => {
     if (!socket || !ready || !userId) return;
@@ -156,7 +141,7 @@ export default function ChatPage() {
     };
 
     const handleTypingStart = (data: any) => {
-      console.log("👀 RECEIVED typing:start:", data); // 🔥 DEBUG LOG
+      console.log("👀 RECEIVED typing:start:", data);
 
       if (!data || !data.fromUserId) return;
 
