@@ -51,7 +51,6 @@ export default function ChatPage() {
   const API_RAW = import.meta.env.VITE_API_URL || "";
   const API = API_RAW.endsWith("/api") ? API_RAW : `${API_RAW}/api`;
 
-  // ✅ FIX: use joinConversation
   const { socket, ready, joinConversation } = useChatSocket();
 
   const { authUser } = useUserAuth();
@@ -90,17 +89,17 @@ export default function ChatPage() {
   }, [liveMessages]);
 
   /* =========================
-     🔥 FIXED JOIN (THIS WAS THE BUG)
+     🔥 FINAL FIXED JOIN
   ========================= */
 
   useEffect(() => {
-    if (!ready || !userId) return;
+    if (!socket || !ready || !userId) return;
 
-    console.log("🚪 JOINING CONVERSATION:", userId);
+    console.log("🚪 CHAT PAGE JOIN:", userId);
 
     joinConversation(userId);
 
-  }, [ready, userId]);
+  }, [socket, ready, userId]);
 
   /* ========================= */
 
@@ -143,7 +142,7 @@ export default function ChatPage() {
     const handleTypingStart = (data: any) => {
       console.log("👀 RECEIVED typing:start:", data);
 
-      if (!data || !data.fromUserId) return;
+      if (!data?.fromUserId) return;
 
       if (data.fromUserId === userId) {
         setIsTyping(true);
@@ -151,7 +150,7 @@ export default function ChatPage() {
     };
 
     const handleTypingStop = (data: any) => {
-      if (!data || !data.fromUserId) return;
+      if (!data?.fromUserId) return;
 
       if (data.fromUserId === userId) {
         setIsTyping(false);
