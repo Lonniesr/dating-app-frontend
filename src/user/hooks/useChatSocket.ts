@@ -15,20 +15,14 @@ export function useChatSocket() {
 
   useEffect(() => {
     if (!authUser?.id) return;
-
-    // 🚨 prevent multiple socket instances
     if (socketRef.current) return;
 
     const s = io(import.meta.env.VITE_API_URL, {
       transports: ["websocket"],
-
-      // 🔥 FIX: stable connection (no disconnect loop)
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       timeout: 20000,
-
-      // 🔥 REQUIRED for auth
       auth: {
         token: localStorage.getItem("token"),
       },
@@ -40,16 +34,22 @@ export function useChatSocket() {
     s.on("connect", () => {
       console.log("💬 Socket connected:", s.id);
 
-      // join personal room
       s.emit("chat:join", authUser.id);
 
-      // 🔥 ALWAYS rejoin conversation after reconnect
+      // 🔥 FORCE REJOIN AFTER CONNECT
       if (currentRoomRef.current) {
         console.log("🔁 Rejoining room:", currentRoomRef.current);
 
         s.emit("conversation:join", {
           otherUserId: currentRoomRef.current,
         });
+
+        // 🔥 second emit to beat race conditions
+        setTimeout(() => {
+          s.emit("conversation:join", {
+            otherUserId: currentRoomRef.current!,
+          });
+        }, 300);
       }
 
       setReady(true);
@@ -68,6 +68,8 @@ export function useChatSocket() {
     ========================= */
 
     s.on("typing:start", (data: any) => {
+      console.log("👀 RECEIVED typing:start:", data);
+
       if (!data?.fromUserId) return;
 
       setTypingUsers((prev) => ({
@@ -85,7 +87,7 @@ export function useChatSocket() {
       }));
     });
 
-  }, [authUser?.id]); // ✅ FIX: removed unstable deps
+  }, [authUser?.id]);
 
   useEffect(() => {
     return () => {
@@ -99,7 +101,7 @@ export function useChatSocket() {
   }, []);
 
   /* =========================
-     JOIN CONVERSATION
+     JOIN CONVERSATION (FIXED)
   ========================= */
 
   const joinConversation = (otherUserId: string) => {
@@ -107,11 +109,19 @@ export function useChatSocket() {
 
     currentRoomRef.current = otherUserId;
 
-    console.log("🚪 JOIN:", otherUserId);
+    console.log("🚪 JOIN (FORCED):", otherUserId);
 
+    // 🔥 send immediately
     socketRef.current.emit("conversation:join", {
       otherUserId,
     });
+
+    // 🔥 retry (handles race condition)
+    setTimeout(() => {
+      socketRef.current?.emit("conversation:join", {
+        otherUserId,
+      });
+    }, 300);
   };
 
   return {
