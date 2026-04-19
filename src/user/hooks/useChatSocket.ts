@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import { useUserAuth } from "../context/UserAuthContext";
-import { useQueryClient } from "@tanstack/react-query";
 
 export function useChatSocket() {
   const { authUser } = useUserAuth();
@@ -14,71 +13,79 @@ export function useChatSocket() {
 
   const currentRoomRef = useRef<string | null>(null);
 
-  const queryClient = useQueryClient();
-
   useEffect(() => {
     if (!authUser?.id) return;
 
-    if (!socketRef.current) {
-      const s = io(import.meta.env.VITE_API_URL, {
-        transports: ["websocket"],
-        reconnection: true,
+    // 🚨 prevent multiple socket instances
+    if (socketRef.current) return;
 
-        // 🔥 FIX: send JWT to backend (required for mobile)
-        auth: {
-          token: localStorage.getItem("token"),
-        },
-      });
+    const s = io(import.meta.env.VITE_API_URL, {
+      transports: ["websocket"],
 
-      socketRef.current = s;
-      setSocket(s);
+      // 🔥 FIX: stable connection (no disconnect loop)
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      timeout: 20000,
 
-      s.on("connect", () => {
-        console.log("💬 Socket connected:", s.id);
+      // 🔥 REQUIRED for auth
+      auth: {
+        token: localStorage.getItem("token"),
+      },
+    });
 
-        s.emit("chat:join", authUser.id);
+    socketRef.current = s;
+    setSocket(s);
 
-        // 🔥 REJOIN ROOM AFTER RECONNECT
-        if (currentRoomRef.current) {
-          console.log("🔁 Rejoining room:", currentRoomRef.current);
-          s.emit("conversation:join", {
-            otherUserId: currentRoomRef.current,
-          });
-        }
+    s.on("connect", () => {
+      console.log("💬 Socket connected:", s.id);
 
-        setReady(true);
-      });
+      // join personal room
+      s.emit("chat:join", authUser.id);
 
-      s.on("disconnect", (reason) => {
-        console.log("❌ SOCKET DISCONNECTED:", reason);
-      });
+      // 🔥 ALWAYS rejoin conversation after reconnect
+      if (currentRoomRef.current) {
+        console.log("🔁 Rejoining room:", currentRoomRef.current);
 
-      s.on("connect_error", (err) => {
-        console.error("❌ SOCKET ERROR:", err.message);
-      });
+        s.emit("conversation:join", {
+          otherUserId: currentRoomRef.current,
+        });
+      }
 
-      // ✅ typing listeners
-      s.on("typing:start", (data: any) => {
-        if (!data?.fromUserId) return;
+      setReady(true);
+    });
 
-        setTypingUsers((prev) => ({
-          ...prev,
-          [data.fromUserId]: true,
-        }));
-      });
+    s.on("disconnect", (reason) => {
+      console.log("❌ SOCKET DISCONNECTED:", reason);
+    });
 
-      s.on("typing:stop", (data: any) => {
-        if (!data?.fromUserId) return;
+    s.on("connect_error", (err) => {
+      console.error("❌ SOCKET ERROR:", err.message);
+    });
 
-        setTypingUsers((prev) => ({
-          ...prev,
-          [data.fromUserId]: false,
-        }));
-      });
-    }
+    /* =========================
+       TYPING LISTENERS
+    ========================= */
 
-    return () => {};
-  }, [authUser?.id, queryClient]);
+    s.on("typing:start", (data: any) => {
+      if (!data?.fromUserId) return;
+
+      setTypingUsers((prev) => ({
+        ...prev,
+        [data.fromUserId]: true,
+      }));
+    });
+
+    s.on("typing:stop", (data: any) => {
+      if (!data?.fromUserId) return;
+
+      setTypingUsers((prev) => ({
+        ...prev,
+        [data.fromUserId]: false,
+      }));
+    });
+
+  }, [authUser?.id]); // ✅ FIX: removed unstable deps
 
   useEffect(() => {
     return () => {
@@ -91,13 +98,16 @@ export function useChatSocket() {
     };
   }, []);
 
-  // 🔥 JOIN ROOM FUNCTION
+  /* =========================
+     JOIN CONVERSATION
+  ========================= */
+
   const joinConversation = (otherUserId: string) => {
     if (!socketRef.current) return;
 
     currentRoomRef.current = otherUserId;
 
-    console.log("🚪 JOIN (FORCED):", otherUserId);
+    console.log("🚪 JOIN:", otherUserId);
 
     socketRef.current.emit("conversation:join", {
       otherUserId,
