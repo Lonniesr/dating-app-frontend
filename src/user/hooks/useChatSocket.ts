@@ -21,9 +21,13 @@ export function useChatSocket() {
 
     if (!socketRef.current) {
       const s = io(import.meta.env.VITE_API_URL, {
-        withCredentials: true,
         transports: ["websocket"],
         reconnection: true,
+
+        // 🔥 FIX: send JWT to backend (required for mobile)
+        auth: {
+          token: localStorage.getItem("token"),
+        },
       });
 
       socketRef.current = s;
@@ -87,7 +91,7 @@ export function useChatSocket() {
     };
   }, []);
 
-  // 🔥 NEW: JOIN ROOM FUNCTION
+  // 🔥 JOIN ROOM FUNCTION
   const joinConversation = (otherUserId: string) => {
     if (!socketRef.current) return;
 
@@ -104,6 +108,6 @@ export function useChatSocket() {
     socket,
     ready,
     typingUsers,
-    joinConversation, // 🔥 expose this
+    joinConversation,
   };
 }
