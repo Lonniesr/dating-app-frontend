@@ -29,6 +29,38 @@ function formatTime(date: string) {
   });
 }
 
+function isMine(m: Message, meId: string | null) {
+  return m.senderId === meId;
+}
+
+/* =========================
+   AVATAR (image if available, else initials)
+========================= */
+function Avatar({
+  src,
+  label,
+}: {
+  src?: string | null;
+  label?: string;
+}) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        className="w-8 h-8 rounded-full object-cover"
+      />
+    );
+  }
+
+  const initials = (label || "U").slice(0, 2).toUpperCase();
+
+  return (
+    <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-bold">
+      {initials}
+    </div>
+  );
+}
+
 export default function ChatPage() {
   const { id: otherUserId } = useParams<{ id: string }>();
   const userId = otherUserId ?? null;
@@ -56,6 +88,8 @@ export default function ChatPage() {
 
   const quickReactions = ["❤️", "😂", "🔥", "👍"];
 
+  /* ========================= */
+
   useEffect(() => {
     if (messages.length && liveMessages.length === 0) {
       setLiveMessages(messages);
@@ -66,10 +100,18 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [liveMessages]);
 
+  /* =========================
+     JOIN
+  ========================= */
+
   useEffect(() => {
     if (!socket || !ready || !userId) return;
     joinConversation(userId);
   }, [socket, ready, userId]);
+
+  /* =========================
+     ONLINE
+  ========================= */
 
   useEffect(() => {
     if (!socket) return;
@@ -88,6 +130,10 @@ export default function ChatPage() {
     };
   }, [socket]);
 
+  /* =========================
+     SOCKET MESSAGES
+  ========================= */
+
   useEffect(() => {
     if (!socket || !ready) return;
 
@@ -105,6 +151,10 @@ export default function ChatPage() {
     };
   }, [socket, ready]);
 
+  /* =========================
+     REACTIONS
+  ========================= */
+
   const addReaction = (messageId: string, emoji: string) => {
     setLiveMessages((prev) =>
       prev.map((msg) =>
@@ -118,18 +168,47 @@ export default function ChatPage() {
     );
   };
 
+  /* =========================
+     SEND MESSAGE
+  ========================= */
+
   async function sendMessage() {
-    if (!text.trim() || !userId) return;
+    if ((!text.trim() && !selectedImage) || !userId) return;
 
     try {
+      let imageUrl: string | null = null;
+
+      if (selectedImage) {
+        const fileExt = selectedImage.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+        const filePath = `chat-images/${fileName}`;
+
+        const { error } = await supabase.storage
+          .from("photos")
+          .upload(filePath, selectedImage);
+
+        if (error) return;
+
+        const { data } = supabase.storage
+          .from("photos")
+          .getPublicUrl(filePath);
+
+        imageUrl = data.publicUrl;
+      }
+
       const res = await axios.post(
         `${API}/messages/${userId}`,
-        { text },
+        {
+          text: text.trim() || null,
+          imageUrl,
+        },
         { withCredentials: true }
       );
 
       setLiveMessages((prev) => [...prev, res.data]);
+
       setText("");
+      setSelectedImage(null);
     } catch (err) {
       console.error("SEND FAILED:", err);
     }
@@ -146,7 +225,7 @@ export default function ChatPage() {
       {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {liveMessages.map((msg) => {
-          const mine = msg.senderId === meId;
+          const mine = isMine(msg, meId);
 
           return (
             <div
@@ -155,11 +234,12 @@ export default function ChatPage() {
                 mine ? "justify-end" : "justify-start"
               }`}
             >
-              {/* LEFT AVATAR */}
+              {/* LEFT AVATAR (OTHER USER) */}
               {!mine && (
-                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs">
-                  U
-                </div>
+                <Avatar
+                  src={null} // replace with real photo when backend provides it
+                  label={userId || "U"}
+                />
               )}
 
               {/* MESSAGE */}
@@ -169,6 +249,9 @@ export default function ChatPage() {
                     mine ? "bg-pink-500" : "bg-white/10"
                   }`}
                 >
+                  {msg.imageUrl && (
+                    <img src={msg.imageUrl} className="mb-2 rounded-lg" />
+                  )}
                   {msg.text}
                 </div>
 
@@ -197,11 +280,12 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              {/* RIGHT AVATAR */}
+              {/* RIGHT AVATAR (ME) */}
               {mine && (
-                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs">
-                  ME
-                </div>
+                <Avatar
+                  src={authUser?.photoUrl || null}
+                  label={meId || "ME"}
+                />
               )}
             </div>
           );
@@ -217,11 +301,7 @@ export default function ChatPage() {
 
         <button>🎤</button>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          className="hidden"
-        />
+        <input ref={fileInputRef} type="file" className="hidden" />
 
         <input
           value={text}
