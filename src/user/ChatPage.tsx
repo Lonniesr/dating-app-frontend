@@ -4,7 +4,6 @@ import {
   useRef,
 } from "react";
 import { useParams } from "react-router-dom";
-import { motion } from "framer-motion";
 import axios from "axios";
 
 import { useUserChat } from "./hooks/useUserChat";
@@ -16,13 +15,11 @@ interface Message {
   id: string;
   text?: string;
   imageUrl?: string;
-  audioUrl?: string;
   senderId: string;
   receiverId: string;
   createdAt: string;
   read: boolean;
-  status?: "sending" | "sent" | "seen";
-  replyTo?: Message | null;
+  reactions?: string[];
 }
 
 function formatTime(date: string) {
@@ -36,12 +33,9 @@ function isMine(m: Message, meId: string | null) {
   return m.senderId === meId;
 }
 
-function getAvatar(user?: any) {
-  return (
-    user?.photoUrl ||
-    user?.photos?.[0] ||
-    "https://ui-avatars.com/api/?background=222&color=fff&name=U"
-  );
+// ✅ always works
+function getAvatar(id?: string) {
+  return `https://ui-avatars.com/api/?background=222&color=fff&name=${id?.slice(0,2) || "U"}`;
 }
 
 export default function ChatPage() {
@@ -52,7 +46,6 @@ export default function ChatPage() {
   const API = API_RAW.endsWith("/api") ? API_RAW : `${API_RAW}/api`;
 
   const { socket, ready, joinConversation } = useChatSocket();
-
   const { authUser } = useUserAuth();
   const meId = authUser?.id ?? null;
 
@@ -64,14 +57,33 @@ export default function ChatPage() {
   const messages =
     liveMessages.length === 0 ? data?.messages || [] : [];
 
-  const isBlocked = data?.isBlocked;
-
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  /* =========================
+     REACTIONS
+  ========================= */
+
+  const addReaction = (messageId: string, emoji: string) => {
+    setLiveMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              reactions: [...(msg.reactions || []), emoji],
+            }
+          : msg
+      )
+    );
+  };
+
+  const quickReactions = ["❤️", "😂", "🔥", "👍"];
+
+  /* ========================= */
 
   useEffect(() => {
     if (messages.length && liveMessages.length === 0) {
@@ -84,17 +96,16 @@ export default function ChatPage() {
   }, [liveMessages]);
 
   /* =========================
-     JOIN CONVERSATION
+     JOIN
   ========================= */
 
   useEffect(() => {
     if (!socket || !ready || !userId) return;
-
     joinConversation(userId);
   }, [socket, ready, userId]);
 
   /* =========================
-     ONLINE STATUS
+     ONLINE
   ========================= */
 
   useEffect(() => {
@@ -115,7 +126,7 @@ export default function ChatPage() {
   }, [socket]);
 
   /* =========================
-     MESSAGES
+     SOCKET MESSAGES
   ========================= */
 
   useEffect(() => {
@@ -128,28 +139,15 @@ export default function ChatPage() {
       });
     };
 
-    const handleRead = () => {
-      setLiveMessages((prev) =>
-        prev.map((msg) =>
-          msg.senderId === meId
-            ? { ...msg, status: "seen", read: true }
-            : msg
-        )
-      );
-    };
-
     socket.on("message:new", handleMessage);
-    socket.on("message:read:update", handleRead);
 
     return () => {
       socket.off("message:new", handleMessage);
-      socket.off("message:read:update", handleRead);
     };
-
   }, [socket, ready]);
 
   async function sendMessage() {
-    if ((!text.trim() && !selectedImage) || !userId || isBlocked) return;
+    if ((!text.trim() && !selectedImage) || !userId) return;
 
     try {
       let imageUrl: string | null = null;
@@ -172,19 +170,6 @@ export default function ChatPage() {
         imageUrl = data.publicUrl;
       }
 
-      const tempMessage: Message = {
-        id: "temp-" + Date.now(),
-        text: text.trim() || undefined,
-        imageUrl: imageUrl || undefined,
-        senderId: meId!,
-        receiverId: userId!,
-        createdAt: new Date().toISOString(),
-        read: false,
-        status: "sending",
-      };
-
-      setLiveMessages((prev) => [...prev, tempMessage]);
-
       const res = await axios.post(
         `${API}/messages/${userId}`,
         {
@@ -194,13 +179,7 @@ export default function ChatPage() {
         { withCredentials: true }
       );
 
-      setLiveMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === tempMessage.id
-            ? { ...res.data, status: "sent" }
-            : msg
-        )
-      );
+      setLiveMessages((prev) => [...prev, res.data]);
 
       setText("");
       setSelectedImage(null);
@@ -214,7 +193,7 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
-      {/* ✅ ONLINE INDICATOR */}
+      {/* ONLINE */}
       <div className="text-xs text-green-400 px-4 pt-2">
         {onlineUsers[userId!] ? "Online" : "Offline"}
       </div>
@@ -224,46 +203,57 @@ export default function ChatPage() {
           const mine = isMine(msg, meId);
 
           return (
-            <motion.div
-              key={msg.id}
-              className={`flex mb-3 items-end gap-2 ${
-                mine ? "justify-end" : "justify-start"
-              }`}
-            >
-              {!mine && (
-                <img
-                  src="https://ui-avatars.com/api/?background=333&color=fff&name=U"
-                  className="w-8 h-8 rounded-full"
-                />
-              )}
+            <div key={msg.id} className={`mb-3 ${mine ? "text-right" : "text-left"}`}>
 
-              <div className="max-w-[70%]">
-                <div className={`px-4 py-2 rounded-2xl ${mine ? "bg-pink-500" : "bg-white/10"}`}>
-                  {msg.imageUrl && (
-                    <img src={msg.imageUrl} className="mb-2 rounded-lg" />
-                  )}
-                  {msg.text}
-                </div>
-
-                <div className="text-xs text-white/40 mt-1">
-                  {formatTime(msg.createdAt)}
-                  {mine && (
-                    <>
-                      {msg.status === "sending" && " Sending..."}
-                      {msg.status === "sent" && " ✓"}
-                      {(msg.status === "seen" || msg.read) && " ✓✓"}
-                    </>
-                  )}
-                </div>
+              <div className={`inline-block px-4 py-2 rounded-2xl ${
+                mine ? "bg-pink-500" : "bg-white/10"
+              }`}>
+                {msg.imageUrl && (
+                  <img src={msg.imageUrl} className="mb-2 rounded-lg" />
+                )}
+                {msg.text}
               </div>
 
-              {mine && (
-                <img
-                  src={getAvatar(authUser)}
-                  className="w-8 h-8 rounded-full"
-                />
-              )}
-            </motion.div>
+              {/* reactions */}
+              <div className="flex gap-2 mt-1">
+                {msg.reactions?.map((r, i) => (
+                  <span key={i}>{r}</span>
+                ))}
+              </div>
+
+              <div className="flex gap-2 mt-1">
+                {quickReactions.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => addReaction(msg.id, emoji)}
+                    className="text-sm opacity-60 hover:opacity-100"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+
+              <div className="text-xs text-white/40 mt-1">
+                {formatTime(msg.createdAt)}
+              </div>
+
+              {/* avatars */}
+              <div className="flex mt-1">
+                {!mine && (
+                  <img
+                    src={getAvatar(msg.senderId)}
+                    className="w-8 h-8 rounded-full"
+                  />
+                )}
+                {mine && (
+                  <img
+                    src={getAvatar(meId!)}
+                    className="w-8 h-8 rounded-full ml-auto"
+                  />
+                )}
+              </div>
+
+            </div>
           );
         })}
         <div ref={bottomRef} />
@@ -273,6 +263,8 @@ export default function ChatPage() {
         <button onClick={() => fileInputRef.current?.click()}>
           📎
         </button>
+
+        <button>🎤</button>
 
         <input
           ref={fileInputRef}
