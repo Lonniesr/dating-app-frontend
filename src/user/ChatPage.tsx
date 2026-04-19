@@ -29,23 +29,6 @@ function formatTime(date: string) {
   });
 }
 
-function isMine(m: Message, meId: string | null) {
-  return m.senderId === meId;
-}
-
-/* =========================
-   ✅ LOCAL AVATAR (ALWAYS WORKS)
-========================= */
-function Avatar({ id }: { id?: string }) {
-  const initials = (id || "U").slice(0, 2).toUpperCase();
-
-  return (
-    <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs font-bold">
-      {initials}
-    </div>
-  );
-}
-
 export default function ChatPage() {
   const { id: otherUserId } = useParams<{ id: string }>();
   const userId = otherUserId ?? null;
@@ -67,31 +50,11 @@ export default function ChatPage() {
 
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /* =========================
-     REACTIONS
-  ========================= */
-
-  const addReaction = (messageId: string, emoji: string) => {
-    setLiveMessages((prev) =>
-      prev.map((msg) =>
-        msg.id === messageId
-          ? {
-              ...msg,
-              reactions: [...(msg.reactions || []), emoji],
-            }
-          : msg
-      )
-    );
-  };
-
   const quickReactions = ["❤️", "😂", "🔥", "👍"];
-
-  /* ========================= */
 
   useEffect(() => {
     if (messages.length && liveMessages.length === 0) {
@@ -103,18 +66,10 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [liveMessages]);
 
-  /* =========================
-     JOIN
-  ========================= */
-
   useEffect(() => {
     if (!socket || !ready || !userId) return;
     joinConversation(userId);
   }, [socket, ready, userId]);
-
-  /* =========================
-     ONLINE
-  ========================= */
 
   useEffect(() => {
     if (!socket) return;
@@ -133,10 +88,6 @@ export default function ChatPage() {
     };
   }, [socket]);
 
-  /* =========================
-     SOCKET MESSAGES
-  ========================= */
-
   useEffect(() => {
     if (!socket || !ready) return;
 
@@ -154,45 +105,31 @@ export default function ChatPage() {
     };
   }, [socket, ready]);
 
+  const addReaction = (messageId: string, emoji: string) => {
+    setLiveMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              reactions: [...(msg.reactions || []), emoji],
+            }
+          : msg
+      )
+    );
+  };
+
   async function sendMessage() {
-    if ((!text.trim() && !selectedImage) || !userId) return;
+    if (!text.trim() || !userId) return;
 
     try {
-      let imageUrl: string | null = null;
-
-      if (selectedImage) {
-        const fileExt = selectedImage.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
-        const filePath = `chat-images/${fileName}`;
-
-        const { error } = await supabase.storage
-          .from("photos")
-          .upload(filePath, selectedImage);
-
-        if (error) return;
-
-        const { data } = supabase.storage
-          .from("photos")
-          .getPublicUrl(filePath);
-
-        imageUrl = data.publicUrl;
-      }
-
       const res = await axios.post(
         `${API}/messages/${userId}`,
-        {
-          text: text.trim() || null,
-          imageUrl,
-        },
+        { text },
         { withCredentials: true }
       );
 
       setLiveMessages((prev) => [...prev, res.data]);
-
       setText("");
-      setSelectedImage(null);
-      setPreview(null);
-
     } catch (err) {
       console.error("SEND FAILED:", err);
     }
@@ -209,7 +146,7 @@ export default function ChatPage() {
       {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {liveMessages.map((msg) => {
-          const mine = isMine(msg, meId);
+          const mine = msg.senderId === meId;
 
           return (
             <div
@@ -219,7 +156,11 @@ export default function ChatPage() {
               }`}
             >
               {/* LEFT AVATAR */}
-              {!mine && <Avatar id={msg.senderId} />}
+              {!mine && (
+                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs">
+                  U
+                </div>
+              )}
 
               {/* MESSAGE */}
               <div className="max-w-[70%]">
@@ -228,9 +169,6 @@ export default function ChatPage() {
                     mine ? "bg-pink-500" : "bg-white/10"
                   }`}
                 >
-                  {msg.imageUrl && (
-                    <img src={msg.imageUrl} className="mb-2 rounded-lg" />
-                  )}
                   {msg.text}
                 </div>
 
@@ -260,7 +198,11 @@ export default function ChatPage() {
               </div>
 
               {/* RIGHT AVATAR */}
-              {mine && <Avatar id={meId!} />}
+              {mine && (
+                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs">
+                  ME
+                </div>
+              )}
             </div>
           );
         })}
@@ -278,13 +220,6 @@ export default function ChatPage() {
         <input
           ref={fileInputRef}
           type="file"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              setSelectedImage(file);
-              setPreview(URL.createObjectURL(file));
-            }
-          }}
           className="hidden"
         />
 
