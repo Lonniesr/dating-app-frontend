@@ -33,10 +33,17 @@ function isMine(m: Message, meId: string | null) {
   return m.senderId === meId;
 }
 
-function getAvatar(id?: string) {
-  return `https://ui-avatars.com/api/?background=222&color=fff&name=${
-    id?.slice(0, 2) || "U"
-  }`;
+/* =========================
+   ✅ LOCAL AVATAR (ALWAYS WORKS)
+========================= */
+function Avatar({ id }: { id?: string }) {
+  const initials = (id || "U").slice(0, 2).toUpperCase();
+
+  return (
+    <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs font-bold">
+      {initials}
+    </div>
+  );
 }
 
 export default function ChatPage() {
@@ -211,15 +218,10 @@ export default function ChatPage() {
                 mine ? "justify-end" : "justify-start"
               }`}
             >
-              {/* OTHER USER AVATAR */}
-              {!mine && (
-                <img
-                  src={getAvatar(msg.senderId)}
-                  className="w-8 h-8 rounded-full"
-                />
-              )}
+              {/* LEFT AVATAR */}
+              {!mine && <Avatar id={msg.senderId} />}
 
-              {/* MESSAGE CONTENT */}
+              {/* MESSAGE */}
               <div className="max-w-[70%]">
                 <div
                   className={`px-4 py-2 rounded-2xl ${
@@ -257,13 +259,8 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              {/* MY AVATAR */}
-              {mine && (
-                <img
-                  src={getAvatar(meId!)}
-                  className="w-8 h-8 rounded-full"
-                />
-              )}
+              {/* RIGHT AVATAR */}
+              {mine && <Avatar id={meId!} />}
             </div>
           );
         })}
