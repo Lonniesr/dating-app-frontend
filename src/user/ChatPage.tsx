@@ -33,9 +33,10 @@ function isMine(m: Message, meId: string | null) {
   return m.senderId === meId;
 }
 
-// ✅ always works
 function getAvatar(id?: string) {
-  return `https://ui-avatars.com/api/?background=222&color=fff&name=${id?.slice(0,2) || "U"}`;
+  return `https://ui-avatars.com/api/?background=222&color=fff&name=${
+    id?.slice(0, 2) || "U"
+  }`;
 }
 
 export default function ChatPage() {
@@ -198,67 +199,78 @@ export default function ChatPage() {
         {onlineUsers[userId!] ? "Online" : "Offline"}
       </div>
 
+      {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {liveMessages.map((msg) => {
           const mine = isMine(msg, meId);
 
           return (
-            <div key={msg.id} className={`mb-3 ${mine ? "text-right" : "text-left"}`}>
+            <div
+              key={msg.id}
+              className={`flex mb-3 items-end gap-2 ${
+                mine ? "justify-end" : "justify-start"
+              }`}
+            >
+              {/* OTHER USER AVATAR */}
+              {!mine && (
+                <img
+                  src={getAvatar(msg.senderId)}
+                  className="w-8 h-8 rounded-full"
+                />
+              )}
 
-              <div className={`inline-block px-4 py-2 rounded-2xl ${
-                mine ? "bg-pink-500" : "bg-white/10"
-              }`}>
-                {msg.imageUrl && (
-                  <img src={msg.imageUrl} className="mb-2 rounded-lg" />
-                )}
-                {msg.text}
+              {/* MESSAGE CONTENT */}
+              <div className="max-w-[70%]">
+                <div
+                  className={`px-4 py-2 rounded-2xl ${
+                    mine ? "bg-pink-500" : "bg-white/10"
+                  }`}
+                >
+                  {msg.imageUrl && (
+                    <img src={msg.imageUrl} className="mb-2 rounded-lg" />
+                  )}
+                  {msg.text}
+                </div>
+
+                {/* REACTIONS */}
+                <div className="flex gap-2 mt-1">
+                  {msg.reactions?.map((r, i) => (
+                    <span key={i}>{r}</span>
+                  ))}
+                </div>
+
+                {/* QUICK REACTIONS */}
+                <div className="flex gap-2 mt-1">
+                  {quickReactions.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => addReaction(msg.id, emoji)}
+                      className="text-sm opacity-60 hover:opacity-100"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="text-xs text-white/40 mt-1">
+                  {formatTime(msg.createdAt)}
+                </div>
               </div>
 
-              {/* reactions */}
-              <div className="flex gap-2 mt-1">
-                {msg.reactions?.map((r, i) => (
-                  <span key={i}>{r}</span>
-                ))}
-              </div>
-
-              <div className="flex gap-2 mt-1">
-                {quickReactions.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => addReaction(msg.id, emoji)}
-                    className="text-sm opacity-60 hover:opacity-100"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-
-              <div className="text-xs text-white/40 mt-1">
-                {formatTime(msg.createdAt)}
-              </div>
-
-              {/* avatars */}
-              <div className="flex mt-1">
-                {!mine && (
-                  <img
-                    src={getAvatar(msg.senderId)}
-                    className="w-8 h-8 rounded-full"
-                  />
-                )}
-                {mine && (
-                  <img
-                    src={getAvatar(meId!)}
-                    className="w-8 h-8 rounded-full ml-auto"
-                  />
-                )}
-              </div>
-
+              {/* MY AVATAR */}
+              {mine && (
+                <img
+                  src={getAvatar(meId!)}
+                  className="w-8 h-8 rounded-full"
+                />
+              )}
             </div>
           );
         })}
         <div ref={bottomRef} />
       </div>
 
+      {/* INPUT */}
       <div className="p-4 flex items-center gap-2">
         <button onClick={() => fileInputRef.current?.click()}>
           📎
