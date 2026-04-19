@@ -57,6 +57,7 @@ export default function ChatPage() {
   const meId = authUser?.id ?? null;
 
   const [liveMessages, setLiveMessages] = useState<Message[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<Record<string, boolean>>({});
 
   const { data } = useUserChat(userId);
 
@@ -68,13 +69,9 @@ export default function ChatPage() {
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const isTypingRef = useRef(false);
-  const typingTimeoutRef = useRef<any>(null);
 
   useEffect(() => {
     if (messages.length && liveMessages.length === 0) {
@@ -83,48 +80,50 @@ export default function ChatPage() {
   }, [messages]);
 
   useEffect(() => {
-    if (!isTypingRef.current) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [liveMessages]);
 
   /* =========================
-     🔥 FINAL FIXED JOIN
+     JOIN CONVERSATION
   ========================= */
 
   useEffect(() => {
     if (!socket || !ready || !userId) return;
 
-    console.log("🚪 CHAT PAGE JOIN:", userId);
-
     joinConversation(userId);
-
   }, [socket, ready, userId]);
 
-  /* ========================= */
+  /* =========================
+     ONLINE STATUS
+  ========================= */
 
   useEffect(() => {
-    if (!socket || !ready || !userId) return;
-    socket.emit("message:read", { otherUserId: userId });
-  }, [socket, ready, userId]);
+    if (!socket) return;
+
+    const handlePresence = ({ userId, online }: any) => {
+      setOnlineUsers((prev) => ({
+        ...prev,
+        [userId]: online,
+      }));
+    };
+
+    socket.on("presence:update", handlePresence);
+
+    return () => {
+      socket.off("presence:update", handlePresence);
+    };
+  }, [socket]);
+
+  /* =========================
+     MESSAGES
+  ========================= */
 
   useEffect(() => {
     if (!socket || !ready) return;
 
     const handleMessage = (msg: Message) => {
       setLiveMessages((prev) => {
-        if (
-          prev.find(
-            (m) =>
-              m.id === msg.id ||
-              (m.id.startsWith("temp-") &&
-                m.text === msg.text &&
-                m.senderId === msg.senderId)
-          )
-        ) {
-          return prev;
-        }
-
+        if (prev.find((m) => m.id === msg.id)) return prev;
         return [...prev, msg];
       });
     };
@@ -139,34 +138,12 @@ export default function ChatPage() {
       );
     };
 
-    const handleTypingStart = (data: any) => {
-      console.log("👀 RECEIVED typing:start:", data);
-
-      if (!data?.fromUserId) return;
-
-      if (data.fromUserId === userId) {
-        setIsTyping(true);
-      }
-    };
-
-    const handleTypingStop = (data: any) => {
-      if (!data?.fromUserId) return;
-
-      if (data.fromUserId === userId) {
-        setIsTyping(false);
-      }
-    };
-
     socket.on("message:new", handleMessage);
     socket.on("message:read:update", handleRead);
-    socket.on("typing:start", handleTypingStart);
-    socket.on("typing:stop", handleTypingStop);
 
     return () => {
       socket.off("message:new", handleMessage);
       socket.off("message:read:update", handleRead);
-      socket.off("typing:start", handleTypingStart);
-      socket.off("typing:stop", handleTypingStop);
     };
 
   }, [socket, ready]);
@@ -229,10 +206,6 @@ export default function ChatPage() {
       setSelectedImage(null);
       setPreview(null);
 
-      if (socket && userId && meId) {
-        socket.emit("typing:stop", { to: userId });
-      }
-
     } catch (err) {
       console.error("SEND FAILED:", err);
     }
@@ -241,11 +214,10 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
-      {isTyping && (
-        <div className="text-sm text-white/40 px-4 pt-2">
-          typing...
-        </div>
-      )}
+      {/* ✅ ONLINE INDICATOR */}
+      <div className="text-xs text-green-400 px-4 pt-2">
+        {onlineUsers[userId!] ? "Online" : "Offline"}
+      </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {liveMessages.map((msg) => {
@@ -297,19 +269,10 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {preview && (
-        <div className="px-4 pb-2">
-          <img src={preview} className="max-h-40 rounded-lg" />
-        </div>
-      )}
-
       <div className="p-4 flex items-center gap-2">
         <button onClick={() => fileInputRef.current?.click()}>
           📎
         </button>
-
-        <button>🎤</button>
-        <button>😊</button>
 
         <input
           ref={fileInputRef}
@@ -326,25 +289,7 @@ export default function ChatPage() {
 
         <input
           value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-
-            if (!socket || !userId || !meId) return;
-
-            if (!isTypingRef.current) {
-              socket.emit("typing:start", { to: userId });
-              isTypingRef.current = true;
-            }
-
-            if (typingTimeoutRef.current) {
-              clearTimeout(typingTimeoutRef.current);
-            }
-
-            typingTimeoutRef.current = setTimeout(() => {
-              socket.emit("typing:stop", { to: userId });
-              isTypingRef.current = false;
-            }, 1000);
-          }}
+          onChange={(e) => setText(e.target.value)}
           className="flex-1 bg-[#1a1a1a] px-4 py-3 rounded-xl"
         />
 
