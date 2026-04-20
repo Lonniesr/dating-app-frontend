@@ -9,13 +9,29 @@ import axios from "axios";
 import { useUserChat } from "./hooks/useUserChat";
 import { useChatSocket } from "./hooks/useChatSocket";
 import { useUserAuth } from "./context/UserAuthContext";
+import { supabase } from "../lib/supabaseClient";
 
-interface Message {
+/* =========================
+   🔥 FIX: EXTENDED TYPE
+========================= */
+type ChatMessage = {
   id: string;
   text?: string;
   senderId: string;
   receiverId: string;
   createdAt: string;
+  sender?: {
+    photos?: { url: string }[];
+  };
+};
+
+function resolvePhotoUrl(photo?: string) {
+  if (!photo) return null;
+
+  if (photo.startsWith("http")) return photo;
+
+  const { data } = supabase.storage.from("photos").getPublicUrl(photo);
+  return data.publicUrl;
 }
 
 function formatTime(date: string) {
@@ -56,20 +72,25 @@ export default function ChatPage() {
   const { authUser } = useUserAuth();
   const meId = authUser?.id ?? null;
 
-  const [liveMessages, setLiveMessages] = useState<Message[]>([]);
+  const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
   const { data } = useUserChat(userId);
 
-  const messages =
-    liveMessages.length === 0 ? data?.messages || [] : [];
+  /* =========================
+     🔥 FIX: CAST HERE
+  ========================= */
+  const messages: ChatMessage[] =
+    liveMessages.length === 0
+      ? (data?.messages as ChatMessage[]) || []
+      : liveMessages;
 
   const [text, setText] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (messages.length && liveMessages.length === 0) {
-      setLiveMessages(messages);
+    if (data?.messages && liveMessages.length === 0) {
+      setLiveMessages(data.messages as ChatMessage[]);
     }
-  }, [messages]);
+  }, [data]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -83,7 +104,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (!socket || !ready) return;
 
-    socket.on("message:new", (msg: Message) => {
+    socket.on("message:new", (msg: ChatMessage) => {
       setLiveMessages((prev) => {
         if (prev.find((m) => m.id === msg.id)) return prev;
         return [...prev, msg];
@@ -115,6 +136,9 @@ export default function ChatPage() {
         {messages.map((msg) => {
           const mine = msg.senderId === meId;
 
+          const photoPath = msg.sender?.photos?.[0]?.url;
+          const avatarUrl = resolvePhotoUrl(photoPath);
+
           return (
             <div
               key={msg.id}
@@ -122,15 +146,10 @@ export default function ChatPage() {
                 mine ? "justify-end" : "justify-start"
               }`}
             >
-              {/* OTHER USER */}
               {!mine && (
-                <Avatar
-                  src={null}
-                  fallback="U"
-                />
+                <Avatar src={avatarUrl} fallback="U" />
               )}
 
-              {/* MESSAGE */}
               <div className="max-w-[70%]">
                 <div className={`px-4 py-2 rounded-2xl ${
                   mine ? "bg-pink-500" : "bg-white/10"
@@ -143,10 +162,13 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              {/* ME */}
               {mine && (
                 <Avatar
-                  src={authUser?.photoUrl || null}
+                  src={
+                    authUser?.photos?.[0]
+                      ? resolvePhotoUrl(authUser.photos[0])
+                      : null
+                  }
                   fallback="ME"
                 />
               )}
