@@ -15,6 +15,7 @@ type ChatMessage = {
   id: string;
   text?: string;
   imageUrl?: string;
+  audioUrl?: string; // ✅ added
   senderId: string;
   receiverId: string;
   createdAt: string;
@@ -80,6 +81,11 @@ export default function ChatPage() {
 
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+
+  // 🎤 NEW STATE
+  const [recording, setRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -174,6 +180,68 @@ export default function ChatPage() {
     }
   }
 
+  /* =========================
+     🎤 MIC FUNCTIONS (ONLY ADDITION)
+  ========================= */
+
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
+
+        const filePath = `chat-audio/audio-${Date.now()}.webm`;
+
+        const { error } = await supabase.storage
+          .from("photos")
+          .upload(filePath, blob);
+
+        if (error) {
+          console.error("AUDIO UPLOAD ERROR:", error);
+          return;
+        }
+
+        const { data } = supabase.storage
+          .from("photos")
+          .getPublicUrl(filePath);
+
+        const res = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/messages/${userId}`,
+          {
+            text: null,
+            audioUrl: data.publicUrl,
+          },
+          { withCredentials: true }
+        );
+
+        setLiveMessages((prev) => [...prev, res.data]);
+      };
+
+      mediaRecorder.start();
+      setRecording(true);
+    } catch (err) {
+      console.error("MIC ERROR:", err);
+    }
+  }
+
+  function stopRecording() {
+    mediaRecorderRef.current?.stop();
+    setRecording(false);
+  }
+
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
@@ -192,12 +260,10 @@ export default function ChatPage() {
                 mine ? "justify-end" : "justify-start"
               }`}
             >
-              {/* OTHER USER */}
               {!mine && (
                 <Avatar src={avatarUrl} fallback="U" />
               )}
 
-              {/* MESSAGE */}
               <div className="max-w-[70%]">
                 <div
                   className={`px-4 py-2 rounded-2xl ${
@@ -205,22 +271,24 @@ export default function ChatPage() {
                   }`}
                 >
                   {msg.imageUrl && (
-                    <img
-                      src={msg.imageUrl}
-                      className="mb-2 rounded-lg"
-                    />
+                    <img src={msg.imageUrl} className="mb-2 rounded-lg" />
                   )}
+
+                  {msg.audioUrl && (
+                    <audio controls className="mb-2">
+                      <source src={msg.audioUrl} type="audio/webm" />
+                    </audio>
+                  )}
+
                   {msg.text}
                 </div>
 
-                {/* REACTIONS */}
                 <div className="flex gap-2 mt-1">
                   {msg.reactions?.map((r, i) => (
                     <span key={i}>{r}</span>
                   ))}
                 </div>
 
-                {/* QUICK REACTIONS */}
                 <div className="flex gap-2 mt-1">
                   {quickReactions.map((emoji) => (
                     <button
@@ -238,7 +306,6 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              {/* ME */}
               {mine && (
                 <Avatar
                   src={
@@ -261,7 +328,15 @@ export default function ChatPage() {
           📎
         </button>
 
-        <button>🎤</button>
+        {/* 🎤 UPDATED BUTTON */}
+        <button
+          onMouseDown={startRecording}
+          onMouseUp={stopRecording}
+          onMouseLeave={stopRecording}
+          className={recording ? "text-red-500" : ""}
+        >
+          🎤
+        </button>
 
         <input
           ref={fileInputRef}
