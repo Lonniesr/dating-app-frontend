@@ -15,7 +15,7 @@ type ChatMessage = {
   id: string;
   text?: string;
   imageUrl?: string;
-  audioUrl?: string; // ✅ added
+  audioUrl?: string;
   senderId: string;
   receiverId: string;
   createdAt: string;
@@ -82,10 +82,11 @@ export default function ChatPage() {
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
-  // 🎤 NEW STATE
+  // 🎤 FIXED MIC STATE
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const hasSentRef = useRef(false); // 🔥 prevents duplicate send
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -181,11 +182,13 @@ export default function ChatPage() {
   }
 
   /* =========================
-     🎤 MIC FUNCTIONS (ONLY ADDITION)
+     🎤 FIXED MIC FUNCTIONS
   ========================= */
 
   async function startRecording() {
     try {
+      hasSentRef.current = false; // reset guard
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       const mediaRecorder = new MediaRecorder(stream);
@@ -199,6 +202,9 @@ export default function ChatPage() {
       };
 
       mediaRecorder.onstop = async () => {
+        if (hasSentRef.current) return; // 🔥 prevent duplicate
+        hasSentRef.current = true;
+
         const blob = new Blob(audioChunksRef.current, {
           type: "audio/webm",
         });
@@ -238,14 +244,16 @@ export default function ChatPage() {
   }
 
   function stopRecording() {
-    mediaRecorderRef.current?.stop();
+    if (!mediaRecorderRef.current) return;
+    if (mediaRecorderRef.current.state === "inactive") return; // 🔥 prevents double stop
+
+    mediaRecorderRef.current.stop();
     setRecording(false);
   }
 
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
-      {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {messages.map((msg) => {
           const mine = msg.senderId === meId;
@@ -322,13 +330,11 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* INPUT */}
       <div className="p-4 flex items-center gap-2">
         <button onClick={() => fileInputRef.current?.click()}>
           📎
         </button>
 
-        {/* 🎤 UPDATED BUTTON */}
         <button
           onMouseDown={startRecording}
           onMouseUp={stopRecording}
