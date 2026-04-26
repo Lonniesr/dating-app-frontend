@@ -2,11 +2,20 @@ import { useNavigate } from "react-router-dom";
 import { useSwipes } from "../hooks/useSwipes";
 import DataTable from "../components/DataTable";
 
+// ✅ Add a type for swipe data
+type Swipe = {
+  id: string;
+  direction?: "like" | "pass" | "super_like";
+  createdAt: string;
+  swiper?: { email?: string };
+  target?: { email?: string };
+};
+
 export default function AdminSwipesPage() {
   const navigate = useNavigate();
   const { data, isLoading, error } = useSwipes();
 
-  const swipes = data?.swipes ?? [];
+  const swipes: Swipe[] = data?.swipes ?? [];
 
   if (isLoading) {
     return <div className="glass-card p-4">Loading swipes…</div>;
@@ -18,26 +27,37 @@ export default function AdminSwipesPage() {
 
   return (
     <div className="page-wrapper fade-in">
-      <h1 className="admin-gold-shimmer" style={{ fontSize: "2rem", marginBottom: "1.5rem" }}>
+      <h1
+        className="admin-gold-shimmer"
+        style={{ fontSize: "2rem", marginBottom: "1.5rem" }}
+      >
         Swipes
       </h1>
 
       <DataTable
         searchable
         columns={[
-          { key: "swiper", label: "Swiper" },
-          { key: "target", label: "Target" },
-          { key: "direction", label: "Direction" },
-          { key: "createdAt", label: "Date" },
+          { key: "swiper" as any, label: "Swiper" },
+          { key: "target" as any, label: "Target" },
+          { key: "direction" as any, label: "Direction" },
+          { key: "createdAt" as any, label: "Date" },
         ]}
-        data={swipes.map((s) => ({
+        data={swipes.map((s: Swipe) => ({
           id: s.id,
           swiper: s.swiper?.email ?? "Unknown",
           target: s.target?.email ?? "Unknown",
-          direction: s.direction === "like" ? "❤️ Like" : "⛔ Pass",
+
+          // ✅ fixed logic
+          direction:
+            s.direction === "super_like"
+              ? "⭐ Super Like"
+              : s.direction === "like"
+              ? "❤️ Like"
+              : "⛔ Pass",
+
           createdAt: new Date(s.createdAt).toLocaleString(),
         }))}
-        onRowClick={(row) => navigate(`/admin/users/${row.id}`)}
+        onRowClick={(row: any) => navigate(`/admin/users/${row.id}`)}
       />
     </div>
   );
