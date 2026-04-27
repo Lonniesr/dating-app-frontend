@@ -9,7 +9,7 @@ export default function AdminMatchesPage() {
 
   const { data: matches = [], isLoading } = useQuery<Match[]>({
     queryKey: ["admin-matches"],
-    queryFn: () => adminMatchesService.list(), // ✅ returns Match[]
+    queryFn: () => adminMatchesService.list(),
   });
 
   const deleteMutation = useMutation({
@@ -34,6 +34,7 @@ export default function AdminMatchesPage() {
       <DataTable
         searchable
         columns={[
+          { key: "id" as any, label: "ID" }, // ✅ REQUIRED (fix)
           { key: "userA" as any, label: "User A" },
           { key: "userB" as any, label: "User B" },
           { key: "createdAt" as any, label: "Matched On" },
