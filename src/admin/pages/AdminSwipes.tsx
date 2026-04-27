@@ -2,10 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { useSwipes } from "../hooks/useSwipes";
 import DataTable from "../components/DataTable";
 
-// ✅ Add a type for swipe data
+// ✅ FIXED type (use real fields)
 type Swipe = {
   id: string;
-  direction?: "like" | "pass" | "super_like";
+  liked?: boolean;
+  superLike?: boolean;
   createdAt: string;
   swiper?: { email?: string };
   target?: { email?: string };
@@ -47,13 +48,12 @@ export default function AdminSwipesPage() {
           swiper: s.swiper?.email ?? "Unknown",
           target: s.target?.email ?? "Unknown",
 
-          // ✅ fixed logic
-          direction:
-            s.direction === "super_like"
-              ? "⭐ Super Like"
-              : s.direction === "like"
-              ? "❤️ Like"
-              : "⛔ Pass",
+          // ✅ REAL FIX
+          direction: s.superLike
+            ? "⭐ Super Like"
+            : s.liked
+            ? "❤️ Like"
+            : "⛔ Pass",
 
           createdAt: new Date(s.createdAt).toLocaleString(),
         }))}
