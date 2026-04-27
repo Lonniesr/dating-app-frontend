@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE = "/api/admin/matches";
+const BASE = `${import.meta.env.VITE_API_URL}/api/admin/matches`;
 
 export interface MatchUser {
   id: string;
