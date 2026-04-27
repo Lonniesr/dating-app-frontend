@@ -17,12 +17,18 @@ export interface Match {
 
 export const adminMatchesService = {
   async list(): Promise<Match[]> {
-    const res = await axios.get(BASE);
+    const res = await axios.get(BASE, {
+      withCredentials: true, // ✅ FIX
+    });
+
     return res.data.matches as Match[];
   },
 
   async delete(id: string) {
-    const res = await axios.delete(`${BASE}/${id}`);
+    const res = await axios.delete(`${BASE}/${id}`, {
+      withCredentials: true, // ✅ FIX
+    });
+
     return res.data;
   },
 };
