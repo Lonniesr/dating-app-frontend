@@ -7,9 +7,9 @@ import type { Match } from "../services/adminMatchesService";
 export default function AdminMatchesPage() {
   const queryClient = useQueryClient();
 
-  const { data: matches, isLoading } = useQuery<Match[]>({
+  const { data: matches = [], isLoading } = useQuery<Match[]>({
     queryKey: ["admin-matches"],
-    queryFn: () => adminMatchesService.list(),
+    queryFn: () => adminMatchesService.list(), // ✅ returns Match[]
   });
 
   const deleteMutation = useMutation({
@@ -34,23 +34,21 @@ export default function AdminMatchesPage() {
       <DataTable
         searchable
         columns={[
-          { key: "userA", label: "User A" },
-          { key: "userB", label: "User B" },
-          { key: "createdAt", label: "Matched On" },
+          { key: "userA" as any, label: "User A" },
+          { key: "userB" as any, label: "User B" },
+          { key: "createdAt" as any, label: "Matched On" },
         ]}
-        data={
-          matches?.map((m) => ({
-            id: m.id,
-            userA: `${m.userA.name ?? "Unknown"} (${m.userA.email})`,
-            userB: `${m.userB.name ?? "Unknown"} (${m.userB.email})`,
-            createdAt: new Date(m.createdAt).toLocaleString(),
-          })) ?? []
-        }
+        data={matches.map((m: Match) => ({
+          id: m.id,
+          userA: `${m.userA?.name ?? "Unknown"} (${m.userA?.email ?? ""})`,
+          userB: `${m.userB?.name ?? "Unknown"} (${m.userB?.email ?? ""})`,
+          createdAt: new Date(m.createdAt).toLocaleString(),
+        }))}
         actions={[
           {
             label: "Unmatch",
             className: "btn-danger",
-            onClick: (row) => deleteMutation.mutate(row.id),
+            onClick: (row: any) => deleteMutation.mutate(row.id),
           },
         ]}
       />
