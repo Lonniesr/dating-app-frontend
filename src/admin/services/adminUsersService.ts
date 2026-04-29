@@ -7,11 +7,20 @@ class AdminUsersService extends BaseService {
     return res.data;
   }
 
-  // ✅ BAN USER
-  banUser(id: string) {
+  // ✅ BAN USER (with reason + optional duration)
+  banUser(
+    id: string,
+    options?: {
+      reason?: string;
+      durationHours?: number;
+    }
+  ) {
     return axios.post(
       `${import.meta.env.VITE_API_URL}/api/admin/bans/${id}`,
-      {},
+      {
+        reason: options?.reason,
+        durationHours: options?.durationHours,
+      },
       { withCredentials: true }
     );
   }

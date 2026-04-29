@@ -3,10 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DataTable from "../components/DataTable";
 import { adminUsersService } from "../services/adminUsersService";
 
-/* =========================
-   TYPES
-========================= */
-
 interface AdminUser {
   id: string;
   name: string | null;
@@ -20,10 +16,6 @@ interface AdminUsersResponse {
   total: number;
 }
 
-/* =========================
-   COMPONENT
-========================= */
-
 export default function AdminUsersPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -34,11 +26,11 @@ export default function AdminUsersPage() {
   });
 
   const users = data?.users ?? [];
-  const totalUsers = data?.total ?? 0;
 
   // ✅ BAN
   const banMutation = useMutation({
-    mutationFn: (id: string) => adminUsersService.banUser(id),
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      adminUsersService.banUser(id, { reason }), // ✅ FIXED
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
@@ -52,61 +44,53 @@ export default function AdminUsersPage() {
     },
   });
 
-  if (isLoading) {
-    return <div className="glass-card">Loading users…</div>;
-  }
+  if (isLoading) return <div>Loading...</div>;
 
   return (
     <div className="fade-in">
+      <h1 className="admin-gold-shimmer">Users</h1>
 
-      {/* HEADER */}
-      <h1
-        className="admin-gold-shimmer"
-        style={{ fontSize: "2rem", marginBottom: "1rem" }}
-      >
-        Users ({totalUsers.toLocaleString()})
-      </h1>
-
-      {/* KPI */}
-      <div
-        className="glass-panel"
-        style={{ marginBottom: "1.5rem", padding: "1rem", width: "fit-content" }}
-      >
-        <p style={{ opacity: 0.6 }}>Total Users</p>
-        <h2 style={{ fontSize: "1.8rem" }}>
-          {totalUsers.toLocaleString()}
-        </h2>
-      </div>
-
-      {/* TABLE */}
       <DataTable
         searchable
         columns={[
           { key: "name", label: "Name" },
           { key: "email", label: "Email" },
           { key: "status", label: "Status" },
-          { key: "createdAt", label: "Joined" },
         ]}
-        data={users.map((u: AdminUser) => ({
+        data={users.map((u) => ({
           id: u.id,
           name: u.name ?? "Unknown",
           email: u.email,
           status: u.banned ? "Banned" : "Active",
-          createdAt: new Date(u.createdAt).toLocaleDateString(),
         }))}
-        onRowClick={(row: any) => navigate(`/admin/users/${row.id}`)}
         actions={[
           {
             label: "Ban",
             className: "btn-danger",
-            onClick: (row: any) => banMutation.mutate(row.id),
+            onClick: (row: any) => {
+              if (row.status === "Banned") return; // ✅ manual guard
+
+              const reason = prompt("Enter ban reason:");
+              if (!reason) return;
+
+              if (confirm("Ban this user?")) {
+                banMutation.mutate({ id: row.id, reason });
+              }
+            },
           },
           {
             label: "Unban",
             className: "btn-outline",
-            onClick: (row: any) => unbanMutation.mutate(row.id),
+            onClick: (row: any) => {
+              if (row.status === "Active") return; // ✅ manual guard
+
+              if (confirm("Unban this user?")) {
+                unbanMutation.mutate(row.id);
+              }
+            },
           },
         ]}
+        onRowClick={(row: any) => navigate(`/admin/users/${row.id}`)}
       />
     </div>
   );
