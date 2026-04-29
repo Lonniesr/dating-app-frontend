@@ -36,9 +36,17 @@ export default function AdminUsersPage() {
   const users = data?.users ?? [];
   const totalUsers = data?.total ?? 0;
 
+  // ✅ BAN
   const banMutation = useMutation({
-    mutationFn: ({ id, banned }: { id: string; banned: boolean }) =>
-      adminUsersService.updateUser(id, { banned }),
+    mutationFn: (id: string) => adminUsersService.banUser(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+  });
+
+  // ✅ UNBAN
+  const unbanMutation = useMutation({
+    mutationFn: (id: string) => adminUsersService.unbanUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
@@ -91,14 +99,12 @@ export default function AdminUsersPage() {
           {
             label: "Ban",
             className: "btn-danger",
-            onClick: (row: any) =>
-              banMutation.mutate({ id: row.id, banned: true }),
+            onClick: (row: any) => banMutation.mutate(row.id),
           },
           {
             label: "Unban",
             className: "btn-outline",
-            onClick: (row: any) =>
-              banMutation.mutate({ id: row.id, banned: false }),
+            onClick: (row: any) => unbanMutation.mutate(row.id),
           },
         ]}
       />
