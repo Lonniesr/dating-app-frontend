@@ -38,9 +38,16 @@ type SortablePhotoProps = {
   index: number;
   onDelete: (i: number) => void;
   onMakeMain: (i: number) => void;
+  onTogglePrivacy: (i: number) => void; // ✅ NEW
 };
 
-function SortablePhoto({ photo, index, onDelete, onMakeMain }: SortablePhotoProps) {
+function SortablePhoto({
+  photo,
+  index,
+  onDelete,
+  onMakeMain,
+  onTogglePrivacy,
+}: SortablePhotoProps) {
   const id = typeof photo === "string" ? photo : photo.id;
 
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -55,6 +62,9 @@ function SortablePhoto({ photo, index, onDelete, onMakeMain }: SortablePhotoProp
     typeof photo === "string"
       ? photo
       : photo.url;
+
+  const isPrivate =
+    typeof photo === "string" ? false : photo.isPrivate;
 
   return (
     <div
@@ -78,6 +88,19 @@ function SortablePhoto({ photo, index, onDelete, onMakeMain }: SortablePhotoProp
         </div>
       )}
 
+      {/* 🔒 TOGGLE BUTTON */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onTogglePrivacy(index);
+        }}
+        className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
+      >
+        {isPrivate ? "Private" : "Public"}
+      </button>
+
+      {/* DELETE BUTTON */}
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -114,6 +137,43 @@ export default function PhotoManagerSection() {
       setItems(authUser.photos);
     }
   }, [authUser]);
+
+  const handleTogglePrivacy = async (index: number) => {
+    try {
+      const photo = items[index];
+
+      if (typeof photo === "string") {
+        alert("Refresh profile first");
+        return;
+      }
+
+      const updated = !photo.isPrivate;
+
+      await fetch(`${import.meta.env.VITE_API_URL}/api/profile/photo/privacy`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          photoId: photo.id,
+          isPrivate: updated,
+        }),
+      });
+
+      const newItems = [...items];
+      newItems[index] = {
+        ...photo,
+        isPrivate: updated,
+      };
+
+      setItems(newItems);
+      await refreshUser();
+    } catch (err) {
+      console.error("Toggle privacy failed:", err);
+      alert("Failed to update privacy");
+    }
+  };
 
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve) => {
@@ -345,6 +405,7 @@ export default function PhotoManagerSection() {
                 index={index}
                 onDelete={handleDelete}
                 onMakeMain={makeMainPhoto}
+                onTogglePrivacy={handleTogglePrivacy}
               />
             ))}
           </div>
