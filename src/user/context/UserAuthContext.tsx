@@ -5,8 +5,8 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { getPushToken } from "../../firebase"; // 🔥 NEW
-import axios from "axios"; // 🔥 NEW
+import { getPushToken } from "../../firebase";
+import axios from "axios";
 
 /* =========================
    USER TYPES
@@ -62,7 +62,7 @@ export type AuthUser = {
 
   lastActiveAt?: string;
 
-  photoUrl?: string; // 🔥 FIX ADDED HERE
+  photoUrl?: string;
 };
 
 /* =========================
@@ -93,14 +93,9 @@ export function UserAuthProvider({
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  /* =========================
-     🔥 PUSH SETUP (NEW)
-  ========================= */
-
   async function setupPush() {
     try {
       const token = await getPushToken();
-
       if (!token) return;
 
       console.log("🔥 Sending push token to backend:", token);
@@ -114,10 +109,6 @@ export function UserAuthProvider({
       console.error("Push setup failed:", err);
     }
   }
-
-  /* =========================
-     DETERMINE ONBOARDING STEP
-  ========================= */
 
   function getOnboardingStep(user: AuthUser): string | null {
     if (user.role === "admin") return null;
@@ -154,7 +145,7 @@ export function UserAuthProvider({
   }
 
   /* =========================
-     LOAD PROFILE
+     LOAD PROFILE (FIXED)
   ========================= */
 
   async function loadProfile(): Promise<AuthUser | null> {
@@ -168,45 +159,31 @@ export function UserAuthProvider({
       );
 
       if (!res.ok) {
-        setAuthUser(null);
-        return null;
+        console.warn("Auth check failed, keeping existing session");
+        return authUser; // ✅ FIX: do NOT wipe user
       }
 
       const data: AuthUser = await res.json();
 
       setAuthUser(data);
-
       return data;
     } catch (err) {
       console.error("Auth load failed:", err);
-      setAuthUser(null);
-      return null;
+      return authUser; // ✅ FIX: keep session
     } finally {
       setIsLoading(false);
     }
   }
 
-  /* =========================
-     INITIAL LOAD
-  ========================= */
-
   useEffect(() => {
     loadProfile();
   }, []);
-
-  /* =========================
-     🔥 TRIGGER PUSH AFTER LOGIN (NEW)
-  ========================= */
 
   useEffect(() => {
     if (authUser) {
       setupPush();
     }
   }, [authUser]);
-
-  /* =========================
-     LOGOUT
-  ========================= */
 
   async function logout(): Promise<void> {
     try {
@@ -221,10 +198,6 @@ export function UserAuthProvider({
 
     setAuthUser(null);
   }
-
-  /* =========================
-     REFRESH USER
-  ========================= */
 
   async function refreshUser(): Promise<AuthUser | null> {
     setIsLoading(true);
