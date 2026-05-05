@@ -1,9 +1,12 @@
+// ONLY CHANGES:
+// navigate(`/user/profile/...`) → navigate(`/user/...`)
+
 import {
   useState,
   useEffect,
   useRef,
 } from "react";
-import { useParams, useNavigate } from "react-router-dom"; // ✅ UPDATED
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import { useUserChat } from "./hooks/useUserChat";
@@ -74,7 +77,7 @@ function Avatar({
 
 export default function ChatPage() {
   const { id: otherUserId } = useParams<{ id: string }>();
-  const navigate = useNavigate(); // ✅ ADDED
+  const navigate = useNavigate();
   const userId = otherUserId ?? null;
 
   const { socket, ready, joinConversation } = useChatSocket();
@@ -274,7 +277,7 @@ export default function ChatPage() {
             >
               {!mine && (
                 <div
-                  onClick={() => navigate(`/user/profile/${msg.senderId}`)}
+                  onClick={() => navigate(`/user/${msg.senderId}`)}
                   className="cursor-pointer"
                 >
                   <Avatar src={avatarUrl} fallback="U" />
@@ -282,21 +285,13 @@ export default function ChatPage() {
               )}
 
               <div className="max-w-[70%]">
-                <div
-                  className={`px-4 py-2 rounded-2xl ${
-                    mine ? "bg-pink-500" : "bg-white/10"
-                  }`}
-                >
-                  {msg.imageUrl && (
-                    <img src={msg.imageUrl} className="mb-2 rounded-lg" />
-                  )}
-
+                <div className={`px-4 py-2 rounded-2xl ${mine ? "bg-pink-500" : "bg-white/10"}`}>
+                  {msg.imageUrl && <img src={msg.imageUrl} className="mb-2 rounded-lg" />}
                   {msg.audioUrl && (
                     <audio controls className="mb-2">
                       <source src={msg.audioUrl} type="audio/webm" />
                     </audio>
                   )}
-
                   {msg.text}
                 </div>
 
@@ -325,7 +320,7 @@ export default function ChatPage() {
 
               {mine && (
                 <div
-                  onClick={() => navigate(`/user/profile`)}
+                  onClick={() => navigate(`/user`)}
                   className="cursor-pointer"
                 >
                   <Avatar
