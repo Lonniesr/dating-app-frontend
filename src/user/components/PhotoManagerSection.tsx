@@ -25,21 +25,36 @@ import { CSS } from "@dnd-kit/utilities";
 
 const MAX_PHOTOS = 6;
 
+type PhotoType =
+  | string
+  | {
+      id: string;
+      url: string;
+      isPrivate?: boolean;
+    };
+
 type SortablePhotoProps = {
-  photo: string;
+  photo: PhotoType;
   index: number;
   onDelete: (i: number) => void;
   onMakeMain: (i: number) => void;
 };
 
 function SortablePhoto({ photo, index, onDelete, onMakeMain }: SortablePhotoProps) {
+  const id = typeof photo === "string" ? photo : photo.id;
+
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: photo });
+    useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
+
+  const src =
+    typeof photo === "string"
+      ? photo
+      : photo.url;
 
   return (
     <div
@@ -51,7 +66,7 @@ function SortablePhoto({ photo, index, onDelete, onMakeMain }: SortablePhotoProp
     >
       <div onClick={() => onMakeMain(index)}>
         <ProgressiveImage
-          src={photo}
+          src={src}
           className="w-full h-32 cursor-pointer"
           alt="User photo"
         />
@@ -63,7 +78,6 @@ function SortablePhoto({ photo, index, onDelete, onMakeMain }: SortablePhotoProp
         </div>
       )}
 
-      {/* ✅ FIXED DELETE BUTTON */}
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -83,7 +97,7 @@ function SortablePhoto({ photo, index, onDelete, onMakeMain }: SortablePhotoProp
 export default function PhotoManagerSection() {
   const { authUser, refreshUser } = useUserAuth();
 
-  const [items, setItems] = useState<string[]>([]);
+  const [items, setItems] = useState<PhotoType[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
   const [cropImage, setCropImage] = useState<string | null>(null);
@@ -235,8 +249,7 @@ export default function PhotoManagerSection() {
   const handleDelete = async (index: number) => {
     try {
       const photoToDelete = items[index];
-
-      console.log("🗑️ Deleting photo:", photoToDelete);
+      const url = typeof photoToDelete === "string" ? photoToDelete : photoToDelete.url;
 
       const newPhotos = [...items];
       newPhotos.splice(index, 1);
@@ -249,7 +262,7 @@ export default function PhotoManagerSection() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          url: photoToDelete,
+          url,
         }),
       });
 
@@ -283,8 +296,8 @@ export default function PhotoManagerSection() {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const oldIndex = items.findIndex((i) => i === active.id);
-    const newIndex = items.findIndex((i) => i === over.id);
+    const oldIndex = items.findIndex((i) => (typeof i === "string" ? i : i.id) === active.id);
+    const newIndex = items.findIndex((i) => (typeof i === "string" ? i : i.id) === over.id);
 
     const newOrder = arrayMove(items, oldIndex, newIndex);
     setItems(newOrder);
@@ -323,11 +336,11 @@ export default function PhotoManagerSection() {
       </p>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={items} strategy={rectSortingStrategy}>
+        <SortableContext items={items.map(i => (typeof i === "string" ? i : i.id))} strategy={rectSortingStrategy}>
           <div className="grid grid-cols-3 gap-3">
             {items.map((photo, index) => (
               <SortablePhoto
-                key={photo}
+                key={typeof photo === "string" ? photo : photo.id}
                 photo={photo}
                 index={index}
                 onDelete={handleDelete}

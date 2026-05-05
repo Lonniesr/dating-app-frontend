@@ -42,8 +42,6 @@ export default function ProfilePage() {
   const [otherUser, setOtherUser] = useState<any>(null);
   const [newInvite, setNewInvite] = useState<any>(null);
   const [prompts, setPrompts] = useState<any[]>([]);
-
-  // ✅ ADDED
   const [canViewMap, setCanViewMap] = useState<Record<string, boolean>>({});
 
   const viewingOtherUser = !!id;
@@ -79,10 +77,9 @@ export default function ProfilePage() {
     }
   }, [authUser, viewingOtherUser]);
 
-  const photos = profileUser.photos ?? [];
-  const age = calculateAge(profileUser.birthdate);
+  const photos = profileUser?.photos ?? [];
+  const age = calculateAge(profileUser?.birthdate);
 
-  // ✅ ADDED (SAFE)
   useEffect(() => {
     const checkAccess = async () => {
       if (!viewingOtherUser) return;
@@ -114,40 +111,6 @@ export default function ProfilePage() {
     onSuccess: (invite) => setNewInvite(invite),
   });
 
-  const handleBlock = async () => {
-    if (!id) return;
-
-    const confirmBlock = window.confirm(
-      "Block this user? You will no longer see or interact with them."
-    );
-    if (!confirmBlock) return;
-
-    try {
-      await apiClient.post("/api/block", { targetId: id });
-      window.location.href = "/user";
-    } catch (err) {
-      console.error("Block failed", err);
-    }
-  };
-
-  const handleReport = async () => {
-    if (!id) return;
-
-    const reason = prompt("Enter reason for report:");
-    if (!reason) return;
-
-    try {
-      await apiClient.post("/api/report", {
-        targetId: id,
-        reason,
-      });
-
-      alert("Report submitted.");
-    } catch (err) {
-      console.error("Report failed", err);
-    }
-  };
-
   if (isLoading) {
     return <div className="p-6 text-white">Loading…</div>;
   }
@@ -167,7 +130,6 @@ export default function ProfilePage() {
           <div className="flex flex-col items-center">
             <div className="w-24 h-24 rounded-full overflow-hidden border border-white/20 bg-white/10">
 
-              {/* ✅ FIXED BLOCK */}
               {photos.length ? (() => {
                 const raw = photos[0];
 
@@ -254,9 +216,49 @@ export default function ProfilePage() {
 
         </div>
 
+        {!viewingOtherUser && (
+          <button
+            onClick={() => createInviteMutation.mutate()}
+            className="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-lg font-semibold"
+          >
+            Invite
+          </button>
+        )}
+
       </div>
 
-      {/* EVERYTHING ELSE UNTOUCHED */}
+      {/* BIO */}
+      {profileUser.bio && (
+        <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+          <h2 className="font-semibold mb-2">Bio</h2>
+          <p>{profileUser.bio}</p>
+        </div>
+      )}
+
+      {/* PROMPTS */}
+      {prompts.length > 0 && (
+        <div className="bg-white/5 p-5 rounded-xl border border-white/10 mb-6">
+          <h2 className="font-semibold mb-4">Personality</h2>
+
+          <div className="space-y-3">
+            {prompts.map((p, i) => (
+              <div key={i}>
+                <p className="text-white/60 text-sm">{p.question}</p>
+                <p className="font-medium">{p.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* OWNER SECTIONS */}
+      {!viewingOtherUser && (
+        <>
+          <SwipeStatsSection />
+          <MatchCountSection />
+          <PhotoManagerSection />
+        </>
+      )}
 
     </div>
   );
