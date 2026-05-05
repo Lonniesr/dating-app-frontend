@@ -38,7 +38,7 @@ type SortablePhotoProps = {
   index: number;
   onDelete: (i: number) => void;
   onMakeMain: (i: number) => void;
-  onTogglePrivacy: (i: number) => void; // ✅ NEW
+  onTogglePrivacy: (i: number) => void;
 };
 
 function SortablePhoto({
@@ -88,11 +88,14 @@ function SortablePhoto({
         </div>
       )}
 
-      {/* 🔒 TOGGLE BUTTON */}
+      {/* 🔒 TOGGLE BUTTON (FIXED) */}
       <button
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
+          console.log("TOGGLE CLICKED");
           onTogglePrivacy(index);
         }}
         className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
@@ -102,13 +105,13 @@ function SortablePhoto({
 
       {/* DELETE BUTTON */}
       <button
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
           onDelete(index);
         }}
-        onPointerDown={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
         className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
       >
         Delete

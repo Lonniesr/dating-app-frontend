@@ -3,7 +3,7 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom"; // ✅ UPDATED
 import axios from "axios";
 
 import { useUserChat } from "./hooks/useUserChat";
@@ -26,10 +26,19 @@ type ChatMessage = {
   };
 };
 
-function resolvePhotoUrl(photo?: string) {
+function resolvePhotoUrl(photo: any) {
   if (!photo) return null;
-  if (photo.startsWith("http")) return photo;
-  const { data } = supabase.storage.from("photos").getPublicUrl(photo);
+
+  const url =
+    typeof photo === "string"
+      ? photo
+      : photo.url;
+
+  if (!url) return null;
+
+  if (url.startsWith("http")) return url;
+
+  const { data } = supabase.storage.from("photos").getPublicUrl(url);
   return data.publicUrl;
 }
 
@@ -65,6 +74,7 @@ function Avatar({
 
 export default function ChatPage() {
   const { id: otherUserId } = useParams<{ id: string }>();
+  const navigate = useNavigate(); // ✅ ADDED
   const userId = otherUserId ?? null;
 
   const { socket, ready, joinConversation } = useChatSocket();
@@ -82,11 +92,10 @@ export default function ChatPage() {
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
-  // 🎤 FIXED MIC STATE
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const hasSentRef = useRef(false); // 🔥 prevents duplicate send
+  const hasSentRef = useRef(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -181,13 +190,9 @@ export default function ChatPage() {
     }
   }
 
-  /* =========================
-     🎤 FIXED MIC FUNCTIONS
-  ========================= */
-
   async function startRecording() {
     try {
-      hasSentRef.current = false; // reset guard
+      hasSentRef.current = false;
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
@@ -202,7 +207,7 @@ export default function ChatPage() {
       };
 
       mediaRecorder.onstop = async () => {
-        if (hasSentRef.current) return; // 🔥 prevent duplicate
+        if (hasSentRef.current) return;
         hasSentRef.current = true;
 
         const blob = new Blob(audioChunksRef.current, {
@@ -245,7 +250,7 @@ export default function ChatPage() {
 
   function stopRecording() {
     if (!mediaRecorderRef.current) return;
-    if (mediaRecorderRef.current.state === "inactive") return; // 🔥 prevents double stop
+    if (mediaRecorderRef.current.state === "inactive") return;
 
     mediaRecorderRef.current.stop();
     setRecording(false);
@@ -258,8 +263,7 @@ export default function ChatPage() {
         {messages.map((msg) => {
           const mine = msg.senderId === meId;
 
-          const photoPath = msg.sender?.photos?.[0]?.url;
-          const avatarUrl = resolvePhotoUrl(photoPath);
+          const avatarUrl = resolvePhotoUrl(msg.sender?.photos?.[0]);
 
           return (
             <div
@@ -269,7 +273,12 @@ export default function ChatPage() {
               }`}
             >
               {!mine && (
-                <Avatar src={avatarUrl} fallback="U" />
+                <div
+                  onClick={() => navigate(`/user/profile/${msg.senderId}`)}
+                  className="cursor-pointer"
+                >
+                  <Avatar src={avatarUrl} fallback="U" />
+                </div>
               )}
 
               <div className="max-w-[70%]">
@@ -315,14 +324,15 @@ export default function ChatPage() {
               </div>
 
               {mine && (
-                <Avatar
-                  src={
-                    authUser?.photos?.[0]
-                      ? resolvePhotoUrl(authUser.photos[0])
-                      : null
-                  }
-                  fallback="ME"
-                />
+                <div
+                  onClick={() => navigate(`/user/profile`)}
+                  className="cursor-pointer"
+                >
+                  <Avatar
+                    src={resolvePhotoUrl(authUser?.photos?.[0])}
+                    fallback="ME"
+                  />
+                </div>
               )}
             </div>
           );
