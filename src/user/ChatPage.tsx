@@ -1,12 +1,9 @@
-// ONLY CHANGES:
-// navigate(`/user/profile/...`) → navigate(`/user/...`)
-
 import {
   useState,
   useEffect,
   useRef,
 } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom"; // ✅ UPDATED
 import axios from "axios";
 
 import { useUserChat } from "./hooks/useUserChat";
@@ -104,6 +101,12 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const quickReactions = ["❤️", "😂", "🔥", "👍"];
+
+  // ✅ ADDED: safe navigation
+  const goToProfile = (id?: string) => {
+    if (!id) return;
+    navigate(`/user/${id}`);
+  };
 
   useEffect(() => {
     if (data?.messages && liveMessages.length === 0) {
@@ -277,7 +280,7 @@ export default function ChatPage() {
             >
               {!mine && (
                 <div
-                  onClick={() => navigate(`/user/${msg.senderId}`)}
+                  onClick={() => goToProfile(msg.senderId)}
                   className="cursor-pointer"
                 >
                   <Avatar src={avatarUrl} fallback="U" />
@@ -285,13 +288,21 @@ export default function ChatPage() {
               )}
 
               <div className="max-w-[70%]">
-                <div className={`px-4 py-2 rounded-2xl ${mine ? "bg-pink-500" : "bg-white/10"}`}>
-                  {msg.imageUrl && <img src={msg.imageUrl} className="mb-2 rounded-lg" />}
+                <div
+                  className={`px-4 py-2 rounded-2xl ${
+                    mine ? "bg-pink-500" : "bg-white/10"
+                  }`}
+                >
+                  {msg.imageUrl && (
+                    <img src={msg.imageUrl} className="mb-2 rounded-lg" />
+                  )}
+
                   {msg.audioUrl && (
                     <audio controls className="mb-2">
                       <source src={msg.audioUrl} type="audio/webm" />
                     </audio>
                   )}
+
                   {msg.text}
                 </div>
 
