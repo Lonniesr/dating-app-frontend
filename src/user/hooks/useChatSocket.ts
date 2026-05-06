@@ -36,7 +36,6 @@ export function useChatSocket() {
 
       s.emit("chat:join", authUser.id);
 
-      // 🔥 FORCE REJOIN AFTER CONNECT
       if (currentRoomRef.current) {
         console.log("🔁 Rejoining room:", currentRoomRef.current);
 
@@ -44,7 +43,6 @@ export function useChatSocket() {
           otherUserId: currentRoomRef.current,
         });
 
-        // 🔥 second emit to beat race conditions
         setTimeout(() => {
           s.emit("conversation:join", {
             otherUserId: currentRoomRef.current!,
@@ -62,10 +60,6 @@ export function useChatSocket() {
     s.on("connect_error", (err) => {
       console.error("❌ SOCKET ERROR:", err.message);
     });
-
-    /* =========================
-       TYPING LISTENERS
-    ========================= */
 
     s.on("typing:start", (data: any) => {
       console.log("👀 RECEIVED typing:start:", data);
@@ -89,20 +83,7 @@ export function useChatSocket() {
 
   }, [authUser?.id]);
 
-  useEffect(() => {
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-        setSocket(null);
-        setReady(false);
-      }
-    };
-  }, []);
-
-  /* =========================
-     JOIN CONVERSATION (FIXED)
-  ========================= */
+  // ❌ REMOVED socket disconnect on unmount (THIS WAS THE PROBLEM)
 
   const joinConversation = (otherUserId: string) => {
     if (!socketRef.current) return;
@@ -111,12 +92,10 @@ export function useChatSocket() {
 
     console.log("🚪 JOIN (FORCED):", otherUserId);
 
-    // 🔥 send immediately
     socketRef.current.emit("conversation:join", {
       otherUserId,
     });
 
-    // 🔥 retry (handles race condition)
     setTimeout(() => {
       socketRef.current?.emit("conversation:join", {
         otherUserId,
