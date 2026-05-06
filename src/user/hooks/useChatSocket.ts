@@ -19,13 +19,11 @@ export function useChatSocket() {
 
     const s = io(import.meta.env.VITE_API_URL, {
       transports: ["websocket"],
+      withCredentials: true, // ✅ FIX: use cookie auth
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       timeout: 20000,
-      auth: {
-        token: localStorage.getItem("token"),
-      },
     });
 
     socketRef.current = s;
@@ -82,8 +80,6 @@ export function useChatSocket() {
     });
 
   }, [authUser?.id]);
-
-  // ❌ REMOVED socket disconnect on unmount (THIS WAS THE PROBLEM)
 
   const joinConversation = (otherUserId: string) => {
     if (!socketRef.current) return;
