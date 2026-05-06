@@ -40,6 +40,9 @@ import ChatPage from "./user/ChatPage";
 /* ✅ NEW */
 import SelfieVerificationPage from "./user/SelfieVerificationPage";
 
+/* ✅ ADDED */
+import PhotoRequestsPage from "./user/PhotoRequestsPage";
+
 import UserLayout from "./user/layout/UserLayout";
 import ProtectedRoute from "./user/routes/ProtectedRoute";
 
@@ -84,6 +87,9 @@ export default function App() {
 
           {/* ✅ NEW ROUTE */}
           <Route path="verify-selfie" element={<SelfieVerificationPage />} />
+
+          {/* ✅ ADDED ROUTE */}
+          <Route path="requests" element={<PhotoRequestsPage />} />
 
         </Route>
 
