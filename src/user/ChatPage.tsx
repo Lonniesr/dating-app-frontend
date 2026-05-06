@@ -90,6 +90,8 @@ export default function ChatPage() {
 
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  // 🔥 REQUIRED FOR SMART REQUEST BUTTON
+  const [requestMap, setRequestMap] = useState<Record<string, string>>({});
 
   // 🎤 MICROPHONE (ADDED ONLY)
   const [recording, setRecording] = useState(false);
@@ -170,44 +172,70 @@ export default function ChatPage() {
   const [profileData, setProfileData] = useState<any | null>(null);
   const [requesting, setRequesting] = useState(false);
 
-  async function openProfile(userId: string) {
-    try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/profile/${userId}`,
-        { withCredentials: true }
-      );
+ async function openProfile(userId: string) {
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_API_URL}/api/profile/${userId}`,
+      { withCredentials: true }
+    );
 
-      setProfileData(res.data);
-      setSelectedUser(userId);
-    } catch (err) {
-      console.error("Failed to load profile", err);
-    }
+    setProfileData(res.data);
+    setSelectedUser(userId);
+
+    // 🔥 load request state
+    const reqRes = await axios.get(
+      `${import.meta.env.VITE_API_URL}/api/photo-access/mine`,
+      { withCredentials: true }
+    );
+
+    const map: Record<string, string> = {};
+
+    reqRes.data.forEach((r: any) => {
+      map[r.photoId] = r.status;
+    });
+
+    setRequestMap(map);
+
+  } catch (err) {
+    console.error("Failed to load profile", err);
   }
+}
 
-  function closeProfile() {
-    setSelectedUser(null);
-    setProfileData(null);
+async function requestAccess(photoId: string, ownerId: string) {
+  try {
+    // 🔥 optimistic UI
+    setRequestMap(prev => ({
+      ...prev,
+      [photoId]: "pending"
+    }));
+
+    await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/photo-access/request`,
+      {
+        photoId,
+        ownerId
+      },
+      { withCredentials: true }
+    );
+
+  } catch (err) {
+    console.error("Request failed", err);
+
+    // rollback
+    setRequestMap(prev => {
+      const copy = { ...prev };
+      delete copy[photoId];
+      return copy;
+    });
   }
+}
+  
+function closeProfile() {
+  setSelectedUser(null);
+  setProfileData(null);
+}
 
-  async function requestAccess(userId: string) {
-    try {
-      setRequesting(true);
-
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/photo-access/request`,
-        { userId },
-        { withCredentials: true }
-      );
-
-      alert("Request sent");
-    } catch (err) {
-      console.error("Request failed", err);
-    } finally {
-      setRequesting(false);
-    }
-  }
-
-  useEffect(() => {
+useEffect(() => {
     if (data?.messages && liveMessages.length === 0) {
       setLiveMessages(data.messages as ChatMessage[]);
     }
@@ -428,15 +456,37 @@ export default function ChatPage() {
                     />
 
                     {isPrivate && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-xl">
-                        <button
-                          onClick={() => requestAccess(profileData.id)}
-                          className="bg-pink-500 px-4 py-2 rounded"
-                        >
-                          {requesting ? "Requesting..." : "Request Access"}
-                        </button>
-                      </div>
-                    )}
+  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-xl">
+
+    {/* NOT REQUESTED */}
+    {!requestMap[p.id] && (
+      <button
+        onClick={() => requestAccess(p.id, profileData.id)}
+        className="bg-pink-500 px-4 py-2 rounded"
+      >
+        Request Access
+      </button>
+    )}
+
+    {/* PENDING */}
+    {requestMap[p.id] === "pending" && (
+      <button
+        disabled
+        className="bg-gray-500 px-4 py-2 rounded opacity-70"
+      >
+        Requested
+      </button>
+    )}
+
+    {/* APPROVED */}
+    {requestMap[p.id] === "approved" && (
+      <div className="text-green-400 text-sm">
+        Access granted
+      </div>
+    )}
+
+  </div>
+)}
                   </div>
                 );
               })}
