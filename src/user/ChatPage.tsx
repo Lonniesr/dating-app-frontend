@@ -292,6 +292,8 @@ export default function ChatPage() {
     }
   }
 
+  // ... EVERYTHING ABOVE YOUR RETURN STAYS EXACTLY THE SAME
+
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
@@ -375,14 +377,88 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* INPUT BAR WITH MIC */}
+      {/* ✅ PROFILE MODAL (ADDED BACK WITH REQUEST ACCESS) */}
+      {selectedUser && profileData && (
+        <div className="fixed inset-0 bg-black/90 z-50 overflow-y-auto">
+          <button
+            onClick={closeProfile}
+            className="absolute top-6 right-6 text-white text-3xl"
+          >
+            ✕
+          </button>
+
+          <div className="max-w-md mx-auto pt-16 pb-24 text-white px-4">
+
+            <h2 className="text-2xl font-bold">
+              {profileData.username || profileData.name}
+              {profileData.age && `, ${profileData.age}`}
+            </h2>
+
+            {profileData.location && (
+              <p className="text-white/60 mt-1">{profileData.location}</p>
+            )}
+
+            {profileData.bio && (
+              <p className="mt-3 text-white/80">{profileData.bio}</p>
+            )}
+
+            {Array.isArray(profileData.prompts) && profileData.prompts.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {profileData.prompts.map((p: any, i: number) => (
+                  <div key={i} className="bg-white/5 p-3 rounded-xl">
+                    <p className="text-xs text-white/50">{p.question}</p>
+                    <p>{p.answer}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {Array.isArray(profileData.photos) &&
+              profileData.photos.map((p: any, i: number) => {
+                const isPrivate = typeof p === "object" && p.isPrivate;
+                const url = typeof p === "string" ? p : p.url;
+
+                return (
+                  <div key={i} className="relative mt-4">
+                    <img
+                      src={url}
+                      className={`w-full rounded-xl ${
+                        isPrivate ? "blur-xl" : ""
+                      }`}
+                    />
+
+                    {isPrivate && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-xl">
+                        <button
+                          onClick={() => requestAccess(profileData.id)}
+                          className="bg-pink-500 px-4 py-2 rounded"
+                        >
+                          {requesting ? "Requesting..." : "Request Access"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+          </div>
+        </div>
+      )}
+
+      {/* INPUT BAR WITH FIXED MIC */}
       <div className="p-4 flex items-center gap-2">
         <button onClick={() => fileInputRef.current?.click()}>📎</button>
 
         <button
-          onMouseDown={startRecording}
-          onMouseUp={stopRecording}
-          onMouseLeave={stopRecording}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            startRecording();
+          }}
+          onPointerUp={(e) => {
+            e.stopPropagation();
+            stopRecording();
+          }}
+          onPointerLeave={stopRecording}
           className={recording ? "text-red-500" : ""}
         >
           🎤
