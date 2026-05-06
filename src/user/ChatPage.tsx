@@ -3,7 +3,7 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { useParams, useNavigate } from "react-router-dom"; // ✅ UPDATED
+import { useParams } from "react-router-dom";
 import axios from "axios";
 
 import { useUserChat } from "./hooks/useUserChat";
@@ -74,7 +74,6 @@ function Avatar({
 
 export default function ChatPage() {
   const { id: otherUserId } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const userId = otherUserId ?? null;
 
   const { socket, ready, joinConversation } = useChatSocket();
@@ -92,21 +91,121 @@ export default function ChatPage() {
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
+  // 🎤 MICROPHONE (ADDED ONLY)
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const hasSentRef = useRef(false);
+
+  async function startRecording() {
+    try {
+      hasSentRef.current = false;
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        if (hasSentRef.current) return;
+        hasSentRef.current = true;
+
+        const blob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
+
+        const filePath = `chat-audio/audio-${Date.now()}.webm`;
+
+        const { error } = await supabase.storage
+          .from("photos")
+          .upload(filePath, blob);
+
+        if (error) return;
+
+        const { data } = supabase.storage
+          .from("photos")
+          .getPublicUrl(filePath);
+
+        const res = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/messages/${userId}`,
+          {
+            text: null,
+            audioUrl: data.publicUrl,
+          },
+          { withCredentials: true }
+        );
+
+        setLiveMessages((prev) => [...prev, res.data]);
+      };
+
+      recorder.start();
+      setRecording(true);
+    } catch (err) {
+      console.error("Mic error", err);
+    }
+  }
+
+  function stopRecording() {
+    if (!mediaRecorderRef.current) return;
+    if (mediaRecorderRef.current.state === "inactive") return;
+
+    mediaRecorderRef.current.stop();
+    setRecording(false);
+  }
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const quickReactions = ["❤️", "😂", "🔥", "👍"];
 
-  // ✅ ADDED: safe navigation
-  const goToProfile = (id?: string) => {
-    if (!id) return;
-    navigate(`/user/${id}`);
-  };
+  // PROFILE STATE
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState<any | null>(null);
+  const [requesting, setRequesting] = useState(false);
+
+  async function openProfile(userId: string) {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/profile/${userId}`,
+        { withCredentials: true }
+      );
+
+      setProfileData(res.data);
+      setSelectedUser(userId);
+    } catch (err) {
+      console.error("Failed to load profile", err);
+    }
+  }
+
+  function closeProfile() {
+    setSelectedUser(null);
+    setProfileData(null);
+  }
+
+  async function requestAccess(userId: string) {
+    try {
+      setRequesting(true);
+
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/photo-access/request`,
+        { userId },
+        { withCredentials: true }
+      );
+
+      alert("Request sent");
+    } catch (err) {
+      console.error("Request failed", err);
+    } finally {
+      setRequesting(false);
+    }
+  }
 
   useEffect(() => {
     if (data?.messages && liveMessages.length === 0) {
@@ -166,10 +265,7 @@ export default function ChatPage() {
           .from("photos")
           .upload(filePath, selectedImage);
 
-        if (error) {
-          console.error("UPLOAD ERROR:", error);
-          return;
-        }
+        if (error) return;
 
         const { data } = supabase.storage
           .from("photos")
@@ -196,79 +292,12 @@ export default function ChatPage() {
     }
   }
 
-  async function startRecording() {
-    try {
-      hasSentRef.current = false;
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        if (hasSentRef.current) return;
-        hasSentRef.current = true;
-
-        const blob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
-        });
-
-        const filePath = `chat-audio/audio-${Date.now()}.webm`;
-
-        const { error } = await supabase.storage
-          .from("photos")
-          .upload(filePath, blob);
-
-        if (error) {
-          console.error("AUDIO UPLOAD ERROR:", error);
-          return;
-        }
-
-        const { data } = supabase.storage
-          .from("photos")
-          .getPublicUrl(filePath);
-
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/messages/${userId}`,
-          {
-            text: null,
-            audioUrl: data.publicUrl,
-          },
-          { withCredentials: true }
-        );
-
-        setLiveMessages((prev) => [...prev, res.data]);
-      };
-
-      mediaRecorder.start();
-      setRecording(true);
-    } catch (err) {
-      console.error("MIC ERROR:", err);
-    }
-  }
-
-  function stopRecording() {
-    if (!mediaRecorderRef.current) return;
-    if (mediaRecorderRef.current.state === "inactive") return;
-
-    mediaRecorderRef.current.stop();
-    setRecording(false);
-  }
-
   return (
     <div className="flex flex-col h-full bg-black text-white">
 
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {messages.map((msg) => {
           const mine = msg.senderId === meId;
-
           const avatarUrl = resolvePhotoUrl(msg.sender?.photos?.[0]);
 
           return (
@@ -280,7 +309,7 @@ export default function ChatPage() {
             >
               {!mine && (
                 <div
-                  onClick={() => goToProfile(msg.senderId)}
+                  onClick={() => openProfile(msg.senderId)}
                   className="cursor-pointer"
                 >
                   <Avatar src={avatarUrl} fallback="U" />
@@ -331,7 +360,7 @@ export default function ChatPage() {
 
               {mine && (
                 <div
-                  onClick={() => navigate(`/user`)}
+                  onClick={() => openProfile(authUser?.id!)}
                   className="cursor-pointer"
                 >
                   <Avatar
@@ -346,10 +375,9 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
+      {/* INPUT BAR WITH MIC */}
       <div className="p-4 flex items-center gap-2">
-        <button onClick={() => fileInputRef.current?.click()}>
-          📎
-        </button>
+        <button onClick={() => fileInputRef.current?.click()}>📎</button>
 
         <button
           onMouseDown={startRecording}
