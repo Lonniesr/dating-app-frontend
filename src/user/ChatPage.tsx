@@ -359,7 +359,6 @@ useEffect(() => {
         { withCredentials: true }
       );
 
-      setLiveMessages((prev) => [...prev, res.data]);
 
       setText("");
       setSelectedImage(null);
