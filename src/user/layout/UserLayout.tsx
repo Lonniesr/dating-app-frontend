@@ -6,14 +6,16 @@ type BadgeCounts = {
   unreadMessages: number;
   newLikes: number;
   newMatches: number;
+  photoRequests: number; // 👈 ADD THIS
 };
 
 export default function UserLayout() {
   const [badges, setBadges] = useState<BadgeCounts>({
-    unreadMessages: 0,
-    newLikes: 0,
-    newMatches: 0,
-  });
+  unreadMessages: 0,
+  newLikes: 0,
+  newMatches: 0,
+  photoRequests: 0, // 👈 ADD THIS
+});
 
   const base =
     "flex items-center justify-between px-4 py-2 rounded-lg transition font-medium";
@@ -34,11 +36,28 @@ export default function UserLayout() {
 
         const data = await res.json();
 
-        setBadges({
-          unreadMessages: data.unreadMessages ?? 0,
-          newLikes: data.newLikes ?? 0,
-          newMatches: data.newMatches ?? 0,
-        });
+       let photoRequests = 0;
+
+try {
+  const reqRes = await fetch(
+    `${import.meta.env.VITE_API_URL}/api/photo-access/incoming`,
+    { credentials: "include" }
+  );
+
+  if (reqRes.ok) {
+    const reqData = await reqRes.json();
+    photoRequests = reqData?.length || 0;
+  }
+} catch (err) {
+  console.error("Photo request count failed", err);
+}
+
+setBadges({
+  unreadMessages: data.unreadMessages ?? 0,
+  newLikes: data.newLikes ?? 0,
+  newMatches: data.newMatches ?? 0,
+  photoRequests, // 👈 ADD THIS
+});
       } catch (err) {
         console.error("Badge load failed", err);
       }
@@ -98,7 +117,15 @@ export default function UserLayout() {
             <span>Messages</span>
             <Badge count={badges.unreadMessages} />
           </NavLink>
-
+            <NavLink
+  to="requests"
+  className={({ isActive }) =>
+    `${base} ${isActive ? active : inactive}`
+  }
+>
+  <span>Requests</span>
+  <Badge count={badges.photoRequests} />
+</NavLink>
           <NavLink
             to="profile"
             className={({ isActive }) =>

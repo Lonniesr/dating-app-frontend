@@ -10,6 +10,7 @@ import { useUserChat } from "./hooks/useUserChat";
 import { useChatSocket } from "./hooks/useChatSocket";
 import { useUserAuth } from "./context/UserAuthContext";
 import { supabase } from "../lib/supabaseClient";
+import toast from "react-hot-toast";
 
 type ChatMessage = {
   id: string;
@@ -276,6 +277,41 @@ useEffect(() => {
       socket.off("message:new");
     };
   }, [socket, ready]);
+  
+  useEffect(() => {
+  if (!socket) return;
+
+  // 📩 NEW REQUEST (for photo owner)
+  socket.on("photo:request:new", () => {
+    toast("📩 New photo request");
+  });
+
+  // ✅ APPROVED
+  socket.on("photo:request:approved", ({ photoId }) => {
+    setRequestMap((prev) => ({
+      ...prev,
+      [photoId]: "approved",
+    }));
+
+    toast.success("Access granted 🎉");
+  });
+
+  // ❌ DENIED
+  socket.on("photo:request:denied", ({ photoId }) => {
+    setRequestMap((prev) => ({
+      ...prev,
+      [photoId]: "denied",
+    }));
+
+    toast.error("Request denied");
+  });
+
+  return () => {
+    socket.off("photo:request:new");
+    socket.off("photo:request:approved");
+    socket.off("photo:request:denied");
+  };
+}, [socket]);
 
   const addReaction = (messageId: string, emoji: string) => {
     setLiveMessages((prev) =>
