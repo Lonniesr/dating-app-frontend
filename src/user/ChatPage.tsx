@@ -194,10 +194,15 @@ export default function ChatPage() {
       map[r.photoId] = r.status;
     });
 
-    setRequestMap(prev => ({
-  ...prev,
-  ...map
-}));
+    setRequestMap(prev => {
+  const merged = { ...prev };
+
+  Object.entries(map).forEach(([photoId, status]) => {
+    merged[photoId] = status;
+  });
+
+  return merged;
+});
   } catch (err) {
     console.error("Failed to load profile", err);
   }
@@ -205,7 +210,7 @@ export default function ChatPage() {
 
 async function requestAccess(photoId: string, ownerId: string) {
   try {
-    // 🔥 optimistic UI
+    // optimistic (instant)
     setRequestMap(prev => ({
       ...prev,
       [photoId]: "pending"
@@ -220,10 +225,15 @@ async function requestAccess(photoId: string, ownerId: string) {
       { withCredentials: true }
     );
 
+    // 🔥 FORCE CONFIRM (this is the missing piece)
+    setRequestMap(prev => ({
+      ...prev,
+      [photoId]: "pending"
+    }));
+
   } catch (err) {
     console.error("Request failed", err);
 
-    // rollback
     setRequestMap(prev => {
       const copy = { ...prev };
       delete copy[photoId];
@@ -445,6 +455,11 @@ useEffect(() => {
 
             {Array.isArray(profileData.photos) &&
               profileData.photos.map((p: any, i: number) => {
+                
+                console.log("PHOTO:", p);
+                console.log("PHOTO ID:", p?.id);
+                console.log("STATUS:", requestMap[p?.id]);
+                
                 const isPrivate = typeof p === "object" && p.isPrivate;
                 const url = typeof p === "string" ? p : p.url;
 

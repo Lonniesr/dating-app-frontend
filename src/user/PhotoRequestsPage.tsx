@@ -49,10 +49,32 @@ export default function PhotoRequestsPage() {
       {requests.map((r) => (
         <div key={r.id} className="bg-white/5 p-4 rounded-xl mb-4">
           <div className="flex gap-3 items-center mb-3">
-            <img
-              src={r.photo.url}
-              className="w-16 h-16 rounded-lg object-cover"
-            />
+            <div className="flex gap-3 items-center mb-3">
+
+  {/* 👤 REQUESTER AVATAR */}
+  <img
+    src={r.requester.photos?.[0]?.url || ""}
+    className="w-10 h-10 rounded-full object-cover bg-gray-600"
+  />
+
+  {/* 🖼️ PHOTO */}
+  <img
+    src={r.photo.url}
+    className="w-16 h-16 rounded-lg object-cover"
+  />
+
+  <div>
+    <p className="font-semibold">
+      {r.requester.username || r.requester.name}
+    </p>
+
+    {r.message && (
+      <p className="text-sm text-white/60">
+        "{r.message}"
+      </p>
+    )}
+  </div>
+</div>
 
             <div>
               <p className="font-semibold">
