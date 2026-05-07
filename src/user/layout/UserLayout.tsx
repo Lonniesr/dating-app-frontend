@@ -17,6 +17,12 @@ export default function UserLayout() {
   photoRequests: 0, // 👈 ADD THIS
 });
 
+const totalNotifications =
+  badges.unreadMessages +
+  badges.newLikes +
+  badges.newMatches +
+  badges.photoRequests;
+
   const base =
     "flex items-center justify-between px-4 py-2 rounded-lg transition font-medium";
   const inactive =
@@ -90,42 +96,51 @@ setBadges({
 
         <nav className="space-y-2">
           <NavLink
-            to="discover"
-            className={({ isActive }) =>
-              `${base} ${isActive ? active : inactive}`
-            }
-          >
-            <span>Discover</span>
-          </NavLink>
+    to="requests"
+    className={({ isActive }) =>
+      `${base} ${isActive ? active : inactive}`
+    }
+  >
+    <div className="flex items-center justify-between w-full">
+      <span>🔔 Notifications</span>
+      <Badge count={totalNotifications} />
+    </div>
+  </NavLink> 
 
           <NavLink
-            to="matches"
-            className={({ isActive }) =>
-              `${base} ${isActive ? active : inactive}`
-            }
-          >
-            <span>Matches</span>
-            <Badge count={badges.newMatches + badges.newLikes} />
-          </NavLink>
+  to="matches"
+  className={({ isActive }) =>
+    `${base} ${isActive ? active : inactive}`
+  }
+>
+  <div className="flex items-center justify-between w-full">
+    <span>Matches</span>
+  </div>
+</NavLink>
 
-          <NavLink
-            to="messages"
-            className={({ isActive }) =>
-              `${base} ${isActive ? active : inactive}`
-            }
-          >
-            <span>Messages</span>
-            <Badge count={badges.unreadMessages} />
-          </NavLink>
-            <NavLink
+<NavLink
+  to="messages"
+  className={({ isActive }) =>
+    `${base} ${isActive ? active : inactive}`
+  }
+>
+  <div className="flex items-center justify-between w-full">
+    <span>Messages</span>
+  </div>
+</NavLink>
+
+ 
+<NavLink
   to="requests"
   className={({ isActive }) =>
     `${base} ${isActive ? active : inactive}`
   }
 >
-  <span>Requests</span>
-  <Badge count={badges.photoRequests} />
+  <div className="flex items-center justify-between w-full">
+    <span>Requests</span>
+  </div>
 </NavLink>
+
           <NavLink
             to="profile"
             className={({ isActive }) =>
