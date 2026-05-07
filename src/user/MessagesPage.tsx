@@ -51,8 +51,16 @@ export default function MatchesPage() {
 
   return (
     <div className="p-6 text-white space-y-6">
-      <h1 className="text-2xl font-bold">Your Matches</h1>
+      <div className="flex items-center justify-between">
+  <h1 className="text-2xl font-bold">Your Matches</h1>
 
+  <button
+    onClick={() => navigate("/user/requests")}
+    className="bg-pink-500 px-4 py-2 rounded-lg text-sm font-semibold"
+  >
+    Requests
+  </button>
+</div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredMatches.map((match: MatchItem) => {
           const primaryPhoto =
