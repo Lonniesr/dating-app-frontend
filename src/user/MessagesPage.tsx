@@ -1,4 +1,4 @@
-// ONLY CHANGE: added block filter safely — nothing else touched
+// ONLY CHANGE: fixed hook order (no logic changes)
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -24,16 +24,6 @@ export default function MatchesPage() {
   const [search, setSearch] = useState("");
   const [requestCount, setRequestCount] = useState(0);
 
-  if (isLoading) {
-    return (
-      <div className="p-6 text-white">
-        <h1 className="text-2xl font-bold mb-6">Your Matches</h1>
-      </div>
-    );
-  }
-
-  const matches: MatchItem[] = data || [];
-
   /* =========================
      BLOCK FILTER (ADDED)
   ========================= */
@@ -58,6 +48,7 @@ export default function MatchesPage() {
     }
   }
 
+  // ✅ ALWAYS ABOVE RETURN
   useEffect(() => {
     loadRequestCount();
 
@@ -66,11 +57,22 @@ export default function MatchesPage() {
     return () => clearInterval(interval);
   }, []);
 
+  const matches: MatchItem[] = data || [];
+
   const filteredMatches = matches
     .filter((m) => !blocked.includes(m.id))
     .filter((m) =>
       m.name.toLowerCase().includes(search.toLowerCase())
     );
+
+  // ✅ RETURN AFTER HOOKS
+  if (isLoading) {
+    return (
+      <div className="p-6 text-white">
+        <h1 className="text-2xl font-bold mb-6">Your Matches</h1>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 text-white space-y-6">
