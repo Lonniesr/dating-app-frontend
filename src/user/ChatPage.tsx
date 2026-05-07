@@ -194,8 +194,10 @@ export default function ChatPage() {
       map[r.photoId] = r.status;
     });
 
-    setRequestMap(map);
-
+    setRequestMap(prev => ({
+  ...prev,
+  ...map
+}));
   } catch (err) {
     console.error("Failed to load profile", err);
   }
