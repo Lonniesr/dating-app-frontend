@@ -1,9 +1,10 @@
 // ONLY CHANGE: added block filter safely — nothing else touched
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMatches } from "../hooks/useMatches";
 import { getProfilePhoto } from "../utils/getProfilePhoto";
+import axios from "axios";
 
 interface MatchItem {
   id: string;
@@ -21,6 +22,7 @@ export default function MatchesPage() {
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
+  const [requestCount, setRequestCount] = useState(0);
 
   if (isLoading) {
     return (
@@ -43,6 +45,27 @@ export default function MatchesPage() {
     }
   })();
 
+  async function loadRequestCount() {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/photo-access/incoming`,
+        { withCredentials: true }
+      );
+
+      setRequestCount(res.data?.length || 0);
+    } catch (err) {
+      console.error("Failed to load request count", err);
+    }
+  }
+
+  useEffect(() => {
+    loadRequestCount();
+
+    const interval = setInterval(loadRequestCount, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const filteredMatches = matches
     .filter((m) => !blocked.includes(m.id))
     .filter((m) =>
@@ -51,16 +74,26 @@ export default function MatchesPage() {
 
   return (
     <div className="p-6 text-white space-y-6">
-      <div className="flex items-center justify-between">
-  <h1 className="text-2xl font-bold">Your Matches</h1>
 
-  <button
-    onClick={() => navigate("/user/requests")}
-    className="bg-pink-500 px-4 py-2 rounded-lg text-sm font-semibold"
-  >
-    Requests
-  </button>
-</div>
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Your Matches</h1>
+
+        <button
+          onClick={() => navigate("/user/requests")}
+          className="bg-pink-500 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2"
+        >
+          Requests
+
+          {requestCount > 0 && (
+            <span className="bg-red-500 text-xs px-2 py-0.5 rounded-full">
+              {requestCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* MATCH GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredMatches.map((match: MatchItem) => {
           const primaryPhoto =
@@ -94,6 +127,7 @@ export default function MatchesPage() {
           );
         })}
       </div>
+
     </div>
   );
 }
