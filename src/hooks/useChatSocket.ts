@@ -33,9 +33,12 @@ export function useChatSocket() {
     socket.on("connect", () => {
       console.log("💬 Socket connected:", socket.id);
 
+      // 🔥 REQUIRED: register user on socket
+      socket.emit("chat:join", authUser.id);
+
       setReady(true);
 
-      // 🔥 FORCE REJOIN AFTER CONNECT
+      // 🔁 rejoin conversation if needed
       if (currentConversationRef.current) {
         console.log("🔁 Rejoining conversation:", currentConversationRef.current);
 
@@ -77,13 +80,12 @@ export function useChatSocket() {
   }, [authUser?.id]);
 
   /* =========================
-     🔥 JOIN CONVERSATION (FIXED)
+     🔥 JOIN CONVERSATION
   ========================= */
 
   function joinConversation(otherUserId: string) {
     if (!socketRef.current) return;
 
-    // 🔥 store it so reconnect works
     currentConversationRef.current = otherUserId;
 
     console.log("📡 Joining conversation with:", otherUserId);
