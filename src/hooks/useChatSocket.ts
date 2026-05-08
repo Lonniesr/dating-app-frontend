@@ -80,17 +80,21 @@ export function useChatSocket() {
        🔥 FIX: NOTIFICATION FILTER
     ========================= */
 
-    socket.on("notification:message", ({ fromUserId }) => {
-      if (fromUserId === activeChatRef.current) {
-        console.log("🔕 Suppressed notification (already in chat)");
-        return;
-      }
+   socket.on("notification:message", ({ fromUserId }) => {
+  const active = activeChatRef.current;
 
-      console.log("🔔 New message notification");
-
-      // 👉 If you are using toast:
-      // toast("💬 New message");
+  if (active && String(fromUserId) === String(active)) {
+    console.log("🔕 Suppressed notification (already in chat)", {
+      fromUserId,
+      active,
     });
+    return;
+  }
+
+  console.log("🔔 New message notification", { fromUserId, active });
+
+  // toast("💬 New message");
+}); 
 
     return () => {
       // DO NOT disconnect
