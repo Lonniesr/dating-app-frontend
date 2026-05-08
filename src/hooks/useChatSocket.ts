@@ -18,7 +18,7 @@ export function useChatSocket() {
 
     const socket = io(import.meta.env.VITE_API_URL, {
       path: "/socket.io",
-      transports: ["websocket"], // 🔥 FIX: force stable connection
+      transports: ["websocket"],
       withCredentials: true,
     });
 
@@ -30,9 +30,6 @@ export function useChatSocket() {
 
     socket.on("connect", () => {
       console.log("💬 Socket connected:", socket.id);
-
-      socket.emit("chat:join", authUser.id);
-
       setReady(true);
     });
 
@@ -52,8 +49,6 @@ export function useChatSocket() {
     socket.on("message:new", () => {
       console.log("📩 message:new received");
 
-      queryClient.invalidateQueries({ queryKey: ["chat"] });
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     });
 
     socket.on("conversation:update", () => {
@@ -70,13 +65,27 @@ export function useChatSocket() {
 
     return () => {
       // ❌ DO NOT disconnect here
-      // prevents message loss due to reconnect loop
     };
 
   }, [authUser?.id]);
 
+  /* =========================
+     🔥 FIX: JOIN CONVERSATION
+  ========================= */
+
+  function joinConversation(otherUserId: string) {
+    if (!socketRef.current) return;
+
+    console.log("📡 Joining conversation with:", otherUserId);
+
+    socketRef.current.emit("conversation:join", {
+      otherUserId,
+    });
+  }
+
   return {
     socket: socketRef.current,
     ready,
+    joinConversation, // 🔥 THIS WAS MISSING
   };
 }
