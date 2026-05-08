@@ -84,10 +84,7 @@ export default function ChatPage() {
   const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
   const { data } = useUserChat(userId);
 
-  const messages =
-    liveMessages.length === 0
-      ? (data?.messages as ChatMessage[]) || []
-      : liveMessages;
+  const messages = liveMessages;
 
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -145,7 +142,6 @@ export default function ChatPage() {
           { withCredentials: true }
         );
 
-        setLiveMessages((prev) => [...prev, res.data]);
       };
 
       recorder.start();
@@ -249,10 +245,10 @@ function closeProfile() {
 }
 
 useEffect(() => {
-    if (data?.messages && liveMessages.length === 0) {
-      setLiveMessages(data.messages as ChatMessage[]);
-    }
-  }, [data]);
+  if (data?.messages) {
+    setLiveMessages(data.messages as ChatMessage[]);
+  }
+}, [data]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
