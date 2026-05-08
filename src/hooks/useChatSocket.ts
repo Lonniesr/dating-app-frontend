@@ -13,6 +13,9 @@ export function useChatSocket() {
   // 🔥 persist current conversation
   const currentConversationRef = useRef<string | null>(null);
 
+  // 🔥 track active chat for notification suppression
+  const activeChatRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!authUser?.id) return;
 
@@ -73,6 +76,22 @@ export function useChatSocket() {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     });
 
+    /* =========================
+       🔥 FIX: NOTIFICATION FILTER
+    ========================= */
+
+    socket.on("notification:message", ({ fromUserId }) => {
+      if (fromUserId === activeChatRef.current) {
+        console.log("🔕 Suppressed notification (already in chat)");
+        return;
+      }
+
+      console.log("🔔 New message notification");
+
+      // 👉 If you are using toast:
+      // toast("💬 New message");
+    });
+
     return () => {
       // DO NOT disconnect
     };
@@ -87,6 +106,7 @@ export function useChatSocket() {
     if (!socketRef.current) return;
 
     currentConversationRef.current = otherUserId;
+    activeChatRef.current = otherUserId; // 🔥 track active chat
 
     console.log("📡 Joining conversation with:", otherUserId);
 
