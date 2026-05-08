@@ -255,9 +255,20 @@ useEffect(() => {
   }, [liveMessages]);
 
   useEffect(() => {
-    if (!socket || !ready || !userId) return;
-    joinConversation(userId);
-  }, [socket, ready, userId]);
+  if (!socket || !ready || !userId) return;
+
+  // 🔥 TRACK ACTIVE CHAT GLOBALLY (THIS FIXES FIREBASE)
+  (window as any).__ACTIVE_CHAT__ = userId;
+
+  console.log("🟢 ACTIVE CHAT SET:", userId);
+
+  joinConversation(userId);
+
+  return () => {
+    console.log("🔴 ACTIVE CHAT CLEARED");
+    (window as any).__ACTIVE_CHAT__ = null;
+  };
+}, [socket, ready, userId]);
 
   useEffect(() => {
     if (!socket || !ready) return;

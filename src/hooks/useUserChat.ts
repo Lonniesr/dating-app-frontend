@@ -9,7 +9,7 @@ interface ChatResponse {
   isBlocked: boolean;
 }
 
-/* 🔥 SAFE FIREBASE INIT (NO IMPORT DEPENDENCY) */
+/* 🔥 SAFE FIREBASE INIT */
 const firebaseConfig = {
   apiKey: "AIzaSyCuaQAKF0pXrKWWrdRObhV158dNbIzQn4U",
   authDomain: "lynq-3ba2d.firebaseapp.com",
@@ -34,6 +34,26 @@ export function useUserChat(otherUserId: string | null) {
 
       unsubscribe = onMessage(messaging, (payload) => {
         console.log("🔥 Foreground message:", payload);
+
+        // 🔥 ACTIVE CHAT FROM GLOBAL (set in ChatPage)
+        const activeChat = (window as any).__ACTIVE_CHAT__;
+        const fromUserId =
+          payload?.data?.senderId ||
+          payload?.data?.userId ||
+          payload?.data?.fromUserId;
+
+        console.log("📊 Notification check:", {
+          activeChat,
+          fromUserId,
+        });
+
+        // 🔕 SUPPRESS if already in chat
+        if (activeChat && String(activeChat) === String(fromUserId)) {
+          console.log("🔕 Suppressed PUSH (already in chat)");
+          return;
+        }
+
+        console.log("🔔 Showing PUSH notification");
 
         if (Notification.permission === "granted") {
           new Notification(
