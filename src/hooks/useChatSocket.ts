@@ -10,10 +10,12 @@ export function useChatSocket() {
 
   const queryClient = useQueryClient();
 
+  // 🔥 persist current conversation
+  const currentConversationRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!authUser?.id) return;
 
-    // ✅ Prevent duplicate connections
     if (socketRef.current) return;
 
     const socket = io(import.meta.env.VITE_API_URL, {
@@ -30,7 +32,17 @@ export function useChatSocket() {
 
     socket.on("connect", () => {
       console.log("💬 Socket connected:", socket.id);
+
       setReady(true);
+
+      // 🔥 FORCE REJOIN AFTER CONNECT
+      if (currentConversationRef.current) {
+        console.log("🔁 Rejoining conversation:", currentConversationRef.current);
+
+        socket.emit("conversation:join", {
+          otherUserId: currentConversationRef.current,
+        });
+      }
     });
 
     socket.on("disconnect", (reason) => {
@@ -48,7 +60,6 @@ export function useChatSocket() {
 
     socket.on("message:new", () => {
       console.log("📩 message:new received");
-
     });
 
     socket.on("conversation:update", () => {
@@ -59,22 +70,21 @@ export function useChatSocket() {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     });
 
-    /* =========================
-       CLEANUP (ONLY ON UNMOUNT)
-    ========================= */
-
     return () => {
-      // ❌ DO NOT disconnect here
+      // DO NOT disconnect
     };
 
   }, [authUser?.id]);
 
   /* =========================
-     🔥 FIX: JOIN CONVERSATION
+     🔥 JOIN CONVERSATION (FIXED)
   ========================= */
 
   function joinConversation(otherUserId: string) {
     if (!socketRef.current) return;
+
+    // 🔥 store it so reconnect works
+    currentConversationRef.current = otherUserId;
 
     console.log("📡 Joining conversation with:", otherUserId);
 
@@ -86,6 +96,6 @@ export function useChatSocket() {
   return {
     socket: socketRef.current,
     ready,
-    joinConversation, // 🔥 THIS WAS MISSING
+    joinConversation,
   };
 }
