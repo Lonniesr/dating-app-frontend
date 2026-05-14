@@ -107,8 +107,24 @@ export default function ProfilePage() {
   }, [photos, viewingOtherUser]);
 
   const createInviteMutation = useMutation({
-    mutationFn: () => userInvitesService.create(),
-    onSuccess: (invite) => setNewInvite(invite),
+    mutationFn: async () => {
+      console.log("🔥 STARTING INVITE");
+
+      const res = await userInvitesService.create();
+
+      console.log("✅ INVITE RESPONSE:", res);
+
+      return res;
+    },
+
+    onSuccess: (invite) => {
+      console.log("✅ SUCCESS:", invite);
+      setNewInvite(invite);
+    },
+
+    onError: (err) => {
+      console.error("❌ INVITE ERROR:", err);
+    },
   });
 
   if (isLoading) {
@@ -218,7 +234,11 @@ export default function ProfilePage() {
 
         {!viewingOtherUser && (
           <button
-            onClick={() => createInviteMutation.mutate()}
+            type="button"
+            onClick={() => {
+              console.log("🔥 BUTTON CLICKED");
+              createInviteMutation.mutate();
+            }}
             className="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-lg font-semibold"
           >
             Invite
@@ -258,6 +278,84 @@ export default function ProfilePage() {
           <MatchCountSection />
           <PhotoManagerSection />
         </>
+      )}
+
+      {/* INVITE MODAL */}
+      {newInvite && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+
+          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm text-center relative">
+
+            {/* CLOSE */}
+            <button
+              onClick={() => setNewInvite(null)}
+              className="absolute top-3 right-3 text-white/60 hover:text-white text-xl"
+            >
+              ×
+            </button>
+
+            <h2 className="text-2xl font-bold mb-2">
+              Invite Friends 🔥
+            </h2>
+
+            <p className="text-white/60 text-sm mb-5">
+              Share your LynQ invite link
+            </p>
+
+            {/* QR */}
+            <div className="bg-white p-4 rounded-xl inline-block mb-5">
+              <QRCodeSVG
+                value={newInvite.inviteLink}
+                size={220}
+                imageSettings={{
+                  src: lynqlogo,
+                  height: 50,
+                  width: 50,
+                  excavate: true,
+                }}
+              />
+            </div>
+
+            {/* LINK */}
+            <div className="bg-black/40 border border-white/10 rounded-xl p-3 mb-4 break-all text-sm text-blue-400">
+              {newInvite.inviteLink}
+            </div>
+
+            {/* COPY */}
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(newInvite.inviteLink);
+                alert("Invite copied 🔥");
+              }}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 rounded-xl mb-3"
+            >
+              Copy Invite Link
+            </button>
+
+            {/* SHARE */}
+            <button
+              type="button"
+              onClick={async () => {
+                if (navigator.share) {
+                  await navigator.share({
+                    title: "Join me on LynQ 🔥",
+                    text: "Here’s your invite to LynQ",
+                    url: newInvite.inviteLink,
+                  });
+                } else {
+                  navigator.clipboard.writeText(newInvite.inviteLink);
+                  alert("Invite copied 🔥");
+                }
+              }}
+              className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 rounded-xl"
+            >
+              Share Invite
+            </button>
+
+          </div>
+
+        </div>
       )}
 
     </div>
