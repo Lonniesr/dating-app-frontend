@@ -5,18 +5,27 @@ export const userNav = {
     label: "Discover",
     path: "/user/discover",
   },
+
+  invite: {
+    label: "Requests",
+    path: "/user/requests",
+  },
+
   matches: {
     label: "Matches",
     path: "/user/matches",
   },
+
   messages: {
     label: "Messages",
     path: "/user/messages",
   },
+
   profile: {
     label: "Profile",
     path: "/user/profile",
   },
+
   settings: {
     label: "Settings",
     path: "/user/settings",
