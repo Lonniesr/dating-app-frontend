@@ -7,8 +7,7 @@ export default function SidebarNav() {
   const active = "bg-white/10 text-yellow-400 border border-white/10";
 
   return (
-    <aside className="w-60 bg-black/40 backdrop-blur-xl border-r border-white/10 p-6 hidden md:block">
-      <h1 className="text-2xl font-bold mb-8 text-yellow-500">Lynq</h1>
+    <aside className="w-60 bg-black/40 backdrop-blur-xl border-r border-white/10 p-6 hidden md:block overflow-y-auto h-screen">      <h1 className="text-2xl font-bold mb-8 text-yellow-500">Lynq</h1>
 
       <nav className="space-y-2">
         <NavLink
