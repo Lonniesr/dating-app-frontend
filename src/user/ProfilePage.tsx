@@ -202,7 +202,7 @@ export default function ProfilePage() {
 
             {!viewingOtherUser && (
               <button
-               onClick={() => navigate("/verify")} 
+              onClick={() => navigate("/user/verify-selfie")}
               className="mt-2 text-xs bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded"
               >
                 Verify
