@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useUserAuth } from "./context/UserAuthContext";
 import { supabase } from "../lib/supabaseClient";
 import apiClient from "../services/apiClient";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import lynqlogo from "../assets/lynqlogo.png";
 
@@ -38,6 +38,7 @@ function calculateAge(birthdate?: string) {
 export default function ProfilePage() {
   const { id } = useParams();
   const { authUser, isLoading } = useUserAuth();
+  const navigate = useNavigate();
 
   const [otherUser, setOtherUser] = useState<any>(null);
   const [newInvite, setNewInvite] = useState<any>(null);
@@ -201,8 +202,8 @@ export default function ProfilePage() {
 
             {!viewingOtherUser && (
               <button
-                onClick={() => window.location.href = "/verify"}
-                className="mt-2 text-xs bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded"
+               onClick={() => navigate("/verify")} 
+              className="mt-2 text-xs bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded"
               >
                 Verify
               </button>

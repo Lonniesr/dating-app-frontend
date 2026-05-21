@@ -11,7 +11,7 @@ export default function ProtectedRoute() {
     authUser,
   });
 
-  // 🔧 1. Always wait for auth to resolve FIRST
+  // ✅ 1. Wait for auth to fully resolve
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen text-white">
@@ -20,14 +20,20 @@ export default function ProtectedRoute() {
     );
   }
 
-  // 🔧 2. Only redirect AFTER loading is complete
+  // ✅ 2. IMPORTANT: Allow internal navigation without instant redirect
   if (!authUser) {
+    // 👇 if user came from inside app, DON'T immediately kick them out
+    if (location.state?.from) {
+      console.log("Auth temporarily missing, staying on page...");
+      return <Outlet />;
+    }
+
     console.log("Redirecting to login");
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  // 🔧 3. Admin routing
-  if (authUser.role === "admin") {
+  // ✅ 3. Admin routing
+  if (authUser?.role === "admin") {
     if (!location.pathname.startsWith("/admin")) {
       console.log("Redirecting admin → /admin/dashboard");
       return <Navigate to="/admin/dashboard" replace />;
@@ -36,7 +42,6 @@ export default function ProtectedRoute() {
     return <Outlet />;
   }
 
-  // 🔧 4. Normal user routing
-  console.log("Rendering protected user route");
+  // ✅ 4. Normal user routing
   return <Outlet />;
 }
