@@ -118,9 +118,22 @@ export default function AdminDashboard() {
     const matches = user.matches || 0;
     const elo = user.eloScore || 1000;
 
-    const score =
-      (matches * 3) +   // 🔥 engagement weight
-      (elo / 100);      // ⭐ attractiveness weight
+    const lastActive = user.lastActiveAt
+  ? new Date(user.lastActiveAt)
+  : new Date();
+
+const hoursInactive =
+  (Date.now() - lastActive.getTime()) / (1000 * 60 * 60);
+
+// 🔥 DECAY
+const decay = hoursInactive * 0.5;
+
+// 🔥 FINAL SCORE
+const score =
+  (matches * 3) +
+  (elo / 100) +
+  ((user.trending || 0) * 5) - // boost active users
+  decay;
 
     return { ...user, score };
   })
