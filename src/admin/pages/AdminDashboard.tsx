@@ -251,20 +251,34 @@ export default function AdminDashboard() {
         <h2 className="mb-4">🔥 Top Picks</h2>
 
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          {topUsers.map((user: any) => (
-            <div
-              key={user.id}
-              className="glass-panel p-4 text-center"
-            >
-              <h3 className="font-semibold">{user.name || "User"}</h3>
-              <p className="text-xs text-white/50">
-                Matches: {user.matches || 0}
-              </p>
-              <p className="text-yellow-400 text-sm">
-                ⭐ {user.eloScore || 1000}
-              </p>
-            </div>
-          ))}
+         {topUsers.map((user: any) => (
+  <div
+    key={user.id}
+    className="glass-panel p-4 text-center"
+  >
+    {/* ✅ AVATAR */}
+    <img
+      src={
+        user.photos?.[0]?.url
+          ? user.photos[0].url
+          : "/placeholder.png"
+      }
+      className="w-16 h-16 rounded-full object-cover mx-auto mb-2 border border-white/10"
+    />
+
+    <h3 className="font-semibold">
+      {user.username || user.name || "User"}
+    </h3>
+
+    <p className="text-xs text-white/50">
+      Matches: {user.matches || 0}
+    </p>
+
+    <p className="text-yellow-400 text-sm">
+      ⭐ {user.eloScore || 1000}
+    </p>
+  </div>
+))}
         </div>
       </div>
 
