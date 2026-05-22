@@ -114,8 +114,18 @@ export default function AdminDashboard() {
   });
 
   const topUsers = Object.values(usersMap)
-    .sort((a: any, b: any) => (b.eloScore || 0) - (a.eloScore || 0))
-    .slice(0, 6);
+  .map((user: any) => {
+    const matches = user.matches || 0;
+    const elo = user.eloScore || 1000;
+
+    const score =
+      (matches * 3) +   // 🔥 engagement weight
+      (elo / 100);      // ⭐ attractiveness weight
+
+    return { ...user, score };
+  })
+  .sort((a: any, b: any) => b.score - a.score)
+  .slice(0, 6);
 
   /* ===============================
      💘 MATCH RATE
@@ -247,40 +257,82 @@ export default function AdminDashboard() {
       </div>
 
       {/* TOP PICKS */}
-      <div className="glass-panel p-6">
-        <h2 className="mb-4">🔥 Top Picks</h2>
+<div className="glass-panel p-6">
+  <h2 className="mb-4">🔥 Top Picks</h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-         {topUsers.map((user: any) => (
-  <div
-    key={user.id}
-    className="glass-panel p-4 text-center"
-  >
-    {/* ✅ AVATAR */}
-    <img
-      src={
-        user.photos?.[0]?.url
-          ? user.photos[0].url
-          : "/placeholder.png"
-      }
-      className="w-16 h-16 rounded-full object-cover mx-auto mb-2 border border-white/10"
-    />
+  <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+    {topUsers.map((user: any, index: number) => {
+      const matches = user.matches || 0;
+      const isTrending = matches >= 3 && index > 2; // 👈 ADD HERE
 
-    <h3 className="font-semibold">
-      {user.username || user.name || "User"}
-    </h3>
+      // 🔥 BADGES LOGIC
+      let badge = null;
+      if (matches >= 8) badge = "💎 Elite";
+      else if (matches >= 5) badge = "🔥 Hot";
+      else if (matches >= 2) badge = "⚡ Rising";
 
-    <p className="text-xs text-white/50">
-      Matches: {user.matches || 0}
-    </p>
+      return (
+        <div
+          key={user.id}
+          className={`glass-panel p-4 text-center ${
+  index === 0
+    ? "ring-2 ring-yellow-400 scale-105"
+    : index === 1
+    ? "ring-2 ring-gray-400"
+    : index === 2
+    ? "ring-2 ring-orange-400"
+    : ""
+}`}
+        >
+          {/* 🔢 RANK */}
+          <p className="text-xs text-white/40 mb-1">
+            #{index + 1}
+          </p>
 
-    <p className="text-yellow-400 text-sm">
-      ⭐ {user.eloScore || 1000}
-    </p>
-  </div>
-))}
+          {/* ✅ AVATAR */}
+          <img
+            src={
+              user.photos?.[0]?.url
+                ? user.photos[0].url
+                : "/placeholder.png"
+            }
+            className="w-16 h-16 rounded-full object-cover mx-auto mb-2 border border-white/10"
+          />
+
+          {/* 🏷 BADGE */}
+          {badge && (
+            <p className="text-[10px] font-semibold text-yellow-400 mb-1">
+  {badge}
+</p>
+          )}
+
+          {isTrending && (
+  <p className="text-[10px] text-green-400">
+    📈 Trending
+  </p>
+)}
+
+          <h3 className="font-semibold">
+            {user.username || user.name || "User"}
+          </h3>
+
+          <p className="text-xs text-white/50">
+            Matches: {matches}
+          </p>
+
+          <p className="text-yellow-400 text-sm">
+            ⭐ {user.eloScore || 1000}
+          </p>
+
+          {/* 🔥 SCORE */}
+          <p className="text-xs text-white/40">
+            Score: {Math.round(user.score)}
+          </p>
         </div>
-      </div>
+      );
+    })}
+  </div>
+</div>
 
     </div>
   );
