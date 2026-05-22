@@ -263,8 +263,7 @@ export default function AdminDashboard() {
   <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
     {topUsers.map((user: any, index: number) => {
       const matches = user.matches || 0;
-      const isTrending = matches >= 3 && index > 2; // 👈 ADD HERE
-
+      const isTrending = (user.trending || 0) >= 1;
       // 🔥 BADGES LOGIC
       let badge = null;
       if (matches >= 8) badge = "💎 Elite";
