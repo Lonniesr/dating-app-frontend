@@ -10,30 +10,37 @@ export function useChatSocket(userId: string) {
 
     let socket: Socket;
 
-    const connectSocket = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+   
+const connectSocket = async () => {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-      const token = session?.access_token;
+  const token = session?.access_token;
 
-      if (!token) {
-        console.error("❌ No auth token for socket");
-        return;
-      }
+  if (!token) {
+    console.error("❌ No auth token for socket");
+    return;
+  }
 
-      socket = io(import.meta.env.VITE_API_URL + "/chat", {
-        auth: { token }, // ✅ FIXED
-        transports: ["websocket"],
-      });
+  socket = io(import.meta.env.VITE_API_URL + "/chat", {
+    auth: { token },
+    transports: ["websocket"],
+  });
 
-      socket.on("connect_error", (err) => {
-        console.error("🔥 SOCKET ERROR:", err.message);
-      });
+  // 🔥 ADD THIS BLOCK
+  socket.on("connect", () => {
+    console.log("⚡ Connected:", socket.id);
 
-      socketRef.current = socket;
-    };
+    socket.emit("chat:join", userId);
+  });
 
+  socket.on("connect_error", (err) => {
+    console.error("🔥 SOCKET ERROR:", err.message);
+  });
+
+  socketRef.current = socket;
+};
     connectSocket();
 
     return () => {
