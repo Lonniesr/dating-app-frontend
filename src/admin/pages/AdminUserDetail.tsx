@@ -30,7 +30,9 @@ export default function AdminUserDetailPage() {
   const { data: onlineData } = useQuery({
     queryKey: ["online-users"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/online");
+      const res = await fetch("/api/admin/online", {
+  credentials: "include",
+});
       return res.json();
     },
     refetchInterval: 5000,
