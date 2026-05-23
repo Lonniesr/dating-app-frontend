@@ -370,3 +370,20 @@ select option {
 @media (max-width: 768px) {
   main { padding: 1.25rem !important; }
 }
+/* -------------------------------------------------------
+   🟢 Online Status Pulse
+------------------------------------------------------- */
+@keyframes ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  70% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
