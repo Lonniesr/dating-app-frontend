@@ -77,10 +77,15 @@ export default function ChatPage() {
   const { id: otherUserId } = useParams<{ id: string }>();
   const userId = otherUserId ?? null;
 
-  const { socket, ready, joinConversation } = useUserSocket();
   const { authUser } = useUserAuth();
-  const meId = authUser?.id ?? null;
+const meId = authUser?.id ?? null;
 
+const {
+  socket,
+  ready,
+  joinConversation,
+  onlineUsers,
+} = useUserSocket(meId || undefined);
   const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
   const { data } = useUserChat(userId);
 
@@ -378,7 +383,21 @@ useEffect(() => {
 
   return (
     <div className="flex flex-col h-full bg-black text-white">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
+  <div
+    className={`w-3 h-3 rounded-full ${
+      onlineUsers?.[otherUserId || ""]
+        ? "bg-green-500"
+        : "bg-gray-500"
+    }`}
+  />
 
+  <span className="text-sm text-white/80">
+    {onlineUsers?.[otherUserId || ""]
+      ? "Online"
+      : "Offline"}
+  </span>
+</div>
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {messages.map((msg) => {
           const mine = msg.senderId === meId;

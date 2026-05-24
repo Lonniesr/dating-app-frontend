@@ -52,24 +52,24 @@ export function useUserSocket(userId?: string) {
       }));
     });
 
-    s.on("user:online", ({ userId }: { userId: string }) => {
-  console.log("🟢 USER ONLINE:", userId);
+   s.on(
+  "presence:update",
+  ({
+    userId,
+    online,
+  }: {
+    userId: string;
+    online: boolean;
+  }) => {
+    console.log("👤 PRESENCE UPDATE:", userId, online);
 
-  setOnlineUsers((prev) => ({
-    ...prev,
-    [userId]: true,
-  }));
-});
-
-s.on("user:offline", ({ userId }: { userId: string }) => {
-  console.log("⚫ USER OFFLINE:", userId);
-
-  setOnlineUsers((prev) => ({
-    ...prev,
-    [userId]: false,
-  }));
-});
-
+    setOnlineUsers((prev) => ({
+      ...prev,
+      [userId]: online,
+    }));
+  }
+);
+console.log("🔥 ONLINE USERS STATE:", onlineUsers);
     return () => {
       console.log("🧹 CLEANING SOCKET");
 
