@@ -7,6 +7,7 @@ import {
 } from "react";
 import { getPushToken } from "../../firebase";
 import axios from "axios";
+import { useUserSocket } from "../hooks/useUserSocket";
 
 /* =========================
    USER TYPES
@@ -93,6 +94,9 @@ export function UserAuthProvider({
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 🔥 GLOBAL SOCKET CONNECTION (FIXED POSITION)
+  useUserSocket();
+
   async function setupPush() {
     try {
       const token = await getPushToken();
@@ -160,7 +164,7 @@ export function UserAuthProvider({
 
       if (!res.ok) {
         console.warn("Auth check failed, keeping existing session");
-        return authUser; // ✅ FIX: do NOT wipe user
+        return authUser;
       }
 
       const data: AuthUser = await res.json();
@@ -169,7 +173,7 @@ export function UserAuthProvider({
       return data;
     } catch (err) {
       console.error("Auth load failed:", err);
-      return authUser; // ✅ FIX: keep session
+      return authUser;
     } finally {
       setIsLoading(false);
     }

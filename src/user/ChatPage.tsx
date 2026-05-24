@@ -7,7 +7,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 
 import { useUserChat } from "./hooks/useUserChat";
-import { useChatSocket } from "./hooks/useChatSocket";
+import { useUserSocket } from "./hooks/useUserSocket";
 import { useUserAuth } from "./context/UserAuthContext";
 import { supabase } from "../lib/supabaseClient";
 import toast from "react-hot-toast";
@@ -77,7 +77,7 @@ export default function ChatPage() {
   const { id: otherUserId } = useParams<{ id: string }>();
   const userId = otherUserId ?? null;
 
-  const { socket, ready, joinConversation } = useChatSocket();
+  const { socket, ready, joinConversation } = useUserSocket();
   const { authUser } = useUserAuth();
   const meId = authUser?.id ?? null;
 
