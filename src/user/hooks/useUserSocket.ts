@@ -90,7 +90,9 @@ console.log("🔥 ONLINE USERS STATE:", onlineUsers);
 
     console.log("📥 JOIN ROOM:", conversationId);
 
-    socketRef.current.emit("conversation:join", conversationId);
+    socketRef.current.emit("conversation:join", {
+  otherUserId: conversationId,
+});
   };
 
   const leaveConversation = (conversationId: string) => {
