@@ -12,6 +12,8 @@ export function useUserSocket(userId?: string) {
   const currentRoomRef = useRef<string | null>(null);
 
   useEffect(() => {
+    console.log("🔥 useUserSocket userId:", userId);
+
     if (!userId) return;
     if (socketRef.current) return;
 

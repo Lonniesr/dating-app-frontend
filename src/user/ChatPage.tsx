@@ -79,6 +79,8 @@ export default function ChatPage() {
 
   const { authUser } = useUserAuth();
 const meId = authUser?.id ?? null;
+console.log("🔥 ME ID:", meId);
+console.log("🔥 AUTH USER:", authUser);
 
 const {
   socket,
