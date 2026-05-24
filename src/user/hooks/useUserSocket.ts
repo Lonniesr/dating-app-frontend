@@ -16,7 +16,7 @@ export function useUserSocket(userId?: string) {
     if (socketRef.current) return;
 
     console.log("🌐 CONNECTING TO:", import.meta.env.VITE_API_URL);
-
+    console.log("🌐 SOCKET URL:", import.meta.env.VITE_API_URL);
     const s = io(import.meta.env.VITE_API_URL, {
       withCredentials: true,
       transports: ["polling", "websocket"],
