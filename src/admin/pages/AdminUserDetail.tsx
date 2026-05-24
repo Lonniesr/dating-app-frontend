@@ -30,9 +30,12 @@ export default function AdminUserDetailPage() {
   const { data: onlineData } = useQuery({
     queryKey: ["online-users"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/online", {
-  credentials: "include",
-});
+     const res = await fetch(
+  `${import.meta.env.VITE_API_URL}/api/admin/online`,
+  {
+    credentials: "include",
+  }
+);
       return res.json();
     },
     refetchInterval: 5000,

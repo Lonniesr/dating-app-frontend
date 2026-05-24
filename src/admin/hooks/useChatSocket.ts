@@ -10,37 +10,45 @@ export function useChatSocket(userId: string) {
 
     let socket: Socket;
 
-   
-const connectSocket = async () => {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    const connectSocket = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-  const token = session?.access_token;
+      const token = session?.access_token;
 
-  if (!token) {
-    console.error("❌ No auth token for socket");
-    return;
-  }
+      if (!token) {
+        console.error("❌ No auth token for socket");
+        return;
+      }
 
-  socket = io(import.meta.env.VITE_API_URL + "/chat", {
-    auth: { token },
-    transports: ["websocket"],
-  });
+      // 🔥 DEBUG THIS
+      console.log("API URL:", import.meta.env.VITE_API_URL);
 
-  // 🔥 ADD THIS BLOCK
-  socket.on("connect", () => {
-    console.log("⚡ Connected:", socket.id);
+      socket = io(import.meta.env.VITE_API_URL, {
+        auth: { token },
 
-    socket.emit("chat:join", userId);
-  });
+        // 🔥 FIXED (CRITICAL)
+        transports: ["polling", "websocket"],
+      });
 
-  socket.on("connect_error", (err) => {
-    console.error("🔥 SOCKET ERROR:", err.message);
-  });
+      socket.on("connect", () => {
+        console.log("⚡ SOCKET CONNECTED:", socket.id);
 
-  socketRef.current = socket;
-};
+        socket.emit("chat:join", userId);
+      });
+
+      socket.on("connect_error", (err) => {
+        console.error("🔥 SOCKET ERROR:", err.message);
+      });
+
+      socket.on("disconnect", () => {
+        console.log("❌ SOCKET DISCONNECTED");
+      });
+
+      socketRef.current = socket;
+    };
+
     connectSocket();
 
     return () => {
