@@ -169,15 +169,18 @@ export default function DiscoverFeed() {
   return (
     <div className="flex flex-col items-center">
 
-      <div className="relative w-[380px] h-[520px]">
-
+    <div className="relative w-[380px] h-[520px] overflow-visible">
         {next && (
           <img
             src={nextPhoto}
             className="absolute w-full h-full object-cover rounded-2xl opacity-60 scale-95"
           />
         )}
-
+        <div
+  className={`absolute top-5 right-5 z-[9999] w-4 h-4 rounded-full border-2 border-white shadow-2xl ${
+    isOnline ? "bg-green-500" : "bg-gray-500"
+  }`}
+/>
         <motion.div
           key={current.id}
           className={`absolute w-full h-full rounded-2xl overflow-hidden shadow-xl ${
@@ -204,11 +207,7 @@ export default function DiscoverFeed() {
           )}
 
           <img src={photo} className="w-full h-full object-cover" />
-          <div
-  className={`absolute top-5 right-5 z-50 w-4 h-4 rounded-full border-2 border-white shadow-lg ${
-    isOnline ? "bg-green-500" : "bg-gray-500"
-  }`}
-/>
+          
           <motion.div
             style={{ opacity: likeOpacity }}
             className="absolute top-6 left-6 text-green-400 text-3xl font-bold"
