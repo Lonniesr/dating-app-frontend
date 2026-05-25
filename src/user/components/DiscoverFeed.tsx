@@ -168,8 +168,7 @@ export default function DiscoverFeed() {
 
   return (
     <div className="flex flex-col items-center">
-
-    <div className="relative w-[380px] h-[520px] overflow-visible">
+      <div className="relative w-full max-w-[380px] h-[520px] overflow-visible px-2">
         {next && (
           <img
             src={nextPhoto}
