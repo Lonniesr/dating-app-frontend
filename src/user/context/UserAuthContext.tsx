@@ -95,8 +95,7 @@ export function UserAuthProvider({
   const [isLoading, setIsLoading] = useState(true);
 
   // 🔥 GLOBAL SOCKET CONNECTION (FIXED POSITION)
-  useUserSocket();
-
+  useUserSocket(authUser?.id);
   async function setupPush() {
     try {
       const token = await getPushToken();
