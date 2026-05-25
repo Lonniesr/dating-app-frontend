@@ -175,7 +175,8 @@ const {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<any | null>(null);
   const [requesting, setRequesting] = useState(false);
-
+  // 🔥 CHAT HEADER USER
+const [otherUser, setOtherUser] = useState<any | null>(null);
  async function openProfile(userId: string) {
   try {
     const res = await axios.get(
@@ -256,13 +257,26 @@ useEffect(() => {
     setLiveMessages(data.messages as ChatMessage[]);
   }
 }, [data]);
+  useEffect(() => {
+  if (!userId) return;
 
+  axios
+    .get(
+      `${import.meta.env.VITE_API_URL}/api/profile/${userId}`,
+      { withCredentials: true }
+    )
+    .then((res) => {
+      setOtherUser(res.data);
+    })
+    .catch(console.error);
+}, [userId]);
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [liveMessages]);
 
   useEffect(() => {
   if (!socket || !ready || !userId) return;
+
 
   // 🔥 TRACK ACTIVE CHAT GLOBALLY (THIS FIXES FIREBASE)
   (window as any).__ACTIVE_CHAT__ = userId;
@@ -388,14 +402,20 @@ useEffect(() => {
       <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
   <div
     className={`w-3 h-3 rounded-full ${
-      onlineUsers?.[otherUserId || ""]
+      otherUser?.lastActiveAt &&
+      Date.now() -
+        new Date(otherUser.lastActiveAt).getTime() <
+        120000
         ? "bg-green-500"
         : "bg-gray-500"
     }`}
   />
 
   <span className="text-sm text-white/80">
-    {onlineUsers?.[otherUserId || ""]
+    {otherUser?.lastActiveAt &&
+    Date.now() -
+      new Date(otherUser.lastActiveAt).getTime() <
+      120000
       ? "Online"
       : "Offline"}
   </span>
