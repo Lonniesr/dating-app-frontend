@@ -17,6 +17,7 @@ type DiscoverUser = {
   latitude?: number;
   longitude?: number;
   photos?: string[];
+   lastActiveAt?: string;
 };
 
 function calculateAge(birthdate?: string) {
@@ -111,7 +112,11 @@ export default function DiscoverFeed() {
       : null;
 
   const isTopPick = feed.length > 0 && feed.indexOf(current) < TOP_PICK_COUNT;
-
+   const isOnline =
+  !!current?.lastActiveAt &&
+  Date.now() -
+    new Date(current.lastActiveAt).getTime() <
+    120000;     
   async function handleSwipe(direction: "left" | "right") {
     if (!current || busy) return;
 
@@ -199,7 +204,11 @@ export default function DiscoverFeed() {
           )}
 
           <img src={photo} className="w-full h-full object-cover" />
-
+          <div
+  className={`absolute top-4 right-4 z-10 w-3 h-3 rounded-full border border-white ${
+    isOnline ? "bg-green-500" : "bg-gray-500"
+  }`}
+/>
           <motion.div
             style={{ opacity: likeOpacity }}
             className="absolute top-6 left-6 text-green-400 text-3xl font-bold"
