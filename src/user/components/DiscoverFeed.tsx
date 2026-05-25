@@ -205,7 +205,7 @@ export default function DiscoverFeed() {
 
           <img src={photo} className="w-full h-full object-cover" />
           <div
-  className={`absolute top-4 right-4 z-10 w-3 h-3 rounded-full border border-white ${
+  className={`absolute top-5 right-5 z-50 w-4 h-4 rounded-full border-2 border-white shadow-lg ${
     isOnline ? "bg-green-500" : "bg-gray-500"
   }`}
 />
