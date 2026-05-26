@@ -257,9 +257,30 @@ function closeProfile() {
 }
 
 useEffect(() => {
-  if (data?.messages) {
-    setLiveMessages(data.messages as ChatMessage[]);
-  }
+  if (!data?.messages) return;
+
+  setLiveMessages((prev) => {
+
+    // initial load only
+    if (prev.length === 0) {
+      return data.messages as ChatMessage[];
+    }
+
+    const existingIds = new Set(
+      prev.map((m) => m.id)
+    );
+
+    const merged = [...prev];
+
+    for (const msg of data.messages as ChatMessage[]) {
+      if (!existingIds.has(msg.id)) {
+        merged.push(msg);
+      }
+    }
+
+    return merged;
+  });
+
 }, [data]);
   useEffect(() => {
   if (!userId) return;
