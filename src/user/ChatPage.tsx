@@ -94,6 +94,10 @@ const {
   const messages = liveMessages;
 
   const [text, setText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   // 🔥 REQUIRED FOR SMART REQUEST BUTTON
   const [requestMap, setRequestMap] = useState<Record<string, string>>({});
@@ -291,20 +295,34 @@ useEffect(() => {
   };
 }, [socket, ready, userId]);
 
-  useEffect(() => {
-    if (!socket || !ready) return;
+ useEffect(() => {
+  if (!socket || !ready) return;
 
-    socket.on("message:new", (msg: ChatMessage) => {
-      setLiveMessages((prev) => {
-        if (prev.find((m) => m.id === msg.id)) return prev;
-        return [...prev, msg];
-      });
+  socket.on("message:new", (msg: ChatMessage) => {
+    setLiveMessages((prev) => {
+      if (prev.find((m) => m.id === msg.id)) return prev;
+      return [...prev, msg];
     });
+  });
 
-    return () => {
-      socket.off("message:new");
-    };
-  }, [socket, ready]);
+  socket.on("typing:start", ({ fromUserId }) => {
+    if (fromUserId === userId) {
+      setIsTyping(true);
+    }
+  });
+
+  socket.on("typing:stop", ({ fromUserId }) => {
+    if (fromUserId === userId) {
+      setIsTyping(false);
+    }
+  });
+
+  return () => {
+    socket.off("message:new");
+    socket.off("typing:start");
+    socket.off("typing:stop");
+  };
+}, [socket, ready, userId]);
   
   useEffect(() => {
   if (!socket) return;
@@ -497,7 +515,13 @@ useEffect(() => {
             </div>
           );
         })}
-        <div ref={bottomRef} />
+        {isTyping && (
+  <div className="text-white/50 text-sm px-2 pb-2">
+    typing...
+  </div>
+)}
+
+<div ref={bottomRef} />
       </div>
 
       {/* ✅ PROFILE MODAL (ADDED BACK WITH REQUEST ACCESS) */}
@@ -625,7 +649,27 @@ useEffect(() => {
 
         <input
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+  const value = e.target.value;
+
+  setText(value);
+
+  if (!socket || !userId) return;
+
+  socket.emit("typing:start", {
+    to: userId,
+  });
+
+  if (typingTimeoutRef.current) {
+    clearTimeout(typingTimeoutRef.current);
+  }
+
+  typingTimeoutRef.current = setTimeout(() => {
+    socket.emit("typing:stop", {
+      to: userId,
+    });
+  }, 1200);
+}}
           className="flex-1 bg-[#1a1a1a] px-4 py-3 rounded-xl"
         />
 
