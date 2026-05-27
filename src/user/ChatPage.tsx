@@ -258,31 +258,19 @@ function closeProfile() {
 
 useEffect(() => {
   if (!data?.messages) return;
-    console.log(
-  "🔥 QUERY MESSAGES:",
-  data.messages.map((m: ChatMessage) => m.id)
-);
-  setLiveMessages((prev) => {
 
-    // initial load only
-    if (prev.length === 0) {
-      return data.messages as ChatMessage[];
-    }
+  console.log(
+    "🔥 QUERY MESSAGES:",
+    data.messages.map((m: ChatMessage) => m.id)
+  );
 
-    const existingIds = new Set(
-      prev.map((m) => m.id)
-    );
+  const unique = Array.from(
+    new Map(
+      (data.messages as ChatMessage[]).map((m) => [m.id, m])
+    ).values()
+  );
 
-    const merged = [...prev];
-
-    for (const msg of data.messages as ChatMessage[]) {
-      if (!existingIds.has(msg.id)) {
-        merged.push(msg);
-      }
-    }
-
-    return merged;
-  });
+  setLiveMessages(unique);
 
 }, [data]);
   useEffect(() => {
