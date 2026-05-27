@@ -258,7 +258,10 @@ function closeProfile() {
 
 useEffect(() => {
   if (!data?.messages) return;
-
+    console.log(
+  "🔥 QUERY MESSAGES:",
+  data.messages.map((m: ChatMessage) => m.id)
+);
   setLiveMessages((prev) => {
 
     // initial load only
@@ -320,6 +323,7 @@ useEffect(() => {
   if (!socket || !ready) return;
 
   socket.on("message:new", (msg: ChatMessage) => {
+    console.log("🔥 SOCKET MESSAGE:", msg.id);
     setLiveMessages((prev) => {
       if (prev.find((m) => m.id === msg.id)) return prev;
       return [...prev, msg];
@@ -381,6 +385,7 @@ useEffect(() => {
 }, [socket]);
 
   const addReaction = (messageId: string, emoji: string) => {
+
     setLiveMessages((prev) =>
       prev.map((msg) =>
         msg.id === messageId
@@ -425,7 +430,7 @@ useEffect(() => {
         },
         { withCredentials: true }
       );
-
+      console.log("🔥 REST RESPONSE:", res.data.id);
 
       setText("");
       setSelectedImage(null);
