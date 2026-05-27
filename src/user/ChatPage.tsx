@@ -466,83 +466,107 @@ useEffect(() => {
   </span>
 </div>
       <div className="flex-1 overflow-y-auto px-4 py-6">
-        {messages.map((msg) => {
-          const mine = msg.senderId === meId;
-          const avatarUrl = resolvePhotoUrl(msg.sender?.photos?.[0]);
+       {messages.map((msg) => {
+  const mine = msg.senderId === meId;
 
-          return (
-            <div
-              key={msg.id}
-              className={`flex mb-3 items-end gap-2 ${
-                mine ? "justify-end" : "justify-start"
-              }`}
+  const avatarUrl = resolvePhotoUrl(
+    msg.sender?.photos?.[0]
+  );
+
+  return (
+    <div
+      key={msg.id}
+      className={`flex mb-3 items-end gap-2 ${
+        mine
+          ? "justify-end"
+          : "justify-start"
+      }`}
+    >
+      {!mine && (
+        <div
+          onClick={() =>
+            openProfile(msg.senderId)
+          }
+          className="cursor-pointer"
+        >
+          <Avatar
+            src={avatarUrl}
+            fallback="U"
+          />
+        </div>
+      )}
+
+      <div className="max-w-[70%]">
+        <div
+          className={`px-4 py-2 rounded-2xl ${
+            mine
+              ? "bg-pink-500"
+              : "bg-white/10"
+          }`}
+        >
+          {msg.imageUrl && (
+            <img
+              src={msg.imageUrl}
+              className="mb-2 rounded-lg"
+            />
+          )}
+
+          {msg.audioUrl && (
+            <audio controls className="mb-2">
+              <source
+                src={msg.audioUrl}
+                type="audio/webm"
+              />
+            </audio>
+          )}
+
+          {msg.text}
+        </div>
+
+        <div className="flex gap-2 mt-1">
+          {msg.reactions?.map((r, i) => (
+            <span key={i}>{r}</span>
+          ))}
+        </div>
+
+        <div className="flex gap-2 mt-1">
+          {quickReactions.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() =>
+                addReaction(msg.id, emoji)
+              }
+              className="text-sm opacity-60 hover:opacity-100"
             >
-              {!mine && (
-                <div
-                  onClick={() => openProfile(msg.senderId)}
-                  className="cursor-pointer"
-                >
-                  <Avatar src={avatarUrl} fallback="U" />
-                </div>
-              )}
+              {emoji}
+            </button>
+          ))}
+        </div>
 
-              <div className="max-w-[70%]">
-                <div
-                  className={`px-4 py-2 rounded-2xl ${
-                    mine ? "bg-pink-500" : "bg-white/10"
-                  }`}
-                >
-                  {msg.imageUrl && (
-                    <img src={msg.imageUrl} className="mb-2 rounded-lg" />
-                  )}
+        <div className="text-xs text-white/40 mt-1">
+          {formatTime(msg.createdAt)}
+        </div>
+      </div>
 
-                  {msg.audioUrl && (
-                    <audio controls className="mb-2">
-                      <source src={msg.audioUrl} type="audio/webm" />
-                    </audio>
-                  )}
-
-                  {msg.text}
-                </div>
-
-                <div className="flex gap-2 mt-1">
-                  {msg.reactions?.map((r, i) => (
-                    <span key={i}>{r}</span>
-                  ))}
-                </div>
-
-                <div className="flex gap-2 mt-1">
-                  {quickReactions.map((emoji) => (
-                    <button
-                      key={emoji}
-                      onClick={() => addReaction(msg.id, emoji)}
-                      className="text-sm opacity-60 hover:opacity-100"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="text-xs text-white/40 mt-1">
-                  {formatTime(msg.createdAt)}
-                </div>
-              </div>
-
-              {mine && (
-                <div
-                  onClick={() => openProfile(authUser?.id!)}
-                  className="cursor-pointer"
-                >
-                  <Avatar
-                    src={resolvePhotoUrl(authUser?.photos?.[0])}
-                    fallback="ME"
-                  />
-                </div>
-              )}
-            </div>
-          );
-        })}
-        {isTyping && (
+      {mine && (
+        <div
+          onClick={() =>
+            openProfile(authUser?.id!)
+          }
+          className="cursor-pointer"
+        >
+          <Avatar
+            src={resolvePhotoUrl(
+              authUser?.photos?.[0]
+            )}
+            fallback="ME"
+          />
+        </div>
+      )}
+    </div>
+  );
+})}
+          {isTyping && (
   <div className="text-white/50 text-sm px-2 pb-2">
     typing...
   </div>
