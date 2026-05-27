@@ -19,6 +19,10 @@ export function useUserSocket(userId?: string) {
 
     console.log("🌐 CONNECTING TO:", import.meta.env.VITE_API_URL);
     console.log("🌐 SOCKET URL:", import.meta.env.VITE_API_URL);
+    if (socketRef.current) {
+    console.log("🛑 SOCKET ALREADY EXISTS");
+    return;
+    }
     const s = io(import.meta.env.VITE_API_URL, {
       withCredentials: true,
       transports: ["polling", "websocket"],
@@ -27,7 +31,7 @@ export function useUserSocket(userId?: string) {
     socketRef.current = s;
     setSocket(s);
 
-    s.on("connect", () => {
+    s.once("connect", () => {
       console.log("✅ SOCKET CONNECTED:", s.id);
 
       s.emit("chat:join", userId);
