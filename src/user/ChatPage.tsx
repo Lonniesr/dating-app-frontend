@@ -86,6 +86,7 @@ const {
   socket,
   ready,
   joinConversation,
+  leaveConversation,
   onlineUsers,
 } = useUserSocket(meId || undefined);
   const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
@@ -290,11 +291,9 @@ useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [liveMessages]);
 
-  useEffect(() => {
+ useEffect(() => {
   if (!socket || !ready || !userId) return;
 
-
-  // 🔥 TRACK ACTIVE CHAT GLOBALLY (THIS FIXES FIREBASE)
   (window as any).__ACTIVE_CHAT__ = userId;
 
   console.log("🟢 ACTIVE CHAT SET:", userId);
@@ -302,9 +301,14 @@ useEffect(() => {
   joinConversation(userId);
 
   return () => {
+
     console.log("🔴 ACTIVE CHAT CLEARED");
+
+    leaveConversation(userId);
+
     (window as any).__ACTIVE_CHAT__ = null;
   };
+
 }, [socket, ready, userId]);
 
  useEffect(() => {
