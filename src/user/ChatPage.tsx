@@ -314,13 +314,22 @@ useEffect(() => {
  useEffect(() => {
   if (!socket || !ready) return;
 
-  socket.on("message:new", (msg: ChatMessage) => {
-    console.log("🔥 SOCKET MESSAGE:", msg.id);
-    setLiveMessages((prev) => {
-      if (prev.find((m) => m.id === msg.id)) return prev;
-      return [...prev, msg];
-    });
+ socket.on("message:new", (msg: ChatMessage) => {
+  console.log("🔥 SOCKET MESSAGE:", msg.id);
+
+  // 🚫 ignore own messages
+  if (msg.senderId === meId) {
+    return;
+  }
+
+  setLiveMessages((prev) => {
+    if (prev.find((m) => m.id === msg.id)) {
+      return prev;
+    }
+
+    return [...prev, msg];
   });
+});
 
   socket.on("typing:start", ({ fromUserId }) => {
     if (fromUserId === userId) {
