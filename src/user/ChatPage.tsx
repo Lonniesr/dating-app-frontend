@@ -257,21 +257,14 @@ function closeProfile() {
   setProfileData(null);
 }
 
-  useEffect(() => {
+ useEffect(() => {
   if (!data?.messages) return;
 
-  // initial hydration only
-  if (liveMessages.length > 0) return;
-
-  const unique = Array.from(
-    new Map(
-      (data.messages as ChatMessage[]).map((m) => [m.id, m])
-    ).values()
+  setLiveMessages(
+    data.messages as ChatMessage[]
   );
 
-  setLiveMessages(unique);
-
-}, [data]);
+}, []);
   
   useEffect(() => {
   if (!userId) return;
