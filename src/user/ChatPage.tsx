@@ -257,13 +257,11 @@ function closeProfile() {
   setProfileData(null);
 }
 
-useEffect(() => {
+  useEffect(() => {
   if (!data?.messages) return;
 
-  console.log(
-    "🔥 QUERY MESSAGES:",
-    data.messages.map((m: ChatMessage) => m.id)
-  );
+  // initial hydration only
+  if (liveMessages.length > 0) return;
 
   const unique = Array.from(
     new Map(
@@ -274,6 +272,7 @@ useEffect(() => {
   setLiveMessages(unique);
 
 }, [data]);
+  
   useEffect(() => {
   if (!userId) return;
 
@@ -433,8 +432,18 @@ useEffect(() => {
       );
       console.log("🔥 REST RESPONSE:", res.data.id);
 
-      setText("");
-      setSelectedImage(null);
+setLiveMessages((prev) => {
+
+  if (prev.find((m) => m.id === res.data.id)) {
+    return prev;
+  }
+
+  return [...prev, res.data];
+});
+
+setText("");
+setSelectedImage(null);
+
     } catch (err) {
       console.error("SEND FAILED:", err);
     }
