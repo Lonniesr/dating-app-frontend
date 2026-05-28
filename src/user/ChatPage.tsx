@@ -254,13 +254,29 @@ function closeProfile() {
 }
 
  useEffect(() => {
+
   if (!data?.messages) return;
 
-  setLiveMessages(
-    data.messages as ChatMessage[]
-  );
+  setLiveMessages((prev) => {
 
-}, []);
+    const existingIds = new Set(
+      prev.map((m) => m.id)
+    );
+
+    const merged = [...prev];
+
+    (data.messages as ChatMessage[]).forEach((msg) => {
+
+      if (!existingIds.has(msg.id)) {
+        merged.push(msg);
+      }
+
+    });
+
+    return merged;
+  });
+
+}, [data]);
   
   useEffect(() => {
   if (!userId) return;
