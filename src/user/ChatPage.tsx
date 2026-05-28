@@ -392,6 +392,7 @@ function closeProfile() {
   };
 
   async function sendMessage() {
+    console.log("🚨 SEND MESSAGE FIRED");
 if ((!text.trim() && !selectedImage) || !userId) {
   return;
 }
