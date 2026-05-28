@@ -74,6 +74,7 @@ function Avatar({
 }
 
 export default function ChatPage() {
+  console.log("🚨 CHAT PAGE RENDERED");
   const { id: otherUserId } = useParams<{ id: string }>();
   const userId = otherUserId ?? null;
 
