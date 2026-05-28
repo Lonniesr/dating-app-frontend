@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
-
+let globalSocket: Socket | null = null;
 export function useUserSocket(userId?: string) {
   const socketRef = useRef<Socket | null>(null);
 
@@ -17,16 +17,19 @@ export function useUserSocket(userId?: string) {
 
     if (!userId) return;
 
-    // 🛑 prevent duplicate sockets
-    if (socketRef.current) {
-      console.log("🛑 SOCKET ALREADY EXISTS");
+   // 🛑 prevent duplicate sockets
+if (globalSocket) {
 
-      setSocket(socketRef.current);
+  console.log("🛑 GLOBAL SOCKET EXISTS");
 
-      setReady(!!socketRef.current.connected);
+  socketRef.current = globalSocket;
 
-      return;
-    }
+  setSocket(globalSocket);
+
+  setReady(globalSocket.connected);
+
+  return;
+}
 
     console.log(
       "🌐 CONNECTING TO:",
@@ -39,7 +42,7 @@ export function useUserSocket(userId?: string) {
     });
 
     socketRef.current = s;
-
+    globalSocket = s;
     setSocket(s);
 
     s.once("connect", () => {
@@ -104,16 +107,24 @@ export function useUserSocket(userId?: string) {
     );
 
     return () => {
-      console.log("🧹 CLEANING SOCKET");
 
-      s.disconnect();
+  console.log("🧹 SOCKET CLEANUP");
 
-      socketRef.current = null;
+  // 🚫 DO NOT destroy socket during normal rerenders
+  if (window.location.pathname !== "/login") {
+    return;
+  }
 
-      setSocket(null);
+  s.disconnect();
 
-      setReady(false);
-    };
+  socketRef.current = null;
+
+  globalSocket = null;
+
+  setSocket(null);
+
+  setReady(false);
+};
 
   }, [userId]);
 
