@@ -423,7 +423,7 @@ sendingRef.current = true;
 
         imageUrl = data.publicUrl;
       }
-
+      console.log("🚨 POSTING MESSAGE NOW");
       const res = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/messages/${userId}`,
         {
@@ -433,7 +433,7 @@ sendingRef.current = true;
         { withCredentials: true }
       );
       console.log("🔥 REST RESPONSE:", res.data.id);
-
+      console.log("✅ POST COMPLETE");
 setLiveMessages((prev) => {
 
   if (prev.find((m) => m.id === res.data.id)) {
