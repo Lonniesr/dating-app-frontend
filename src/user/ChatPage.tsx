@@ -11,6 +11,7 @@ import { useUserSocket } from "./hooks/useUserSocket";
 import { useUserAuth } from "./context/UserAuthContext";
 import { supabase } from "../lib/supabaseClient";
 import toast from "react-hot-toast";
+import { globalSocket } from "./hooks/useUserSocket";
 
 type ChatMessage = {
   id: string;
@@ -82,13 +83,8 @@ const meId = authUser?.id ?? null;
 console.log("🔥 ME ID:", meId);
 console.log("🔥 AUTH USER:", authUser);
 
-const {
-  socket,
-  ready,
-  joinConversation,
-  leaveConversation,
-  onlineUsers,
-} = useUserSocket(meId || undefined);
+const socket = globalSocket;
+const ready = !!socket?.connected;
   const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
   const { data } = useUserChat(userId);
 
@@ -284,25 +280,27 @@ function closeProfile() {
   }, [liveMessages]);
 
  useEffect(() => {
-  if (!socket || !ready || !userId) return;
 
-  (window as any).__ACTIVE_CHAT__ = userId;
+  if (!socket || !ready || !userId) {
+    return;
+  }
 
   console.log("🟢 ACTIVE CHAT SET:", userId);
 
-  joinConversation(userId);
+  socket.emit("conversation:join", {
+    otherUserId: userId,
+  });
 
   return () => {
 
     console.log("🔴 ACTIVE CHAT CLEARED");
 
-    leaveConversation(userId);
-
-    (window as any).__ACTIVE_CHAT__ = null;
+    socket.emit("conversation:leave", {
+      otherUserId: userId,
+    });
   };
 
 }, [socket, ready, userId]);
-
  useEffect(() => {
   if (!socket || !ready) return;
 

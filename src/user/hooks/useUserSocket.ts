@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
-let globalSocket: Socket | null = null;
+export let globalSocket: Socket | null = null;
 export function useUserSocket(userId?: string) {
   const socketRef = useRef<Socket | null>(null);
 
