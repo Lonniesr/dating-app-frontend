@@ -302,24 +302,42 @@ function closeProfile() {
 
 }, [socket, ready, userId]);
  useEffect(() => {
-  if (!socket || !ready) return;
 
- socket.on("message:new", (msg: ChatMessage) => {
-  console.log("🔥 SOCKET MESSAGE:", msg.id);
-
-  // 🚫 ignore own messages
-  if (msg.senderId === meId) {
+  if (!socket || !ready) {
     return;
   }
 
-  setLiveMessages((prev) => {
-    if (prev.find((m) => m.id === msg.id)) {
-      return prev;
-    }
+  const handleMessage = (msg: ChatMessage) => {
 
-    return [...prev, msg];
-  });
-});
+    console.log("🔥 SOCKET MESSAGE:", msg.id);
+
+    setLiveMessages((prev) => {
+
+      // 🚫 SAME MESSAGE ID
+      if (prev.some((m) => m.id === msg.id)) {
+        return prev;
+      }
+
+      // 🚫 SAME MESSAGE CONTENT/TIMING
+      const duplicate = prev.some(
+        (m) =>
+          m.senderId === msg.senderId &&
+          m.text === msg.text &&
+          Math.abs(
+            new Date(m.createdAt).getTime() -
+            new Date(msg.createdAt).getTime()
+          ) < 5000
+      );
+
+      if (duplicate) {
+        return prev;
+      }
+
+      return [...prev, msg];
+    });
+  };
+
+  socket.on("message:new", handleMessage);
 
   socket.on("typing:start", ({ fromUserId }) => {
     if (fromUserId === userId) {
@@ -334,10 +352,14 @@ function closeProfile() {
   });
 
   return () => {
-    socket.off("message:new");
+
+    socket.off("message:new", handleMessage);
+
     socket.off("typing:start");
+
     socket.off("typing:stop");
   };
+
 }, [socket, ready, userId]);
   
   useEffect(() => {
