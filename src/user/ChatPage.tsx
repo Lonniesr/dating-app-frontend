@@ -108,7 +108,7 @@ const {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const hasSentRef = useRef(false);
-
+  const sendingRef = useRef(false);
   async function startRecording() {
     try {
       hasSentRef.current = false;
@@ -392,8 +392,16 @@ function closeProfile() {
   };
 
   async function sendMessage() {
-    if ((!text.trim() && !selectedImage) || !userId) return;
+if ((!text.trim() && !selectedImage) || !userId) {
+  return;
+}
 
+if (sendingRef.current) {
+  console.log("🛑 BLOCKED DUPLICATE SEND");
+  return;
+}
+
+sendingRef.current = true;
     try {
       let imageUrl: string | null = null;
 
@@ -433,13 +441,18 @@ setLiveMessages((prev) => {
 
   return [...prev, res.data];
 });
-
 setText("");
 setSelectedImage(null);
 
-    } catch (err) {
-      console.error("SEND FAILED:", err);
-    }
+sendingRef.current = false;
+
+} catch (err) {
+
+  sendingRef.current = false;
+
+  console.error("SEND FAILED:", err);
+
+}
   }
 
   // ... EVERYTHING ABOVE YOUR RETURN STAYS EXACTLY THE SAME
