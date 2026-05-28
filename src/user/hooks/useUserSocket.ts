@@ -108,22 +108,8 @@ if (globalSocket) {
 
     return () => {
 
-  console.log("🧹 SOCKET CLEANUP");
+  console.log("🧹 SOCKET CLEANUP SKIPPED");
 
-  // 🚫 DO NOT destroy socket during normal rerenders
-  if (window.location.pathname !== "/login") {
-    return;
-  }
-
-  s.disconnect();
-
-  socketRef.current = null;
-
-  globalSocket = null;
-
-  setSocket(null);
-
-  setReady(false);
 };
 
   }, [userId]);
