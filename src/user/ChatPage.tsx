@@ -87,7 +87,9 @@ const ready = !!socket?.connected;
   const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
   const { data } = useUserChat(userId);
 
-  const messages = liveMessages;
+  const messages = [...new Map(
+  liveMessages.map((m) => [m.id, m])
+).values()];
 
   const [text, setText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
