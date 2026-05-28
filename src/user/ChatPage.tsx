@@ -7,7 +7,6 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 
 import { useUserChat } from "./hooks/useUserChat";
-import { useUserSocket } from "./hooks/useUserSocket";
 import { useUserAuth } from "./context/UserAuthContext";
 import { supabase } from "../lib/supabaseClient";
 import toast from "react-hot-toast";
@@ -519,6 +518,7 @@ sendingRef.current = false;
 </div>
       <div className="flex-1 overflow-y-auto px-4 py-6">
        {messages.map((msg) => {
+         console.log("🎨 RENDER MESSAGE:", msg.id);
   const mine = msg.senderId === meId;
 
   const avatarUrl = resolvePhotoUrl(
