@@ -354,9 +354,15 @@ function closeProfile() {
       return [...prev, msg];
     });
   };
-
+console.log(
+  "🔥 message:new listeners BEFORE:",
+  socket.listeners("message:new").length
+);
   socket.on("message:new", handleMessage);
-
+console.log(
+  "🔥 message:new listeners AFTER:",
+  socket.listeners("message:new").length
+);
   socket.on("typing:start", ({ fromUserId }) => {
     if (fromUserId === userId) {
       setIsTyping(true);
