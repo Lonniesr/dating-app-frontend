@@ -18,6 +18,7 @@ type ChatMessage = {
   audioUrl?: string;
   senderId: string;
   receiverId: string;
+  read?: boolean;
   createdAt: string;
   reactions?: string[];
 
@@ -295,7 +296,14 @@ useEffect(() => {
   });
 
   return () => {
+useEffect(() => {
+  if (!socket || !ready || !userId) return;
 
+  socket.emit("message:read", {
+    otherUserId: userId,
+  });
+
+}, [socket, ready, userId, liveMessages.length]);
     console.log("🔴 ACTIVE CHAT CLEARED");
 
     socket.emit("conversation:leave", {
@@ -589,9 +597,15 @@ sendingRef.current = false;
           ))}
         </div>
 
-        <div className="text-xs text-white/40 mt-1">
-          {formatTime(msg.createdAt)}
-        </div>
+        <div className="text-xs text-white/40 mt-1 flex items-center gap-2">
+  <span>{formatTime(msg.createdAt)}</span>
+
+  {mine && (
+    <span className="text-pink-400">
+      {msg.read ? "Seen" : "Sent"}
+    </span>
+  )}
+</div>
       </div>
 
       {mine && (
