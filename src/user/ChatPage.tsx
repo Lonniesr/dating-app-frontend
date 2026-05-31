@@ -10,8 +10,7 @@ import { useUserChat } from "./hooks/useUserChat";
 import { useUserAuth } from "./context/UserAuthContext";
 import { supabase } from "../lib/supabaseClient";
 import toast from "react-hot-toast";
-import { globalSocket } from "./hooks/useUserSocket";
-
+import { useUserSocket } from "./hooks/useUserSocket";
 type ChatMessage = {
   id: string;
   text?: string;
@@ -80,13 +79,14 @@ export default function ChatPage() {
 
   const { authUser } = useUserAuth();
 const meId = authUser?.id ?? null;
-console.log("🔥 ME ID:", meId);
-console.log("🔥 AUTH USER:", authUser);
 
-const socket = globalSocket;
-const ready = !!socket?.connected;
-  const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
-  const { data } = useUserChat(userId);
+const {
+  socket,
+  ready,
+} = useUserSocket(authUser?.id);
+
+const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
+const { data } = useUserChat(userId);
 
   const messages = [...new Map(
   liveMessages.map((m) => [m.id, m])
@@ -255,30 +255,15 @@ function closeProfile() {
   setProfileData(null);
 }
 
- useEffect(() => {
+useEffect(() => {
 
   if (!data?.messages) return;
 
-  setLiveMessages((prev) => {
+  setLiveMessages(
+    data.messages as ChatMessage[]
+  );
 
-    const existingIds = new Set(
-      prev.map((m) => m.id)
-    );
-
-    const merged = [...prev];
-
-    (data.messages as ChatMessage[]).forEach((msg) => {
-
-      if (!existingIds.has(msg.id)) {
-        merged.push(msg);
-      }
-
-    });
-
-    return merged;
-  });
-
-}, [data]);
+}, [data?.messages]);
   
   useEffect(() => {
   if (!userId) return;
