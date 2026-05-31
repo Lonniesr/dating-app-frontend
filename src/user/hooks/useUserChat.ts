@@ -22,18 +22,9 @@ export function useUserChat(otherUserId: string | null) {
 
       if (!messaging) return;
 
-      unsubscribe = onMessage(messaging, (payload) => {
-        console.log("🔥 Foreground message:", payload);
-
-        if (Notification.permission === "granted") {
-          new Notification(
-            payload.notification?.title || "New message",
-            {
-              body: payload.notification?.body || "",
-            }
-          );
-        }
-      });
+     unsubscribe = onMessage(messaging, (payload) => {
+  console.log("🔥 Foreground message:", payload);
+}); 
     };
 
     setupListener();
