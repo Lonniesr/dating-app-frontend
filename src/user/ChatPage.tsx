@@ -20,7 +20,7 @@ type ChatMessage = {
   receiverId: string;
   read?: boolean;
   createdAt: string;
-  reactions?: string[];
+  reaction?: string;
 
   sender?: {
     photos?: { url: string }[];
@@ -296,14 +296,7 @@ useEffect(() => {
   });
 
   return () => {
-useEffect(() => {
-  if (!socket || !ready || !userId) return;
 
-  socket.emit("message:read", {
-    otherUserId: userId,
-  });
-
-}, [socket, ready, userId, liveMessages.length]);
     console.log("🔴 ACTIVE CHAT CLEARED");
 
     socket.emit("conversation:leave", {
@@ -312,6 +305,19 @@ useEffect(() => {
   };
 
 }, [socket, ready, userId]);
+
+useEffect(() => {
+
+  if (!socket || !ready || !userId) {
+    return;
+  }
+
+  socket.emit("message:read", {
+    otherUserId: userId,
+  });
+
+}, [socket, ready, userId, liveMessages.length]);
+
  useEffect(() => {
 
   if (!socket || !ready) {
@@ -351,26 +357,45 @@ console.log(
   "🔥 message:new listeners BEFORE:",
   socket.listeners("message:new").length
 );
-  socket.on("message:new", handleMessage);
-console.log(
-  "🔥 message:new listeners AFTER:",
-  socket.listeners("message:new").length
-);
-  socket.on("typing:start", ({ fromUserId }) => {
-    if (fromUserId === userId) {
-      setIsTyping(true);
-    }
-  });
+ socket.on("message:new", handleMessage);
 
-  socket.on("typing:stop", ({ fromUserId }) => {
-    if (fromUserId === userId) {
-      setIsTyping(false);
-    }
-  });
+socket.on(
+  "message:reaction:update",
+  ({
+    messageId,
+    emoji,
+  }) => {
+
+    setLiveMessages(prev =>
+      prev.map(msg =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              reaction: emoji,
+            }
+          : msg
+      )
+    );
+  }
+);
+
+socket.on("typing:start", ({ fromUserId }) => {
+  if (fromUserId === userId) {
+    setIsTyping(true);
+  }
+});
+
+socket.on("typing:stop", ({ fromUserId }) => {
+  if (fromUserId === userId) {
+    setIsTyping(false);
+  }
+});
 
   return () => {
 
     socket.off("message:new", handleMessage);
+
+socket.off("message:reaction:update");
 
     socket.off("typing:start");
 
@@ -414,19 +439,22 @@ console.log(
   };
 }, [socket]);
 
-  const addReaction = (messageId: string, emoji: string) => {
+  const addReaction = (
+  messageId: string,
+  emoji: string
+) => {
 
-    setLiveMessages((prev) =>
-      prev.map((msg) =>
-        msg.id === messageId
-          ? {
-              ...msg,
-              reactions: [...(msg.reactions || []), emoji],
-            }
-          : msg
-      )
-    );
-  };
+  if (!socket || !userId) return;
+
+  socket.emit(
+    "message:reaction",
+    {
+      messageId,
+      emoji,
+      otherUserId: userId,
+    }
+  );
+};
 
   async function sendMessage() {
     console.log("🚨 SEND MESSAGE FIRED");
@@ -577,11 +605,11 @@ sendingRef.current = false;
           {msg.text}
         </div>
 
-        <div className="flex gap-2 mt-1">
-          {msg.reactions?.map((r, i) => (
-            <span key={i}>{r}</span>
-          ))}
-        </div>
+        {msg.reaction && (
+  <div className="mt-1 text-lg">
+    {msg.reaction}
+  </div>
+)}
 
         <div className="flex gap-2 mt-1">
           {quickReactions.map((emoji) => (
