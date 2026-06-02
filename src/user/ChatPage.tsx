@@ -635,7 +635,7 @@ sendingRef.current = false;
 }}
               className="text-sm opacity-60 hover:opacity-100"
             >
-              {emoji}
+              {emoji} TEST
             </button>
           ))}
         </div>
