@@ -444,7 +444,18 @@ socket.off("message:reaction:update");
   emoji: string
 ) => {
 
-  if (!socket || !userId) return;
+  console.log("🔥 EMITTING REACTION", {
+    messageId,
+    emoji,
+    otherUserId: userId,
+    socketExists: !!socket,
+    ready,
+  });
+
+  if (!socket || !userId) {
+    console.log("❌ NO SOCKET");
+    return;
+  }
 
   socket.emit(
     "message:reaction",
@@ -454,6 +465,8 @@ socket.off("message:reaction:update");
       otherUserId: userId,
     }
   );
+
+  console.log("✅ REACTION EMITTED");
 };
 
   async function sendMessage() {
