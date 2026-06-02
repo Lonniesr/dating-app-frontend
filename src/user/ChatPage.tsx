@@ -624,21 +624,24 @@ sendingRef.current = false;
   </div>
 )}
 
-        <div className="flex gap-2 mt-1">
-          {quickReactions.map((emoji) => (
-            <button
-              key={emoji}
-              onClick={() => {
-  console.log("❤️ BUTTON CLICKED");
+   <div className="flex gap-2 mt-1">
+  {quickReactions.map((emoji) => (
+    <button
+      key={emoji}
+      onClick={() => {
+        console.log("❤️ BUTTON CLICKED", {
+          messageId: msg.id,
+          emoji,
+        });
 
-  addReaction(msg.id, emoji);
-}}
-              className="text-sm opacity-60 hover:opacity-100"
-            >
-              {emoji} TEST
-            </button>
-          ))}
-        </div>
+        addReaction(msg.id, emoji);
+      }}
+      className="text-sm opacity-60 hover:opacity-100"
+    >
+      {emoji} TEST
+    </button>
+  ))}
+</div>    
 
         <div className="text-xs text-white/40 mt-1 flex items-center gap-2">
   <span>{formatTime(msg.createdAt)}</span>
