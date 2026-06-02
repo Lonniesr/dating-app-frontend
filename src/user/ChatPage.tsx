@@ -74,7 +74,6 @@ function Avatar({
 }
 
 export default function ChatPage() {
-  console.log("🚨 CHAT PAGE RENDERED");
   const { id: otherUserId } = useParams<{ id: string }>();
   const userId = otherUserId ?? null;
 
@@ -289,7 +288,6 @@ useEffect(() => {
     return;
   }
 
-  console.log("🟢 ACTIVE CHAT SET:", userId);
 
   socket.emit("conversation:join", {
     otherUserId: userId,
@@ -297,7 +295,6 @@ useEffect(() => {
 
   return () => {
 
-    console.log("🔴 ACTIVE CHAT CLEARED");
 
     socket.emit("conversation:leave", {
       otherUserId: userId,
@@ -326,7 +323,6 @@ useEffect(() => {
 
   const handleMessage = (msg: ChatMessage) => {
 
-    console.log("🔥 SOCKET MESSAGE:", msg.id);
 
     setLiveMessages((prev) => {
 
@@ -471,13 +467,11 @@ socket.off("message:reaction:update");
 };
 
   async function sendMessage() {
-    console.log("🚨 SEND MESSAGE FIRED");
 if ((!text.trim() && !selectedImage) || !userId) {
   return;
 }
 
 if (sendingRef.current) {
-  console.log("🛑 BLOCKED DUPLICATE SEND");
   return;
 }
 
@@ -502,7 +496,6 @@ sendingRef.current = true;
 
         imageUrl = data.publicUrl;
       }
-      console.log("🚨 POSTING MESSAGE NOW");
       const res = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/messages/${userId}`,
         {
@@ -562,7 +555,6 @@ sendingRef.current = false;
 </div>
       <div className="flex-1 overflow-y-auto px-4 py-6">
        {messages.map((msg) => {
-         console.log("🎨 RENDER MESSAGE:", msg.id);
   const mine = msg.senderId === meId;
 
   const avatarUrl = resolvePhotoUrl(
@@ -639,7 +631,7 @@ sendingRef.current = false;
       }}
       className="text-sm opacity-60 hover:opacity-100"
     >
-      {emoji} TEST
+      {emoji}
     </button>
   ))}
 </div>    
