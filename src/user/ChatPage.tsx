@@ -445,13 +445,14 @@ socket.off("message:reaction:update");
 ) => {
 
   console.log("🔥 EMITTING REACTION", {
-    messageId,
-    emoji,
-    otherUserId: userId,
-    socketExists: !!socket,
-    ready,
-  });
-
+  socketId: socket?.id,
+  connected: socket?.connected,
+  messageId,
+  emoji,
+  otherUserId: userId,
+  socketExists: !!socket,
+  ready,
+});
   if (!socket || !userId) {
     console.log("❌ NO SOCKET");
     return;
