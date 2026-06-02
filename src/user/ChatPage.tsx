@@ -628,9 +628,11 @@ sendingRef.current = false;
           {quickReactions.map((emoji) => (
             <button
               key={emoji}
-              onClick={() =>
-                addReaction(msg.id, emoji)
-              }
+              onClick={() => {
+  console.log("❤️ BUTTON CLICKED");
+
+  addReaction(msg.id, emoji);
+}}
               className="text-sm opacity-60 hover:opacity-100"
             >
               {emoji}
