@@ -23,15 +23,20 @@ export type ChatResponse = {
 };
 
 export type ConversationPreview = {
-  userId: string;
-  lastMessage: Message;
-  unread: number;
+  conversationId: string;
+
   user: {
     id: string;
     name: string | null;
-    photos: string[];
-    location: string | null;
+    avatar: string | null;
+  };
+
+  lastMessage: {
+    text: string | null;
+    createdAt: string;
   } | null;
+
+  unreadCount: number;
 };
 
 /* =======================
