@@ -10,7 +10,7 @@ export interface MessageUser {
 
 export interface Message {
   id: string;
-  content: string;
+  text: string;
   createdAt: string;
   sender: MessageUser;
   receiver: MessageUser;

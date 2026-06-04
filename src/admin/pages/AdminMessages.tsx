@@ -69,7 +69,7 @@ receiver:
   m.receiver.id === LYNQ_TEAM_ID
     ? "LynQ Team"
     : `${m.receiver.name ?? "Unknown"} (${m.receiver.email})`,
-            content: m.content,
+            content: m.text,
             createdAt: new Date(m.createdAt).toLocaleString(),
             senderId: m.sender.id,
             receiverId: m.receiver.id,
@@ -123,7 +123,9 @@ receiver:
                     {msg.receiver.name ?? "Unknown"}
                   </div>
 
-                  <div style={{ marginBottom: "0.5rem" }}>{msg.content}</div>
+<div style={{ marginBottom: "0.5rem" }}>
+  {msg.text}
+</div>
 
                   <div
                     style={{
