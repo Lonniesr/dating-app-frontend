@@ -4,6 +4,8 @@ import DataTable from "../components/DataTable";
 
 import { adminMessagesService } from "../services/adminMessagesService";
 import type { Message } from "../services/adminMessagesService";
+const LYNQ_TEAM_ID =
+  "3e6a706c-b29e-4202-b6f7-89a0e4bf9c4c";
 
 export default function AdminMessagesPage() {
   const queryClient = useQueryClient();
@@ -38,22 +40,35 @@ export default function AdminMessagesPage() {
         className="admin-gold-shimmer"
         style={{ fontSize: "2rem", marginBottom: "1.5rem" }}
       >
-        Message Moderation
+        LynQ Team Inbox
       </h1>
 
       <DataTable
         searchable
         columns={[
-          { key: "sender", label: "Sender" },
-          { key: "receiver", label: "Receiver" },
-          { key: "content", label: "Message" },
-          { key: "createdAt", label: "Sent At" },
-        ]}
+  { key: "sender", label: "Sender" },
+  { key: "receiver", label: "Receiver" },
+  { key: "content", label: "Message" },
+  { key: "createdAt", label: "Sent At" },
+]}
         data={
-          messages?.map((m) => ({
+  messages
+    ?.filter(
+      (m) =>
+        m.sender.id === LYNQ_TEAM_ID ||
+        m.receiver.id === LYNQ_TEAM_ID
+    )
+    .map((m) => ({
             id: m.id,
-            sender: `${m.sender.name ?? "Unknown"} (${m.sender.email})`,
-            receiver: `${m.receiver.name ?? "Unknown"} (${m.receiver.email})`,
+            sender:
+  m.sender.id === LYNQ_TEAM_ID
+    ? "LynQ Team"
+    : `${m.sender.name ?? "Unknown"} (${m.sender.email})`,
+
+receiver:
+  m.receiver.id === LYNQ_TEAM_ID
+    ? "LynQ Team"
+    : `${m.receiver.name ?? "Unknown"} (${m.receiver.email})`,
             content: m.content,
             createdAt: new Date(m.createdAt).toLocaleString(),
             senderId: m.sender.id,
