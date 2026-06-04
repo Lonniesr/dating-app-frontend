@@ -12,6 +12,8 @@ export default function AdminMessagesPage() {
 
   const [conversation, setConversation] = useState<Message[] | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+const [replyText, setReplyText] = useState("");
+const [selectedUserId, setSelectedUserId] = useState("");
 
   const { data: messages, isLoading } = useQuery<Message[]>({
     queryKey: ["admin-messages"],

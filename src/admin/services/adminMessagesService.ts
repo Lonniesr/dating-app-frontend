@@ -29,6 +29,18 @@ export const adminMessagesService = {
     return res.data.messages as Message[];
   },
 
+  async sendToUser(
+    userId: string,
+    message: string
+  ) {
+    const res = await base.post("/user", {
+      userId,
+      message,
+    });
+
+    return res.data;
+  },
+
   async delete(id: string) {
     const res = await base.deleteReq(`/${id}`);
     return res.data;
