@@ -72,7 +72,7 @@ export default function DataTable<T extends { id: string }>({
   return (
     <div className="glass-panel fade-in">
       {/* Search */}
-      {searchable && (
+     {searchable && (
   <input
     className="input"
     placeholder="Search..."
@@ -80,8 +80,9 @@ export default function DataTable<T extends { id: string }>({
     onChange={(e) => setSearch(e.target.value)}
     style={{
       marginBottom: "1rem",
-      color: "#ffffff",
-      WebkitTextFillColor: "#ffffff",
+      color: "#fff",
+      WebkitTextFillColor: "#fff",
+      caretColor: "#d4af37",
     }}
   />
 )}
