@@ -15,7 +15,12 @@ export default function AdminMessagesPage() {
 const [replyText, setReplyText] = useState("");
 const [selectedUserId, setSelectedUserId] = useState("");
 const [broadcastText, setBroadcastText] = useState("");
-
+const [broadcastOpen, setBroadcastOpen] =
+  useState(false);
+const [broadcastGroup, setBroadcastGroup] =
+  useState<"all" | "verified" | "unverified">(
+    "all"
+  );
   const { data: messages, isLoading } = useQuery<Message[]>({
     queryKey: ["admin-messages"],
     queryFn: () => adminMessagesService.list(),
@@ -61,63 +66,19 @@ const [broadcastText, setBroadcastText] = useState("");
       >
         LynQ Team Inbox
       </h1>
-    <div
+  <div
   style={{
     display: "flex",
-    gap: "1rem",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: "1.5rem",
-    flexWrap: "wrap",
   }}
 >
   <button
     className="btn-gold"
-    onClick={async () => {
-      const msg = prompt(
-        "Message ALL users:"
-      );
-
-      if (!msg?.trim()) return;
-
-      await adminMessagesService.sendToAll(msg);
-
-      alert("Sent to all users");
-    }}
+    onClick={() => setBroadcastOpen(true)}
   >
-    Message All Users
-  </button>
-
-  <button
-    className="btn-gold"
-    onClick={async () => {
-      const msg = prompt(
-        "Message VERIFIED users:"
-      );
-
-      if (!msg?.trim()) return;
-
-      await adminMessagesService.sendToVerified(msg);
-
-      alert("Sent to verified users");
-    }}
-  >
-    Message Verified Users
-  </button>
-
-  <button
-    className="btn-gold"
-    onClick={async () => {
-      const msg = prompt(
-        "Message NON-VERIFIED users:"
-      );
-
-      if (!msg?.trim()) return;
-
-      await adminMessagesService.sendToUnverified(msg);
-
-      alert("Sent to non-verified users");
-    }}
-  >
-    Message Non-Verified Users
+    📢 New Broadcast
   </button>
 </div>
 
@@ -279,6 +240,126 @@ receiver:
           </div>
         </div>
       )}
+     {/* Broadcast Modal */}
+{broadcastOpen && (
+  <div className="modal-backdrop">
+    <div className="glass-panel modal">
+      <h2 className="h2">
+        Send LynQ Team Announcement
+      </h2>
+
+      <div
+        style={{
+          marginTop: "1rem",
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.75rem",
+        }}
+      >
+        <label>
+          <input
+            type="radio"
+            checked={broadcastGroup === "all"}
+            onChange={() =>
+              setBroadcastGroup("all")
+            }
+          />{" "}
+          All Users
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            checked={broadcastGroup === "verified"}
+            onChange={() =>
+              setBroadcastGroup("verified")
+            }
+          />{" "}
+          Verified Users
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            checked={broadcastGroup === "unverified"}
+            onChange={() =>
+              setBroadcastGroup("unverified")
+            }
+          />{" "}
+          Non-Verified Users
+        </label>
+      </div>
+
+      <textarea
+        value={broadcastText}
+        onChange={(e) =>
+          setBroadcastText(e.target.value)
+        }
+        placeholder="Type your announcement..."
+        className="input"
+        style={{
+          width: "100%",
+          minHeight: "160px",
+          marginTop: "1rem",
+          color: "#fff",
+          background: "rgba(255,255,255,0.08)",
+          border: "1px solid rgba(255,255,255,0.15)",
+        }}
+      />
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: "1rem",
+          marginTop: "1rem",
+        }}
+      >
+        <button
+          className="btn-outline"
+          onClick={() => {
+            setBroadcastOpen(false);
+            setBroadcastText("");
+          }}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="btn-gold"
+          onClick={async () => {
+            if (!broadcastText.trim()) return;
+
+            if (broadcastGroup === "all") {
+              await adminMessagesService.sendToAll(
+                broadcastText
+              );
+            }
+
+            if (broadcastGroup === "verified") {
+              await adminMessagesService.sendToVerified(
+                broadcastText
+              );
+            }
+
+            if (broadcastGroup === "unverified") {
+              await adminMessagesService.sendToUnverified(
+                broadcastText
+              );
+            }
+
+            alert("Announcement sent!");
+
+            setBroadcastText("");
+            setBroadcastOpen(false);
+          }}
+        >
+          Send Announcement
+        </button>
+      </div>
+    </div>
+  </div>
+)} 
     </div>
   );
 }
