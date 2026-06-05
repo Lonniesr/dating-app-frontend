@@ -26,11 +26,27 @@ const [selectedUserId, setSelectedUserId] = useState("");
       queryClient.invalidateQueries({ queryKey: ["admin-messages"] }),
   });
 
-  const openConversation = async (userA: string, userB: string) => {
-    const convo = await adminMessagesService.getConversation(userA, userB);
-    setConversation(convo);
-    setModalOpen(true);
-  };
+  const openConversation = async (
+  userA: string,
+  userB: string
+) => {
+  const convo =
+    await adminMessagesService.getConversation(
+      userA,
+      userB
+    );
+
+  setConversation(convo);
+
+  const actualUserId =
+    userA === LYNQ_TEAM_ID
+      ? userB
+      : userA;
+
+  setSelectedUserId(actualUserId);
+
+  setModalOpen(true);
+};
 
   if (isLoading) {
     return <div className="glass-card">Loading messages…</div>;
@@ -152,6 +168,52 @@ receiver:
               style={{ marginTop: "1rem" }}
               onClick={() => setModalOpen(false)}
             >
+<textarea
+  value={replyText}
+  onChange={(e) => setReplyText(e.target.value)}
+  placeholder="Reply as LynQ Team..."
+  className="input"
+  style={{
+    width: "100%",
+    minHeight: "120px",
+    marginTop: "1rem",
+    color: "#fff",
+    background: "rgba(255,255,255,0.08)",
+    border: "1px solid rgba(255,255,255,0.15)",
+  }}
+/>
+
+<div
+  style={{
+    display: "flex",
+    justifyContent: "flex-end",
+    marginTop: "1rem",
+  }}
+>
+  <button
+    className="btn-gold"
+    onClick={async () => {
+      if (!replyText.trim()) return;
+
+      await adminMessagesService.sendToUser(
+        selectedUserId,
+        replyText
+      );
+
+      const refreshed =
+        await adminMessagesService.getConversation(
+          selectedUserId,
+          LYNQ_TEAM_ID
+        );
+
+      setConversation(refreshed);
+      setReplyText("");
+    }}
+  >
+    Send Reply
+  </button>
+</div>
+
               Close
             </button>
           </div>
