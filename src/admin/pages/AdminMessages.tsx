@@ -163,12 +163,7 @@ receiver:
               )}
             </div>
 
-            <button
-              className="btn-gold"
-              style={{ marginTop: "1rem" }}
-              onClick={() => setModalOpen(false)}
-            >
-<textarea
+           <textarea
   value={replyText}
   onChange={(e) => setReplyText(e.target.value)}
   placeholder="Reply as LynQ Team..."
@@ -188,6 +183,7 @@ receiver:
     display: "flex",
     justifyContent: "flex-end",
     marginTop: "1rem",
+    gap: "1rem",
   }}
 >
   <button
@@ -212,10 +208,14 @@ receiver:
   >
     Send Reply
   </button>
-</div>
 
-              Close
-            </button>
+  <button
+    className="btn-outline"
+    onClick={() => setModalOpen(false)}
+  >
+    Close
+  </button>
+</div>
           </div>
         </div>
       )}
