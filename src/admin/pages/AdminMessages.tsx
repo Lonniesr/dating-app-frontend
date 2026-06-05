@@ -14,6 +14,7 @@ export default function AdminMessagesPage() {
   const [modalOpen, setModalOpen] = useState(false);
 const [replyText, setReplyText] = useState("");
 const [selectedUserId, setSelectedUserId] = useState("");
+const [broadcastText, setBroadcastText] = useState("");
 
   const { data: messages, isLoading } = useQuery<Message[]>({
     queryKey: ["admin-messages"],
@@ -60,6 +61,65 @@ const [selectedUserId, setSelectedUserId] = useState("");
       >
         LynQ Team Inbox
       </h1>
+    <div
+  style={{
+    display: "flex",
+    gap: "1rem",
+    marginBottom: "1.5rem",
+    flexWrap: "wrap",
+  }}
+>
+  <button
+    className="btn-gold"
+    onClick={async () => {
+      const msg = prompt(
+        "Message ALL users:"
+      );
+
+      if (!msg?.trim()) return;
+
+      await adminMessagesService.sendToAll(msg);
+
+      alert("Sent to all users");
+    }}
+  >
+    Message All Users
+  </button>
+
+  <button
+    className="btn-gold"
+    onClick={async () => {
+      const msg = prompt(
+        "Message VERIFIED users:"
+      );
+
+      if (!msg?.trim()) return;
+
+      await adminMessagesService.sendToVerified(msg);
+
+      alert("Sent to verified users");
+    }}
+  >
+    Message Verified Users
+  </button>
+
+  <button
+    className="btn-gold"
+    onClick={async () => {
+      const msg = prompt(
+        "Message NON-VERIFIED users:"
+      );
+
+      if (!msg?.trim()) return;
+
+      await adminMessagesService.sendToUnverified(msg);
+
+      alert("Sent to non-verified users");
+    }}
+  >
+    Message Non-Verified Users
+  </button>
+</div>
 
       <DataTable
         searchable

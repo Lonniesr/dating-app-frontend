@@ -40,7 +40,36 @@ export const adminMessagesService = {
 
     return res.data;
   },
+  async sendToAll(
+    message: string
+  ) {
+    const res = await base.post("/all", {
+      message,
+    });
 
+    return res.data;
+  },
+
+  async sendToVerified(
+    message: string
+  ) {
+    const res = await base.post("/verified", {
+      message,
+    });
+
+    return res.data;
+  },
+
+  async sendToUnverified(
+    message: string
+  ) {
+    const res = await base.post("/unverified", {
+      message,
+    });
+
+    return res.data;
+  },
+  
   async delete(id: string) {
     const res = await base.deleteReq(`/${id}`);
     return res.data;
