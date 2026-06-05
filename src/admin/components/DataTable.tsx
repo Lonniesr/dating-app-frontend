@@ -80,9 +80,10 @@ export default function DataTable<T extends { id: string }>({
     onChange={(e) => setSearch(e.target.value)}
     style={{
       marginBottom: "1rem",
+      width: "100%",
       color: "#fff",
-      WebkitTextFillColor: "#fff",
-      caretColor: "#d4af37",
+      background: "rgba(255,255,255,0.08)",
+      border: "1px solid rgba(255,255,255,0.15)",
     }}
   />
 )}
