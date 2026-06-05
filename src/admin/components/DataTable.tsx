@@ -73,14 +73,18 @@ export default function DataTable<T extends { id: string }>({
     <div className="glass-panel fade-in">
       {/* Search */}
       {searchable && (
-        <input
-          className="input"
-          placeholder="Search..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ marginBottom: "1rem" }}
-        />
-      )}
+  <input
+    className="input"
+    placeholder="Search..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    style={{
+      marginBottom: "1rem",
+      color: "#ffffff",
+      WebkitTextFillColor: "#ffffff",
+    }}
+  />
+)}
 
       {/* Table */}
       <table className="table">
@@ -115,7 +119,9 @@ export default function DataTable<T extends { id: string }>({
               }}
             >
               {columns.map((col) => (
-                <td key={String(col.key)}>{row[col.key]}</td>
+                <td key={String(col.key)}>
+  {String(row[col.key] ?? "")}
+</td>
               ))}
 
               {actions && (
