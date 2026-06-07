@@ -31,14 +31,24 @@ export default function InviteLandingPage() {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        setError(data);
-        setLoading(false);
-        return;
-      }
+     if (!res.ok) {
+  setError(data);
+  setLoading(false);
+  return;
+}
 
-      setInvite(data);
-      setLoading(false);
+localStorage.setItem(
+  "lynqInviteData",
+  JSON.stringify({
+    redirectToInviter:
+      data.redirectToInviter ?? false,
+    invitedById:
+      data.invitedById ?? null,
+  })
+);
+
+setInvite(data);
+setLoading(false);
     } catch {
       setError({ message: "Server error" });
       setLoading(false);

@@ -30,14 +30,28 @@ export default function CompletionStep() {
         throw new Error("Onboarding completion failed");
       }
 
-      await refreshUser();
+     await refreshUser();
 
-      await queryClient.invalidateQueries({
-        queryKey: ["authUser"],
-      });
+await queryClient.invalidateQueries({
+  queryKey: ["authUser"],
+});
 
-      navigate("/dashboard");
+const inviteData = JSON.parse(
+  localStorage.getItem("lynqInviteData") || "{}"
+);
 
+if (
+  inviteData.redirectToInviter &&
+  inviteData.invitedById
+) {
+  localStorage.removeItem("lynqInviteData");
+
+  navigate(
+    `/user/profile/${inviteData.invitedById}`
+  );
+} else {
+  navigate("/dashboard");
+}
     } catch (err) {
       console.error("Onboarding completion failed:", err);
       alert("Something went wrong finishing onboarding.");
