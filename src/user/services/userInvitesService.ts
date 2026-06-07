@@ -30,17 +30,21 @@ export const userInvitesService = {
     return res.data.invites as UserInvite[];
   },
 
-  async create(): Promise<UserInvite> {
-    const res = await apiClient.post(BASE);
+ async create(
+  data?: {
+    redirectToInviter?: boolean;
+  }
+): Promise<UserInvite> {
+  const res = await apiClient.post(BASE, data);
 
-    return {
-      id: res.data.id,
-      code: res.data.code,
-      inviteLink: res.data.inviteLink, // guaranteed
-      used: res.data.used ?? false,
-      usedAt: res.data.usedAt ?? null,
-    };
-  },
+  return {
+    id: res.data.id,
+    code: res.data.code,
+    inviteLink: res.data.inviteLink,
+    used: res.data.used ?? false,
+    usedAt: res.data.usedAt ?? null,
+  };
+},
 
   async markUsed(inviteId: string, userId: string): Promise<UserInvite> {
     const res = await apiClient.post(`${BASE}/mark-used`, {

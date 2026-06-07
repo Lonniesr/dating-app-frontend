@@ -42,6 +42,9 @@ export default function ProfilePage() {
 
   const [otherUser, setOtherUser] = useState<any>(null);
   const [newInvite, setNewInvite] = useState<any>(null);
+  const [inviteType, setInviteType] = useState<
+  "general" | "profile"
+>("general");
   const [prompts, setPrompts] = useState<any[]>([]);
   const [canViewMap, setCanViewMap] = useState<Record<string, boolean>>({});
 
@@ -108,25 +111,28 @@ export default function ProfilePage() {
   }, [photos, viewingOtherUser]);
 
   const createInviteMutation = useMutation({
-    mutationFn: async () => {
-      console.log("🔥 STARTING INVITE");
+  mutationFn: async () => {
+    console.log("🔥 STARTING INVITE");
 
-      const res = await userInvitesService.create();
+    const res = await userInvitesService.create({
+      redirectToInviter:
+        inviteType === "profile",
+    });
 
-      console.log("✅ INVITE RESPONSE:", res);
+    console.log("✅ INVITE RESPONSE:", res);
 
-      return res;
-    },
+    return res;
+  },
 
-    onSuccess: (invite) => {
-      console.log("✅ SUCCESS:", invite);
-      setNewInvite(invite);
-    },
+  onSuccess: (invite) => {
+    console.log("✅ SUCCESS:", invite);
+    setNewInvite(invite);
+  },
 
-    onError: (err) => {
-      console.error("❌ INVITE ERROR:", err);
-    },
-  });
+  onError: (err) => {
+    console.error("❌ INVITE ERROR:", err);
+  },
+});
 
   if (isLoading) {
     return <div className="p-6 text-white">Loading…</div>;
@@ -234,17 +240,40 @@ export default function ProfilePage() {
         </div>
 
         {!viewingOtherUser && (
-          <button
-            type="button"
-            onClick={() => {
-              console.log("🔥 BUTTON CLICKED");
-              createInviteMutation.mutate();
-            }}
-            className="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-lg font-semibold"
-          >
-            Invite
-          </button>
-        )}
+  <div className="flex flex-col gap-2">
+
+    <select
+      value={inviteType}
+      onChange={(e) =>
+        setInviteType(
+          e.target.value as
+            "general" | "profile"
+        )
+      }
+      className="bg-black border border-white/20 rounded px-3 py-2 text-sm"
+    >
+      <option value="general">
+        General Invite
+      </option>
+
+      <option value="profile">
+        Personal Invite
+      </option>
+    </select>
+
+    <button
+      type="button"
+      onClick={() => {
+        console.log("🔥 BUTTON CLICKED");
+        createInviteMutation.mutate();
+      }}
+      className="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-lg font-semibold"
+    >
+      Invite
+    </button>
+
+  </div>
+)}
 
       </div>
 
