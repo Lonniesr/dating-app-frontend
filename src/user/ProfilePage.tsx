@@ -112,8 +112,11 @@ export default function ProfilePage() {
 
   const createInviteMutation = useMutation({
   mutationFn: async () => {
-    console.log("🔥 STARTING INVITE");
-
+console.log("🔥 STARTING INVITE");
+console.log(
+  "Sending redirectToInviter:",
+  inviteType === "profile"
+);
     const res = await userInvitesService.create({
       redirectToInviter:
         inviteType === "profile",
@@ -264,9 +267,9 @@ export default function ProfilePage() {
     <button
       type="button"
       onClick={() => {
-        console.log("🔥 BUTTON CLICKED");
-        createInviteMutation.mutate();
-      }}
+  console.log("Invite Type:", inviteType);
+  createInviteMutation.mutate();
+}}
       className="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-lg font-semibold"
     >
       Invite
