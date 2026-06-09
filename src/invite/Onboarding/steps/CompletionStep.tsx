@@ -40,16 +40,35 @@ const inviteData = JSON.parse(
   localStorage.getItem("lynqInviteData") || "{}"
 );
 
+console.log(
+  "lynqInviteData raw:",
+  localStorage.getItem("lynqInviteData")
+);
+
+console.log(
+  "inviteData parsed:",
+  inviteData
+);
+
 if (
   inviteData.redirectToInviter &&
   inviteData.invitedById
 ) {
+  console.log(
+    "✅ REDIRECTING TO INVITER:",
+    inviteData.invitedById
+  );
+
   localStorage.removeItem("lynqInviteData");
 
   navigate(
     `/user/profile/${inviteData.invitedById}`
   );
 } else {
+  console.log(
+    "❌ FALLING BACK TO DASHBOARD"
+  );
+
   navigate("/dashboard");
 }
     } catch (err) {
