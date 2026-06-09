@@ -87,23 +87,52 @@ export default function Onboarding() {
      Finish
   ================================= */
 
-  const finish = async () => {
-    try {
-      await fetch(
-        `${import.meta.env.VITE_API_URL}/api/onboarding/complete`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ inviteCode }),
-        }
-      );
-    } catch (err) {
-      console.error("Error completing onboarding:", err);
-    }
+ const finish = async () => {
+  try {
+    await fetch(
+      `${import.meta.env.VITE_API_URL}/api/onboarding/complete`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inviteCode }),
+      }
+    );
+  } catch (err) {
+    console.error("Error completing onboarding:", err);
+  }
+
+  const inviteData = JSON.parse(
+    localStorage.getItem("lynqInviteData") || "{}"
+  );
+
+  console.log(
+    "Onboarding finish inviteData:",
+    inviteData
+  );
+
+  if (
+    inviteData.redirectToInviter &&
+    inviteData.invitedById
+  ) {
+    console.log(
+      "✅ Redirecting to inviter profile:",
+      inviteData.invitedById
+    );
+
+    localStorage.removeItem("lynqInviteData");
+
+    navigate(
+      `/user/profile/${inviteData.invitedById}`
+    );
+  } else {
+    console.log(
+      "❌ No inviter redirect data found"
+    );
 
     navigate("/user/dashboard");
-  };
+  }
+};
 
   /* ================================
      Render
