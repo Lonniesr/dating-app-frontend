@@ -7,6 +7,7 @@ export default function SidebarNav() {
   const [matchCount, setMatchCount] = useState(0);
 
   useEffect(() => {
+     console.log("🔥 SIDEBAR LOADED");
     const loadBadges = async () => {
       try {
         const res = await fetch(
@@ -17,6 +18,7 @@ export default function SidebarNav() {
         );
 
         const badges = await res.json();
+ console.log("🔥 FETCHING BADGES");
 
         setUnreadCount(badges.unreadMessages || 0);
         setMatchCount(badges.newMatches || 0);
