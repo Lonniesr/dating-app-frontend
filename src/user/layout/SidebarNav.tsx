@@ -1,7 +1,32 @@
 import { NavLink } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { userNav } from "../nav/UserNavConfig";
 
 export default function SidebarNav() {
+    const [unreadCount, setUnreadCount] = useState(0);
+  const [matchCount, setMatchCount] = useState(0);
+
+  useEffect(() => {
+    const loadBadges = async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/notifications/badges`,
+          {
+            credentials: "include",
+          }
+        );
+
+        const badges = await res.json();
+
+        setUnreadCount(badges.unreadMessages || 0);
+        setMatchCount(badges.newMatches || 0);
+      } catch (err) {
+        console.error("Failed loading badges", err);
+      }
+    };
+
+    loadBadges();
+  }, []);
   const base = "block px-4 py-3 rounded-lg transition font-medium";
   const inactive = "text-white/70 hover:bg-white/10";
   const active = "bg-white/10 text-yellow-400 border border-white/10";
@@ -28,14 +53,30 @@ export default function SidebarNav() {
           to={userNav.matches.path}
           className={({ isActive }) => `${base} ${isActive ? active : inactive}`}
         >
-          {userNav.matches.label}
+<div className="flex items-center justify-between w-full">
+  <span>{userNav.matches.label}</span>
+
+  {matchCount > 0 && (
+    <span className="bg-pink-500 text-white text-xs px-2 py-0.5 rounded-full">
+      {matchCount}
+    </span>
+  )}
+</div>
         </NavLink>
 
         <NavLink
           to={userNav.messages.path}
           className={({ isActive }) => `${base} ${isActive ? active : inactive}`}
         >
-          {userNav.messages.label}
+<div className="flex items-center justify-between w-full">
+  <span>{userNav.messages.label}</span>
+
+  {unreadCount > 0 && (
+    <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+      {unreadCount}
+    </span>
+  )}
+</div>
         </NavLink>
 
         <NavLink

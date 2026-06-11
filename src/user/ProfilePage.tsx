@@ -50,9 +50,6 @@ export default function ProfilePage() {
   const [prompts, setPrompts] = useState<any[]>([]);
   const [canViewMap, setCanViewMap] = useState<Record<string, boolean>>({});
 
-const [unreadCount, setUnreadCount] = useState(0);
-const [matchCount, setMatchCount] = useState(0);
-
   const viewingOtherUser = !!id;
 
   const profileUser = viewingOtherUser
@@ -113,40 +110,7 @@ const [matchCount, setMatchCount] = useState(0);
     };
 
     checkAccess();
-  }, [photos, viewingOtherUser]);
-
-useEffect(() => {
-  if (viewingOtherUser) return;
-
-  const loadCounts = async () => {
-  try {
-    const badgesRes = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/notifications/badges`,
-      {
-        credentials: "include",
-      }
-    );
-
-    const badges = await badgesRes.json();
-
-    setUnreadCount(
-      badges.unreadMessages || 0
-    );
-
-    setMatchCount(
-      badges.newMatches || 0
-    );
-
-  } catch (err) {
-    console.error(
-      "Failed loading profile badges",
-      err
-    );
-  }
-};
-
-  loadCounts();
-}, [viewingOtherUser]);
+  }, [photos, viewingOtherUser]); 
 
   const createInviteMutation = useMutation({
   mutationFn: async () => {
@@ -278,37 +242,6 @@ console.log(
             </p>
           
 
-{!viewingOtherUser && (
-  <div className="flex gap-3 mt-3 flex-wrap">
-
-    <button
-      onClick={() => navigate("/user/messages")}
-      className="bg-white/10 px-3 py-1 rounded-full text-sm flex items-center gap-2"
-    >
-      💬 Messages
-
-      {unreadCount > 0 && (
-        <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-          {unreadCount}
-        </span>
-      )}
-    </button>
-
-    <button
-      onClick={() => navigate("/user/matches")}
-      className="bg-white/10 px-3 py-1 rounded-full text-sm flex items-center gap-2"
-    >
-      ❤️ New Matches
-
-      {matchCount > 0 && (
-        <span className="bg-pink-500 text-white text-xs px-2 py-0.5 rounded-full">
-          {matchCount}
-        </span>
-      )}
-    </button>
-
-  </div>
-)}
 </div>
         </div>
 
