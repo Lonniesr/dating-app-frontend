@@ -114,7 +114,8 @@ setBadges({
   }
 >
   <div className="flex items-center justify-between w-full">
-    <span>Matches</span>
+  <span>Matches</span>
+  <Badge count={badges.newMatches} />
   </div>
 </NavLink>
 
@@ -126,6 +127,7 @@ setBadges({
 >
   <div className="flex items-center justify-between w-full">
     <span>Messages</span>
+    <Badge count={badges.unreadMessages} />
   </div>
 </NavLink>
 
