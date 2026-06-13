@@ -94,17 +94,7 @@ setBadges({
         </h1>
 
         <nav className="space-y-2">
-          <NavLink
-    to="requests"
-    className={({ isActive }) =>
-      `${base} ${isActive ? active : inactive}`
-    }
-  >
-    <div className="flex items-center justify-between w-full">
-      <span>🔔 Notifications</span>
-      <Badge count={totalNotifications} />
-    </div>
-  </NavLink> 
+         
 
           <NavLink
   to="matches"
