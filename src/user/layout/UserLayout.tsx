@@ -57,7 +57,6 @@ try {
 } catch (err) {
   console.error("Photo request count failed", err);
 }
-
 setBadges({
   unreadMessages: data.unreadMessages ?? 0,
   newLikes: data.newLikes ?? 0,
