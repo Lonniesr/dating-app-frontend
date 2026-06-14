@@ -26,8 +26,11 @@ function calculateAge(birthdate?: string) {
 }
 
 export function useMatches() {
-  return useQuery<MatchUser[]>({
-    queryKey: ["matches"],
+return useQuery<{
+  matches: MatchUser[];
+  likes: MatchUser[];
+}>({
+  queryKey: ["matches"],
     queryFn: async () => {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/user/matches`,
@@ -35,17 +38,27 @@ export function useMatches() {
       );
 
       const data = await res.json();
-
+      console.log("MATCHES API RESPONSE:", data);
+console.log("🔥 RAW MATCH RESPONSE:", data);
       if (!res.ok) throw new Error(data.error);
 
-      return data.map((user: any) => ({
-        id: user.id,
-        name: user.name,
-        gender: user.gender,
-        photos: Array.isArray(user.photos) ? user.photos : [],
-        age: calculateAge(user.birthdate),
-        location: user.location,
-      }));
+     const mapUser = (user: any) => ({
+  id: user.id,
+  name: user.name,
+  gender: user.gender,
+  photos: Array.isArray(user.photos) ? user.photos : [],
+  age: calculateAge(user.birthdate),
+  location: user.location,
+});
+
+return {
+  matches: Array.isArray(data.matches)
+    ? data.matches.map(mapUser)
+    : [],
+  likes: Array.isArray(data.likes)
+    ? data.likes.map(mapUser)
+    : [],
+};
     },
   });
 }
