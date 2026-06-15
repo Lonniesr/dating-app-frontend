@@ -19,6 +19,7 @@ export default function MatchesPage() {
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
+const [activeTab, setActiveTab] = useState<"matches" | "likes">("matches");
 
   if (isLoading) {
     return (
@@ -49,15 +50,46 @@ const likes: MatchItem[] = data?.likes || [];
 console.log("MATCHES:", matches);
 console.log("LIKES:", likes);
 
-  const filteredMatches = matches.filter((m) =>
-    m.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const activeList =
+  activeTab === "matches" ? matches : likes;
 
-  if (matches.length === 0) {
+const filteredMatches = activeList.filter((m) =>
+  m.name.toLowerCase().includes(search.toLowerCase())
+);
+
+ if (
+  (activeTab === "matches" && matches.length === 0) ||
+  (activeTab === "likes" && likes.length === 0)
+) { 
     return (
       <div className="p-6 text-white text-center">
-        <h1 className="text-2xl font-bold mb-4">Your Matches</h1>
+<div className="space-y-2">
+  <h1 className="text-2xl font-bold">Connections</h1>
 
+  <div className="flex gap-2">
+    <button
+      onClick={() => setActiveTab("matches")}
+      className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+        activeTab === "matches"
+          ? "bg-yellow-500 text-black"
+          : "bg-white/10 text-white"
+      }`}
+    >
+      💬 Matches ({matches.length})
+    </button>
+
+    <button
+      onClick={() => setActiveTab("likes")}
+      className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+        activeTab === "likes"
+          ? "bg-pink-500 text-white"
+          : "bg-white/10 text-white"
+      }`}
+    >
+      ❤️ Likes You ({likes.length})
+    </button>
+  </div>
+</div>
         <div className="bg-white/5 border border-white/10 rounded-xl p-10">
           <p className="text-white/60 mb-4">You have no matches yet.</p>
 
