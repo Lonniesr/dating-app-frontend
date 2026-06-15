@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMatches } from "../hooks/useMatches";
 import { getProfilePhoto } from "../utils/getProfilePhoto";
-
+import { useSwipe } from "./hooks/useSwipe";
 interface MatchItem {
   id: string;
   name: string;
@@ -17,6 +17,7 @@ interface MatchItem {
 export default function MatchesPage() {
   const { data, isLoading } = useMatches();
   const navigate = useNavigate();
+  const { swipe } = useSwipe();
 
   const [search, setSearch] = useState("");
 const [activeTab, setActiveTab] = useState<"matches" | "likes">("matches");
@@ -63,36 +64,13 @@ const filteredMatches = activeList.filter((m) =>
 ) { 
     return (
       <div className="p-6 text-white text-center">
-<div className="space-y-2">
-  <h1 className="text-2xl font-bold">Connections</h1>
 
-  <div className="flex gap-2">
-    <button
-      onClick={() => setActiveTab("matches")}
-      className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-        activeTab === "matches"
-          ? "bg-yellow-500 text-black"
-          : "bg-white/10 text-white"
-      }`}
-    >
-      💬 Matches ({matches.length})
-    </button>
-
-    <button
-      onClick={() => setActiveTab("likes")}
-      className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-        activeTab === "likes"
-          ? "bg-pink-500 text-white"
-          : "bg-white/10 text-white"
-      }`}
-    >
-      ❤️ Likes You ({likes.length})
-    </button>
-  </div>
-</div>
         <div className="bg-white/5 border border-white/10 rounded-xl p-10">
-          <p className="text-white/60 mb-4">You have no matches yet.</p>
-
+<p className="text-white/60 mb-4">
+  {activeTab === "matches"
+    ? "You have no matches yet."
+    : "Nobody has liked you yet."}
+</p>
           <button
             onClick={() => navigate("/user/discover")}
             className="px-5 py-2 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 transition"
@@ -106,10 +84,37 @@ const filteredMatches = activeList.filter((m) =>
 
   return (
     <div className="p-6 text-white space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold">Your Matches</h1>
+ <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-        <input
+  <div className="space-y-2">
+    <h1 className="text-2xl font-bold">Connections</h1>
+
+    <div className="flex gap-2">
+      <button
+        onClick={() => setActiveTab("matches")}
+        className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+          activeTab === "matches"
+            ? "bg-yellow-500 text-black"
+            : "bg-white/10 text-white"
+        }`}
+      >
+        💬 Matches ({matches.length})
+      </button>
+
+      <button
+        onClick={() => setActiveTab("likes")}
+        className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+          activeTab === "likes"
+            ? "bg-pink-500 text-white"
+            : "bg-white/10 text-white"
+        }`}
+      >
+        ❤️ Likes You ({likes.length})
+      </button>
+    </div>
+  </div>
+
+  <input
           type="text"
           placeholder="Search matches..."
           value={search}
@@ -133,7 +138,13 @@ const filteredMatches = activeList.filter((m) =>
           return (
             <div
               key={match.id}
-              onClick={() => navigate(`/user/messages/${match.id}`)}
+
+              onClick={() =>
+  activeTab === "matches"
+    ? navigate(`/user/messages/${match.id}`)
+    : navigate(`/user/profile/${match.id}`)
+}
+              
               className="group flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-xl hover:bg-white/10 transition cursor-pointer relative"
             >
               <div className="relative">
@@ -167,15 +178,41 @@ const filteredMatches = activeList.filter((m) =>
                 </div>
               )}
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/user/messages/${match.id}`);
-                }}
-                className="opacity-0 group-hover:opacity-100 transition text-sm bg-yellow-500 text-black px-3 py-1 rounded-lg"
-              >
-                Chat
-              </button>
+             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+  {activeTab === "likes" && (
+    <button
+      onClick={async (e) => {
+        e.stopPropagation();
+
+        try {
+          await swipe(match.id, true);
+
+          window.location.reload();
+        } catch (err) {
+          console.error(err);
+        }
+      }}
+      className="text-sm bg-pink-500 text-white px-3 py-1 rounded-lg"
+    >
+      ❤️ Like Back
+    </button>
+  )}
+
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+
+      if (activeTab === "matches") {
+        navigate(`/user/messages/${match.id}`);
+      } else {
+        navigate(`/user/profile/${match.id}`);
+      }
+    }}
+    className="text-sm bg-yellow-500 text-black px-3 py-1 rounded-lg"
+  >
+    {activeTab === "matches" ? "Chat" : "View"}
+  </button>
+</div>
             </div>
           );
         })}
