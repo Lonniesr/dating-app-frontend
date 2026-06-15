@@ -11,12 +11,15 @@ export function useMatches() {
         }
       );
 
+      const data = await res.json();
+
+      console.log("🔥 ACTIVE MATCH RESPONSE:", data);
+
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to fetch matches");
       }
 
-      return res.json();
+      return data;
     },
   });
 }

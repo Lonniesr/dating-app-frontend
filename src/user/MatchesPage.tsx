@@ -43,9 +43,11 @@ export default function MatchesPage() {
     );
   }
 
-  const matches: MatchItem[] = data || [];
+  const matches: MatchItem[] = data?.matches || [];
+const likes: MatchItem[] = data?.likes || [];
 
-  console.log("MATCH DATA:", matches);
+console.log("MATCHES:", matches);
+console.log("LIKES:", likes);
 
   const filteredMatches = matches.filter((m) =>
     m.name.toLowerCase().includes(search.toLowerCase())

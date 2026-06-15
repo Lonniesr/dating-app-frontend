@@ -25,7 +25,7 @@ function calculateAge(birthdate?: string) {
   return age;
 }
 
-export function useMatches() {
+  export function useMatches() {
 return useQuery<{
   matches: MatchUser[];
   likes: MatchUser[];
