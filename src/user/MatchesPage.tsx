@@ -177,8 +177,7 @@ const filteredMatches = activeList.filter((m) =>
                   {match.unreadCount}
                 </div>
               )}
-
-             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+<div className="flex gap-2">
   {activeTab === "likes" && (
     <button
       onClick={async (e) => {
