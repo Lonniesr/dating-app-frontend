@@ -178,23 +178,41 @@ const filteredMatches = activeList.filter((m) =>
                 </div>
               )}
 <div className="flex gap-2">
+
   {activeTab === "likes" && (
-    <button
-      onClick={async (e) => {
-        e.stopPropagation();
+    <>
+      <button
+        onClick={async (e) => {
+          e.stopPropagation();
 
-        try {
-          await swipe(match.id, true);
+          try {
+            await swipe(match.id, true);
+            window.location.reload();
+          } catch (err) {
+            console.error(err);
+          }
+        }}
+        className="text-sm bg-pink-500 text-white px-3 py-1 rounded-lg"
+      >
+        ❤️ Like Back
+      </button>
 
-          window.location.reload();
-        } catch (err) {
-          console.error(err);
-        }
-      }}
-      className="text-sm bg-pink-500 text-white px-3 py-1 rounded-lg"
-    >
-      ❤️ Like Back
-    </button>
+      <button
+        onClick={async (e) => {
+          e.stopPropagation();
+
+          try {
+            await swipe(match.id, false);
+            window.location.reload();
+          } catch (err) {
+            console.error(err);
+          }
+        }}
+        className="text-sm bg-red-500 text-white px-3 py-1 rounded-lg"
+      >
+        ❌ Pass
+      </button>
+    </>
   )}
 
   <button
