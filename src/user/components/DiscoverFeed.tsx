@@ -55,7 +55,14 @@ function calculateDistance(
 }
 
 export default function DiscoverFeed() {
-  const { data, isLoading } = useDiscover();
+
+  const {
+  data,
+  isLoading,
+  fetchNextPage,
+  hasNextPage,
+} = useDiscover();
+
   const { swipe } = useSwipe();
 
   const [feed, setFeed] = useState<DiscoverUser[]>([]);
@@ -73,10 +80,10 @@ export default function DiscoverFeed() {
   const nopeOpacity = useTransform(x, [-150, 0], [1, 0]);
 
   useEffect(() => {
-    if (data && data.length && feed.length === 0) {
-      setFeed(data);
-    }
-  }, [data]);
+  if (data?.length) {
+    setFeed(data);
+  }
+}, [data]);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -128,11 +135,19 @@ export default function DiscoverFeed() {
 
     x.set(fly);
 
-    setTimeout(() => {
-      setFeed((prev) => prev.slice(1));
-      x.set(0);
-      setBusy(false);
-    }, 160);
+    setTimeout(async () => {
+  const remaining = feed.length - 1;
+
+  setFeed((prev) => prev.slice(1));
+
+  if (remaining < 10 && hasNextPage) {
+    console.log("🔥 FETCHING NEXT DISCOVER PAGE");
+    await fetchNextPage();
+  }
+
+  x.set(0);
+  setBusy(false);
+}, 160);
   }
 
   async function openProfile(userId: string) {
