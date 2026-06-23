@@ -18,6 +18,10 @@ export default function BasicStep({ next }: BasicStepProps) {
 
   const [birthdate, setBirthdate] = useState("");
 
+  const [birthMonth, setBirthMonth] = useState("");
+const [birthDay, setBirthDay] = useState("");
+const [birthYear, setBirthYear] = useState("");
+
   const [gender, setGender] = useState("");
   const [race, setRace] = useState("");
 
@@ -28,6 +32,28 @@ export default function BasicStep({ next }: BasicStepProps) {
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const months = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const days = Array.from({ length: 31 }, (_, i) => i + 1);
+
+const years = Array.from(
+  { length: 100 },
+  (_, i) => new Date().getFullYear() - 18 - i
+);
 
   const calculateAge = (dateString: string) => {
     const birth = new Date(dateString);
@@ -338,18 +364,94 @@ export default function BasicStep({ next }: BasicStepProps) {
             </div>
           )}
 
-          <div className="mb-6">
-            <label className="block text-sm text-white/60 mb-1">
-              Birthdate
-            </label>
+         <div className="mb-6">
+  <label className="block text-sm text-white/60 mb-2">
+    Birthdate
+  </label>
 
-            <input
-              type="date"
-              className="w-full p-3 rounded bg-white/10 border border-white/20"
-              value={birthdate}
-              onChange={(e) => setBirthdate(e.target.value)}
-            />
-          </div>
+  <div className="grid grid-cols-3 gap-2">
+    <select
+      value={birthMonth}
+      onChange={(e) => {
+        setBirthMonth(e.target.value);
+
+        if (e.target.value && birthDay && birthYear) {
+          const monthNumber =
+            months.indexOf(e.target.value) + 1;
+
+          setBirthdate(
+            `${birthYear}-${String(monthNumber).padStart(2, "0")}-${String(
+              birthDay
+            ).padStart(2, "0")}`
+          );
+        }
+      }}
+      className="p-3 rounded bg-white/10 border border-white/20"
+    >
+      <option value="">Month</option>
+
+      {months.map((month) => (
+        <option key={month} value={month}>
+          {month}
+        </option>
+      ))}
+    </select>
+
+    <select
+      value={birthDay}
+      onChange={(e) => {
+        setBirthDay(e.target.value);
+
+        if (birthMonth && e.target.value && birthYear) {
+          const monthNumber =
+            months.indexOf(birthMonth) + 1;
+
+          setBirthdate(
+            `${birthYear}-${String(monthNumber).padStart(2, "0")}-${String(
+              e.target.value
+            ).padStart(2, "0")}`
+          );
+        }
+      }}
+      className="p-3 rounded bg-white/10 border border-white/20"
+    >
+      <option value="">Day</option>
+
+      {days.map((day) => (
+        <option key={day} value={day}>
+          {day}
+        </option>
+      ))}
+    </select>
+
+    <select
+      value={birthYear}
+      onChange={(e) => {
+        setBirthYear(e.target.value);
+
+        if (birthMonth && birthDay && e.target.value) {
+          const monthNumber =
+            months.indexOf(birthMonth) + 1;
+
+          setBirthdate(
+            `${e.target.value}-${String(monthNumber).padStart(2, "0")}-${String(
+              birthDay
+            ).padStart(2, "0")}`
+          );
+        }
+      }}
+      className="p-3 rounded bg-white/10 border border-white/20"
+    >
+      <option value="">Year</option>
+
+      {years.map((year) => (
+        <option key={year} value={year}>
+          {year}
+        </option>
+      ))}
+    </select>
+  </div>
+</div> 
         </>
       )}
 

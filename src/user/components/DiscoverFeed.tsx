@@ -79,10 +79,22 @@ export default function DiscoverFeed() {
   const likeOpacity = useTransform(x, [0, 150], [0, 1]);
   const nopeOpacity = useTransform(x, [-150, 0], [1, 0]);
 
-  useEffect(() => {
-  if (data?.length) {
-    setFeed(data);
-  }
+ useEffect(() => {
+  if (!data?.length) return;
+
+  setFeed((prev) => {
+    if (prev.length === 0) {
+      return data;
+    }
+
+    const existingIds = new Set(prev.map((p) => p.id));
+
+    const newProfiles = data.filter(
+      (p) => !existingIds.has(p.id)
+    );
+
+    return [...prev, ...newProfiles];
+  });
 }, [data]);
 
   useEffect(() => {
@@ -137,6 +149,12 @@ export default function DiscoverFeed() {
 
     setTimeout(async () => {
   const remaining = feed.length - 1;
+
+console.log(
+  "🔥 REMOVING:",
+  current.id,
+  current.name
+);
 
   setFeed((prev) => prev.slice(1));
 
