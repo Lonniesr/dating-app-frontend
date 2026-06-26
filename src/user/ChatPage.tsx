@@ -532,27 +532,7 @@ sendingRef.current = false;
 
   return (
     <div className="flex flex-col h-full bg-black text-white">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
-  <div
-    className={`w-3 h-3 rounded-full ${
-      otherUser?.lastActiveAt &&
-      Date.now() -
-        new Date(otherUser.lastActiveAt).getTime() <
-        120000
-        ? "bg-green-500"
-        : "bg-gray-500"
-    }`}
-  />
-
-  <span className="text-sm text-white/80">
-    {otherUser?.lastActiveAt &&
-    Date.now() -
-      new Date(otherUser.lastActiveAt).getTime() <
-      120000
-      ? "Online"
-      : "Offline"}
-  </span>
-</div>
+      
       <div className="flex-1 overflow-y-auto px-4 py-6">
        {messages.map((msg) => {
   const mine = msg.senderId === meId;
@@ -560,7 +540,29 @@ sendingRef.current = false;
   const avatarUrl = resolvePhotoUrl(
     msg.sender?.photos?.[0]
   );
+{authUser?.verified && (
+  <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
+    <div
+      className={`w-3 h-3 rounded-full ${
+        otherUser?.lastActiveAt &&
+        Date.now() -
+          new Date(otherUser.lastActiveAt).getTime() <
+          120000
+          ? "bg-green-500"
+          : "bg-gray-500"
+      }`}
+    />
 
+    <span className="text-sm text-white/80">
+      {otherUser?.lastActiveAt &&
+      Date.now() -
+        new Date(otherUser.lastActiveAt).getTime() <
+        120000
+        ? "Online"
+        : "Offline"}
+    </span>
+  </div>
+)}
   return (
     <div
       key={msg.id}
@@ -639,11 +641,11 @@ sendingRef.current = false;
         <div className="text-xs text-white/40 mt-1 flex items-center gap-2">
   <span>{formatTime(msg.createdAt)}</span>
 
-  {mine && (
-    <span className="text-pink-400">
-      {msg.read ? "Seen" : "Sent"}
-    </span>
-  )}
+  {mine && authUser?.verified && (
+  <span className="text-pink-400">
+    {msg.read ? "Seen" : "Sent"}
+  </span>
+)}
 </div>
       </div>
 
@@ -665,11 +667,11 @@ sendingRef.current = false;
     </div>
   );
 })}
-          {isTyping && (
+ {authUser?.verified && isTyping && (
   <div className="text-white/50 text-sm px-2 pb-2">
     typing...
   </div>
-)}
+)}   
 
 <div ref={bottomRef} />
       </div>
