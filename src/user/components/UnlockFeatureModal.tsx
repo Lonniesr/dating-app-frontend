@@ -47,29 +47,39 @@ export default function UnlockFeatureModal({
             <div className="mb-5">
 
   <h3 className="text-lg font-bold text-white">
-    Why Verify?
+    Unlock Verified Membership
   </h3>
 
   <p className="text-white/60 text-sm mt-2">
-    Verification helps keep LynQ full of real people while unlocking
-    every premium dating feature.
+    Become a verified member and unlock every trusted feature designed to help you make real connections.
   </p>
 
 </div>
 
             <ul className="space-y-2">
 
-              {benefits.map((benefit) => (
-                <li
-                  key={benefit}
-                  className="text-white/80 flex items-center gap-2"
-                >
-<span className="text-yellow-400 text-lg">
-  ✨
-</span>
-                  {benefit}
-                </li>
-              ))}
+       {benefits.map((benefit) => {
+  let icon = "⭐";
+
+  if (benefit.includes("Likes")) icon = "❤️";
+  else if (benefit.includes("Messaging")) icon = "💬";
+  else if (benefit.includes("Read")) icon = "👀";
+  else if (benefit.includes("Typing")) icon = "⌨️";
+  else if (benefit.includes("Private")) icon = "📸";
+  else if (benefit.includes("Invites")) icon = "📨";
+  else if (benefit.includes("Badge")) icon = "🛡️";
+
+  return (
+    <li
+      key={benefit}
+      className="text-white/80 flex items-center gap-3"
+    >
+      <span className="text-xl">{icon}</span>
+
+      <span>{benefit}</span>
+    </li>
+  );
+})}       
 
             </ul>
 
@@ -86,7 +96,7 @@ export default function UnlockFeatureModal({
             onClick={onClose}
             className="w-full mt-3 text-white/60 hover:text-white transition"
           >
-            Maybe Later
+            Continue with Limited Features
           </button>
 
         </div>

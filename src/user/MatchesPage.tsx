@@ -275,13 +275,16 @@ const hideLikes =
         icon="❤️"
         title="Someone already likes you!"
         description="Verify your profile to reveal everyone who has liked you."
-        benefits={[
-          "Reveal everyone who likes you",
-          "Unlimited messaging",
-          "Private Photos",
-          "Unlimited invites",
-          "Personal Invites",
-        ]}
+       benefits={[
+  "Reveal Everyone Who Likes You",
+  "Unlimited Messaging",
+  "Read Receipts",
+  "Typing Indicators",
+  "Private Photos",
+  "Unlimited Invites",
+  "Personal Invites",
+  "Verified Badge",
+]}
         buttonText="Reveal My Likes"
         onClose={() => setShowUnlockModal(false)}
         onUnlock={() => {
