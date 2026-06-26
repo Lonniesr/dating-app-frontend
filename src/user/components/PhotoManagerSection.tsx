@@ -142,6 +142,10 @@ export default function PhotoManagerSection() {
   }, [authUser]);
 
   const handleTogglePrivacy = async (index: number) => {
+    if (!authUser?.verified) {
+  alert("🔒 Verify your profile to unlock Private Photos.");
+  return;
+}
     try {
       const photo = items[index];
 
