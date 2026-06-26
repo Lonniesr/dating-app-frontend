@@ -4,6 +4,7 @@ import { useMatches } from "../hooks/useMatches";
 import { getProfilePhoto } from "../utils/getProfilePhoto";
 import { useSwipe } from "./hooks/useSwipe";
 import { useUserAuth } from "./context/UserAuthContext";
+import UnlockFeatureModal from "./components/UnlockFeatureModal";
 
 interface MatchItem {
   id: string;
@@ -22,7 +23,8 @@ export default function MatchesPage() {
 const { authUser } = useUserAuth();
 const { swipe } = useSwipe();
 
-  const [search, setSearch] = useState("");
+const [search, setSearch] = useState("");
+const [showUnlockModal, setShowUnlockModal] = useState(false);
 const [activeTab, setActiveTab] = useState<"matches" | "likes">("matches");
 
   if (isLoading) {
@@ -144,9 +146,12 @@ const hideLikes =
         Verify your profile to reveal who liked you.
       </p>
 
-      <button className="bg-pink-500 hover:bg-pink-600 px-6 py-3 rounded-xl font-semibold">
-        Verify Profile
-      </button>
+    <button
+  onClick={() => setShowUnlockModal(true)}
+  className="bg-pink-500 hover:bg-pink-600 px-6 py-3 rounded-xl font-semibold"
+>
+  Reveal My Likes
+</button>  
 
     </div>
   </div>
@@ -263,7 +268,30 @@ const hideLikes =
           })
       )}
 
-      </div>
+           </div>
+
+      <UnlockFeatureModal
+        open={showUnlockModal}
+        icon="❤️"
+        title="Someone already likes you!"
+        description="Verify your profile to reveal everyone who has liked you."
+        benefits={[
+          "Reveal everyone who likes you",
+          "Unlimited messaging",
+          "Private Photos",
+          "Unlimited invites",
+          "Personal Invites",
+        ]}
+        buttonText="Reveal My Likes"
+        onClose={() => setShowUnlockModal(false)}
+        onUnlock={() => {
+          setShowUnlockModal(false);
+
+          // Replace this later with your verification page.
+          alert("Open verification flow");
+        }}
+      />
+
     </div>
   );
-}
+} 

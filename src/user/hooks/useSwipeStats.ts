@@ -6,6 +6,11 @@ type SwipeStatsResponse = {
   superLikesGiven: number;
   likesReceived: number;
   matches: number;
+
+  activity: {
+    createdAt: string;
+    _count: number;
+  }[];
 };
 
 const API = import.meta.env.VITE_API_URL;
