@@ -44,9 +44,18 @@ export default function UnlockFeatureModal({
 
           <div className="bg-white/5 rounded-xl p-4 mb-6 text-left">
 
-            <p className="text-sm font-semibold text-white mb-3">
-              Verification Unlocks
-            </p>
+            <div className="mb-5">
+
+  <h3 className="text-lg font-bold text-white">
+    Why Verify?
+  </h3>
+
+  <p className="text-white/60 text-sm mt-2">
+    Verification helps keep LynQ full of real people while unlocking
+    every premium dating feature.
+  </p>
+
+</div>
 
             <ul className="space-y-2">
 
@@ -55,7 +64,9 @@ export default function UnlockFeatureModal({
                   key={benefit}
                   className="text-white/80 flex items-center gap-2"
                 >
-                  <span className="text-green-400">✓</span>
+<span className="text-yellow-400 text-lg">
+  ✨
+</span>
                   {benefit}
                 </li>
               ))}
@@ -65,11 +76,11 @@ export default function UnlockFeatureModal({
           </div>
 
           <button
-            onClick={onUnlock}
-            className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded-xl transition"
-          >
-            {buttonText}
-          </button>
+  onClick={onUnlock}
+  className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 hover:brightness-110 text-black font-bold py-3 rounded-xl transition"
+>
+  {buttonText}
+</button>
 
           <button
             onClick={onClose}
