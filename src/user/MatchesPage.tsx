@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useMatches } from "../hooks/useMatches";
 import { getProfilePhoto } from "../utils/getProfilePhoto";
 import { useSwipe } from "./hooks/useSwipe";
+import { useUserAuth } from "./context/UserAuthContext";
+
 interface MatchItem {
   id: string;
   name: string;
@@ -17,7 +19,8 @@ interface MatchItem {
 export default function MatchesPage() {
   const { data, isLoading } = useMatches();
   const navigate = useNavigate();
-  const { swipe } = useSwipe();
+const { authUser } = useUserAuth();
+const { swipe } = useSwipe();
 
   const [search, setSearch] = useState("");
 const [activeTab, setActiveTab] = useState<"matches" | "likes">("matches");
@@ -57,7 +60,9 @@ console.log("LIKES:", likes);
 const filteredMatches = activeList.filter((m) =>
   m.name.toLowerCase().includes(search.toLowerCase())
 );
-
+const hideLikes =
+  activeTab === "likes" &&
+  !authUser?.verified;
  if (
   (activeTab === "matches" && matches.length === 0) ||
   (activeTab === "likes" && likes.length === 0)
@@ -124,7 +129,30 @@ const filteredMatches = activeList.filter((m) =>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredMatches.map((match: MatchItem) => {
+
+{hideLikes ? (
+  <div className="col-span-full">
+    <div className="bg-white/5 border border-white/10 rounded-xl p-10 text-center">
+
+      <div className="text-6xl mb-4">🔒</div>
+
+      <h2 className="text-2xl font-bold mb-3">
+        {likes.length} {likes.length === 1 ? "person likes" : "people like"} you
+      </h2>
+
+      <p className="text-white/60 mb-6">
+        Verify your profile to reveal who liked you.
+      </p>
+
+      <button className="bg-pink-500 hover:bg-pink-600 px-6 py-3 rounded-xl font-semibold">
+        Verify Profile
+      </button>
+
+    </div>
+  </div>
+) : (
+  filteredMatches.map((match: MatchItem) => {
+
           const primaryPhoto =
             getProfilePhoto(match.photos) || "/default-avatar.png";
 
@@ -232,7 +260,9 @@ const filteredMatches = activeList.filter((m) =>
 </div>
             </div>
           );
-        })}
+          })
+      )}
+
       </div>
     </div>
   );
