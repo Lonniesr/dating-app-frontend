@@ -132,31 +132,8 @@ const hideLikes =
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
-{hideLikes ? (
-  <div className="col-span-full">
-    <div className="bg-white/5 border border-white/10 rounded-xl p-10 text-center">
 
-      <div className="text-6xl mb-4">🔒</div>
-
-      <h2 className="text-2xl font-bold mb-3">
-        {likes.length} {likes.length === 1 ? "person likes" : "people like"} you
-      </h2>
-
-      <p className="text-white/60 mb-6">
-        Verify your profile to reveal who liked you.
-      </p>
-
-    <button
-  onClick={() => setShowUnlockModal(true)}
-  className="bg-pink-500 hover:bg-pink-600 px-6 py-3 rounded-xl font-semibold"
->
-  Reveal My Likes
-</button>  
-
-    </div>
-  </div>
-) : (
-  filteredMatches.map((match: MatchItem) => {
+  {filteredMatches.map((match: MatchItem) => {
 
           const primaryPhoto =
             getProfilePhoto(match.photos) || "/default-avatar.png";
@@ -264,9 +241,8 @@ const hideLikes =
   </button>
 </div>
             </div>
-          );
-          })
-      )}
+              );
+        })}     
 
            </div>
 
