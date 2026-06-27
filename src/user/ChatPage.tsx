@@ -862,13 +862,16 @@ sendingRef.current = false;
         icon="💬"
         title="Unlock Unlimited Messaging"
         description="You've reached today's message limit. Verify your profile to continue chatting without limits."
-       benefits={[
+        benefits={[
   "Unlimited Messaging",
   "Photo Messages",
   "Voice Messages",
   "Read Receipts",
   "Typing Indicators",
   "Private Photos",
+  "Reveal Everyone Who Likes You",
+  "Unlimited Invites",
+  "Personal Invites",
   "Verified Badge",
 ]}
         buttonText="Verify My Profile"
