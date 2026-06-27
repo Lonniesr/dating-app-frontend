@@ -5,6 +5,7 @@ import {
 } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import UnlockFeatureModal from "./components/UnlockFeatureModal";
 
 import { useUserChat } from "./hooks/useUserChat";
 import { useUserAuth } from "./context/UserAuthContext";
@@ -98,6 +99,7 @@ const { data } = useUserChat(userId);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
   // 🔥 REQUIRED FOR SMART REQUEST BUTTON
   const [requestMap, setRequestMap] = useState<Record<string, string>>({});
 
@@ -519,9 +521,16 @@ setSelectedImage(null);
 
 sendingRef.current = false;
 
-} catch (err) {
+} catch (err: any) {
 
   sendingRef.current = false;
+
+  if (
+    err.response?.data?.code === "MESSAGE_LIMIT_REACHED"
+  ) {
+    setShowUnlockModal(true);
+    return;
+  }
 
   console.error("SEND FAILED:", err);
 
@@ -773,13 +782,29 @@ sendingRef.current = false;
 
       {/* INPUT BAR WITH FIXED MIC */}
       <div className="p-4 flex items-center gap-2">
-        <button onClick={() => fileInputRef.current?.click()}>📎</button>
+<button
+  onClick={() => {
+    if (!authUser?.verified) {
+      setShowUnlockModal(true);
+      return;
+    }
 
+    fileInputRef.current?.click();
+  }}
+>
+  📎
+</button>
         <button
           onPointerDown={(e) => {
-            e.stopPropagation();
-            startRecording();
-          }}
+  e.stopPropagation();
+
+  if (!authUser?.verified) {
+    setShowUnlockModal(true);
+    return;
+  }
+
+  startRecording();
+}}
           onPointerUp={(e) => {
             e.stopPropagation();
             stopRecording();
@@ -832,7 +857,29 @@ sendingRef.current = false;
           Send
         </button>
       </div>
+      <UnlockFeatureModal
+        open={showUnlockModal}
+        icon="💬"
+        title="Unlock Unlimited Messaging"
+        description="You've reached today's message limit. Verify your profile to continue chatting without limits."
+       benefits={[
+  "Unlimited Messaging",
+  "Photo Messages",
+  "Voice Messages",
+  "Read Receipts",
+  "Typing Indicators",
+  "Private Photos",
+  "Verified Badge",
+]}
+        buttonText="Verify My Profile"
+        onClose={() => setShowUnlockModal(false)}
+        onUnlock={() => {
+          setShowUnlockModal(false);
 
+          // Later we'll navigate to verification.
+          alert("Open verification");
+        }}
+      />
     </div>
   );
 }
