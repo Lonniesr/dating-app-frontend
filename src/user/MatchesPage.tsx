@@ -5,6 +5,7 @@ import { getProfilePhoto } from "../utils/getProfilePhoto";
 import { useSwipe } from "./hooks/useSwipe";
 import { useUserAuth } from "./context/UserAuthContext";
 import UnlockFeatureModal from "./components/UnlockFeatureModal";
+import { Lock } from "lucide-react";
 
 interface MatchItem {
   id: string;
@@ -94,8 +95,9 @@ const hideLikes =
  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
   <div className="space-y-2">
-    <h1 className="text-2xl font-bold">Connections</h1>
-
+<h1 className="text-2xl font-bold">
+  Connections
+</h1>
     <div className="flex gap-2">
       <button
         onClick={() => setActiveTab("matches")}
@@ -155,15 +157,21 @@ const hideLikes =
     : navigate(`/user/profile/${match.id}`)
 }
               
-              className="group flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-xl hover:bg-white/10 transition cursor-pointer relative"
-            >
-              <div className="relative">
+className={`group bg-white/5 border border-white/10 p-4 rounded-xl transition relative ${
+  hideLikes
+    ? "flex flex-col items-center text-center"
+    : "flex items-center gap-4 hover:bg-white/10 cursor-pointer"
+}`}
+>
+<div className={hideLikes ? "mb-5" : "relative"}>
                 <div className="w-16 h-16 rounded-full overflow-hidden border border-white/20">
-                  <img
-                    src={primaryPhoto}
-                    alt={match.name}
-                    className="w-full h-full object-cover"
-                  />
+                 <img
+  src={primaryPhoto}
+  alt={match.name}
+  className={`w-full h-full object-cover transition ${
+    hideLikes ? "blur-lg scale-110" : ""
+  }`}
+/> 
                 </div>
 
                 {match.online && (
@@ -171,15 +179,24 @@ const hideLikes =
                 )}
               </div>
 
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-lg truncate">
-                  {match.name}
-                  {match.age ? `, ${match.age}` : ""}
-                </p>
+<div
+  className={
+    hideLikes
+      ? "w-full text-center mb-5"
+      : "flex-1 min-w-[170px]"
+  }
+>
+               <p className="font-semibold text-lg">
+  {hideLikes
+    ? "Hidden Member"
+    : `${match.name}${match.age ? `, ${match.age}` : ""}`}
+</p>
 
-                <p className="text-white/60 text-sm truncate">
-                  {match.lastMessage || match.gender || "Say hello 👋"}
-                </p>
+               <p className="text-white/60 text-sm truncate">
+  {hideLikes
+    ? "Verify to reveal"
+    : match.lastMessage || match.gender || "Say hello 👋"}
+</p> 
               </div>
 
               {match.unreadCount && match.unreadCount > 0 && (
@@ -187,58 +204,88 @@ const hideLikes =
                   {match.unreadCount}
                 </div>
               )}
-<div className="flex gap-2">
-
-  {activeTab === "likes" && (
-    <>
-      <button
-        onClick={async (e) => {
-          e.stopPropagation();
-
-          try {
-            await swipe(match.id, true);
-            window.location.reload();
-          } catch (err) {
-            console.error(err);
-          }
-        }}
-        className="text-sm bg-pink-500 text-white px-3 py-1 rounded-lg"
-      >
-        ❤️ Like Back
-      </button>
-
-      <button
-        onClick={async (e) => {
-          e.stopPropagation();
-
-          try {
-            await swipe(match.id, false);
-            window.location.reload();
-          } catch (err) {
-            console.error(err);
-          }
-        }}
-        className="text-sm bg-red-500 text-white px-3 py-1 rounded-lg"
-      >
-        ❌ Pass
-      </button>
-    </>
-  )}
-
+<div
+  className={
+    hideLikes
+      ? "w-full flex justify-center"
+      : "flex flex-col justify-center ml-auto"
+  }
+>
+  {hideLikes ? (
   <button
-    onClick={(e) => {
-      e.stopPropagation();
+  onClick={(e) => {
+    e.stopPropagation();
+    setShowUnlockModal(true);
+  }}
+  className="bg-gradient-to-r from-yellow-400 to-yellow-600
+             hover:brightness-110
+             text-black
+             px-3
+             py-2
+             rounded-lg
+             font-semibold
+             flex
+             items-center
+             gap-2"
+>
+  <Lock size={15} />
+  <span>Reveal</span>
+</button>
 
-      if (activeTab === "matches") {
-        navigate(`/user/messages/${match.id}`);
-      } else {
-        navigate(`/user/profile/${match.id}`);
-      }
-    }}
-    className="text-sm bg-yellow-500 text-black px-3 py-1 rounded-lg"
-  >
-    {activeTab === "matches" ? "Chat" : "View"}
-  </button>
+) : (
+  <>
+    {activeTab === "likes" && (
+      <>
+        <button
+          onClick={async (e) => {
+            e.stopPropagation();
+
+            try {
+              await swipe(match.id, true);
+              window.location.reload();
+            } catch (err) {
+              console.error(err);
+            }
+          }}
+          className="text-sm bg-pink-500 text-white px-3 py-1 rounded-lg"
+        >
+          ❤️ Like Back
+        </button>
+
+        <button
+          onClick={async (e) => {
+            e.stopPropagation();
+
+            try {
+              await swipe(match.id, false);
+              window.location.reload();
+            } catch (err) {
+              console.error(err);
+            }
+          }}
+          className="text-sm bg-red-500 text-white px-3 py-1 rounded-lg"
+        >
+          ❌ Pass
+        </button>
+      </>
+    )}
+
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+
+        if (activeTab === "matches") {
+          navigate(`/user/messages/${match.id}`);
+        } else {
+          navigate(`/user/profile/${match.id}`);
+        }
+      }}
+      className="text-sm bg-yellow-500 text-black px-3 py-1 rounded-lg"
+    >
+      {activeTab === "matches" ? "Chat" : "View"}
+    </button>
+  </>
+)}
 </div>
             </div>
               );
