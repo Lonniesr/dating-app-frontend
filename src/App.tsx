@@ -26,6 +26,8 @@ import AdminAnalyticsDeepDivePage from "./admin/pages/AdminAnalyticsDeepDivePage
 import AdminSystemLogsPage from "./admin/pages/AdminSystemLogsPage";
 
 import LoginPage from "./user/LoginPage";
+import ForgotPasswordPage from "./user/ForgotPasswordPage";
+import ResetPasswordPage from "./user/ResetPasswordPage";
 
 import DashboardPage from "./user/DashboardPage";
 import ProfilePage from "./user/ProfilePage";
@@ -57,6 +59,8 @@ export default function App() {
       <Route path="/" element={<Navigate to="/login" replace />} />
 
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/invite/:code" element={<InviteLandingPage />} />
 

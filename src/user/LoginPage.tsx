@@ -111,16 +111,26 @@ export default function LoginPage() {
             onKeyDown={handleKeyPress}
           />
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full p-3 rounded-lg bg-black border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={handleKeyPress}
-          />
+         <input
+  type="password"
+  placeholder="Password"
+  className="w-full p-3 rounded-lg bg-black border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  onKeyDown={handleKeyPress}
+/>
 
-          <button
+<div className="flex justify-end">
+  <button
+    type="button"
+    onClick={() => navigate("/forgot-password")}
+    className="text-sm text-yellow-400 hover:text-yellow-300 transition"
+  >
+    Forgot Password?
+  </button>
+</div>
+
+<button
             onClick={handleLogin}
             disabled={loading}
             className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 transition text-black rounded-lg font-semibold text-lg disabled:opacity-50 flex items-center justify-center gap-2"
