@@ -32,6 +32,16 @@ class AdminUsersService extends BaseService {
       { withCredentials: true }
     );
   }
+
+  // ✅ DELETE USER
+deleteUser(id: string) {
+  return axios.delete(
+    `${import.meta.env.VITE_API_URL}/api/admin/users/${id}`,
+    {
+      withCredentials: true,
+    }
+  );
+}
 }
 
 export const adminUsersService = new AdminUsersService("api/admin/users");

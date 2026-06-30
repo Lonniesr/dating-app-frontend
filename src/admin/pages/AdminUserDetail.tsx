@@ -2,6 +2,16 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { adminUserDetailService } from "../services/adminUserDetailService";
 import type { AdminUserDetail } from "../services/adminUserDetailService";
+import UserHeader from "../components/userDetail/UserHeader";
+import UserStats from "../components/userDetail/UserStats";
+import UserInfo from "../components/userDetail/UserInfo";
+import UserPhotos from "../components/userDetail/UserPhotos";
+import UserMatches from "../components/userDetail/UserMatches";
+import UserInvites from "../components/userDetail/UserInvites";
+import UserSwipes from "../components/userDetail/UserSwipes";
+import UserMessages from "../components/userDetail/UserMessages";
+import UserVerification from "../components/userDetail/UserVerification";
+import UserModeration from "../components/userDetail/UserModeration";
 
 // 🔥 ADDED (helper)
 const getTimeAgo = (date: string) => {
@@ -59,184 +69,67 @@ export default function AdminUserDetailPage() {
   const matches = user.matches ?? [];
 
   return (
-    <div className="fade-in">
-      {/* HEADER */}
-      <h1
-        className="admin-gold-shimmer"
-        style={{ fontSize: "2rem", marginBottom: "1.5rem" }}
-      >
-        User Profile
-      </h1>
+  <div className="fade-in">
+    <UserHeader
+      user={user}
+      isOnline={isOnline}
+      getTimeAgo={getTimeAgo}
+    />
 
-      {/* PROFILE CARD */}
-      <div
-        className="glass-panel"
-        style={{ padding: "2rem", marginBottom: "2rem" }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-          }}
-        >
-          <h2 className="h2">{user.name ?? "Unnamed User"}</h2>
+    <UserStats user={user} />
 
-          {/* 🟢 ONLINE DOT */}
-          <div
-  style={{
-    position: "relative",
-    width: "10px",
-    height: "10px",
-  }}
->
-  {/* MAIN DOT */}
-  <div
-    style={{
-      width: "10px",
-      height: "10px",
-      borderRadius: "50%",
-      backgroundColor: isOnline ? "#22c55e" : "#555",
-      position: "relative",
-      zIndex: 2,
-    }}
-  />
-
-  {/* PULSE EFFECT (only when online) */}
-  {isOnline && (
     <div
       style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "10px",
-        height: "10px",
-        borderRadius: "50%",
-        backgroundColor: "#22c55e",
-        opacity: 0.6,
-        animation: "ping 1.5s infinite",
+        display: "grid",
+
+      gridTemplateColumns:
+        "repeat(auto-fit, minmax(450px, 1fr))",
+        gap: "1.5rem",
+        alignItems: "start",
       }}
-    />
-  )}
-</div>
-        </div>
+    >
+      {/* LEFT COLUMN */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "1.5rem",
+        }}
+      >
+        <UserInfo user={user} />
 
-        <div style={{ marginTop: "1rem", display: "flex", gap: "2rem" }}>
-          <div>
-            <div className="label">Age</div>
-            <div>{user.age ?? "—"}</div>
+        <UserPhotos
+          photos={photos}
+        />
 
-            <div className="label" style={{ marginTop: "1rem" }}>
-              Location
-            </div>
-            <div>{user.location ?? "—"}</div>
+        <UserMatches
+          matches={matches}
+        />
 
-            <div className="label" style={{ marginTop: "1rem" }}>
-              Joined
-            </div>
-            <div>{new Date(user.createdAt).toLocaleString()}</div>
+        <UserSwipes
+          user={user}
+        />
 
-            <div className="label" style={{ marginTop: "1rem" }}>
-              Last Active
-            </div>
-
-            <div>
-              {isOnline
-                ? "Online now"
-                : user.lastActiveAt
-                ? getTimeAgo(user.lastActiveAt)
-                : "Never"}
-            </div>
-          </div>
-
-          {/* PHOTOS */}
-          <div style={{ flex: 1 }}>
-            <div className="label">Photos</div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "repeat(auto-fill, minmax(120px, 1fr))",
-                gap: "0.75rem",
-                marginTop: "0.5rem",
-              }}
-            >
-              {photos.length > 0 ? (
-                photos.map((url, i) => (
-                  <img
-                    key={i}
-                    src={url}
-                    alt="User"
-                    style={{
-                      width: "100%",
-                      height: "120px",
-                      objectFit: "cover",
-                      borderRadius: "8px",
-                    }}
-                  />
-                ))
-              ) : (
-                <div className="glass-card" style={{ padding: "1rem" }}>
-                  No photos uploaded.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <UserInvites
+          user={user}
+        />
       </div>
 
-      {/* MATCHES */}
-      <div className="glass-panel" style={{ padding: "2rem" }}>
-        <h2 className="h2">Matches</h2>
+      {/* RIGHT COLUMN */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "1.5rem",
+        }}
+      >
+        <UserVerification user={user} />
 
-        {matches.length === 0 ? (
-          <div
-            className="glass-card"
-            style={{ padding: "1rem", marginTop: "1rem" }}
-          >
-            No matches found.
-          </div>
-        ) : (
-          <div style={{ marginTop: "1rem" }}>
-            {matches.map((m) => (
-              <div
-                key={m.id}
-                className="glass-card"
-                style={{
-                  padding: "1rem",
-                  marginBottom: "0.75rem",
-                  display: "flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: "bold" }}>
-                    {m.otherUserName}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--lynq-text-muted)",
-                    }}
-                  >
-                    Matched on{" "}
-                    {new Date(m.createdAt).toLocaleString()}
-                  </div>
-                </div>
+        <UserModeration user={user} />
 
-                <a
-                  href={`/admin/users/${m.otherUserId}`}
-                  className="btn-gold"
-                  style={{ alignSelf: "center" }}
-                >
-                  View
-                </a>
-              </div>
-            ))}
-          </div>
-        )}
+        <UserMessages user={user} />
       </div>
     </div>
-  );
+  </div>
+);
 }
