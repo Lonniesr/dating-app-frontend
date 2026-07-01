@@ -58,11 +58,10 @@ const [confirmPassword, setConfirmPassword] = useState("");
   }
 
   try {
-    await apiClient.post("/api/auth/change-password", {
-      currentPassword,
-      newPassword,
-    });
-
+    await apiClient.post("/api/settings/password", {
+  currentPassword,
+  newPassword,
+});
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
