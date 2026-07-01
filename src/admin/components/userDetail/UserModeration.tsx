@@ -1,3 +1,7 @@
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+
 interface Props {
   user: any;
 }
@@ -55,6 +59,74 @@ function ActionButton({
 }
 
 export default function UserModeration({ user }: Props) {
+
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+const [verifying, setVerifying] = useState(false);
+
+const queryClient = useQueryClient();
+
+  async function sendMessage() {
+    if (!message.trim()) return;
+
+    try {
+      setSending(true);
+
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/admin/messages/user`,
+        {
+          userId: user.id,
+          message,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      alert("Message sent successfully.");
+
+      setMessage("");
+      setMessageOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send message.");
+    } finally {
+      setSending(false);
+    }
+  }
+  async function toggleVerification() {
+    try {
+      setVerifying(true);
+
+      const endpoint = user.verified ? "remove" : "approve";
+
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/admin/verification/${user.id}/${endpoint}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
+      alert(
+        user.verified
+          ? "Verification removed."
+          : "User verified."
+      );
+
+      await queryClient.invalidateQueries({
+        queryKey: ["admin-user-detail", user.id],
+      });
+
+    } catch (err) {
+      console.error(err);
+      alert("Verification update failed.");
+    } finally {
+      setVerifying(false);
+    }
+  }
   return (
     <div
       className="glass-panel"
@@ -95,25 +167,24 @@ export default function UserModeration({ user }: Props) {
         }}
       >
         <ActionButton
-          title={
-            user?.verified
-              ? "Remove Verification"
-              : "Verify User"
-          }
-          subtitle="Manage verification status"
-          onClick={() =>
-            console.log("Verify:", user.id)
-          }
-        />
+  title={
+    verifying
+      ? "Updating..."
+      : user?.verified
+      ? "Remove Verification"
+      : "Verify User"
+  }
+  subtitle="Manage verification status"
+  onClick={toggleVerification}
+/>
 
         <ActionButton
-          title="Send Message"
-          subtitle="Message user as LynQ Team"
-          color="#3b82f6"
-          onClick={() =>
-            console.log("Message:", user.id)
-          }
-        />
+        title="Send Message"
+        subtitle="Message user as LynQ Team"
+        color="#3b82f6"
+        onClick={() => setMessageOpen(true)}
+/>
+
 
         <ActionButton
           title="Reset Password"
@@ -164,7 +235,7 @@ export default function UserModeration({ user }: Props) {
           }
         />
 
-        <ActionButton
+               <ActionButton
           title="Delete Account"
           subtitle="Permanent action"
           color="#b91c1c"
@@ -173,6 +244,90 @@ export default function UserModeration({ user }: Props) {
           }
         />
       </div>
+
+      {messageOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,.75)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            className="glass-panel"
+            style={{
+              width: "95%",
+              maxWidth: "650px",
+              padding: "2rem",
+            }}
+          >
+            <h2 style={{ marginTop: 0 }}>
+              Message as LynQ Team
+            </h2>
+
+            <p
+              style={{
+                color: "#999",
+                marginBottom: "1rem",
+              }}
+            >
+              Sending to{" "}
+              <strong>
+                {user.name || user.email}
+              </strong>
+            </p>
+
+            <textarea
+              value={message}
+              onChange={(e) =>
+                setMessage(e.target.value)
+              }
+              placeholder="Type your message..."
+              rows={8}
+              style={{
+                width: "100%",
+                padding: "1rem",
+                borderRadius: "12px",
+                border: "1px solid #444",
+                background: "#111",
+                color: "#fff",
+                resize: "vertical",
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "1rem",
+                marginTop: "1.5rem",
+              }}
+            >
+              <button
+                className="btn-secondary"
+                onClick={() => setMessageOpen(false)}
+                disabled={sending}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="btn-gold"
+                onClick={sendMessage}
+                disabled={sending}
+              >
+                {sending
+                  ? "Sending..."
+                  : "Send Message"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+} 
