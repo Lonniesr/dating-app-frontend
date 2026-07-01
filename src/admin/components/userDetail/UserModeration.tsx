@@ -258,16 +258,6 @@ async function deleteUser() {
         onClick={() => setMessageOpen(true)}
 />
 
-
-        <ActionButton
-          title="Reset Password"
-          subtitle="Send password reset email"
-          color="#8b5cf6"
-          onClick={() =>
-            console.log("Reset password:", user.id)
-          }
-        />
-
         <ActionButton
           title="Copy Email"
           subtitle={user?.email}
