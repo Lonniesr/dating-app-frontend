@@ -66,6 +66,8 @@ export default function UserModeration({ user }: Props) {
 
 const [verifying, setVerifying] = useState(false);
 
+const [banning, setBanning] = useState(false);
+
 const queryClient = useQueryClient();
 
   async function sendMessage() {
@@ -127,6 +129,47 @@ const queryClient = useQueryClient();
       setVerifying(false);
     }
   }
+
+async function toggleBan() {
+  try {
+    setBanning(true);
+
+    if (user.banned) {
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/admin/bans/${user.id}`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      alert("User unbanned.");
+    } else {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/admin/bans/${user.id}`,
+        {
+          reason: "Banned by administrator",
+          durationHours: null,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      alert("User banned.");
+    }
+
+    await queryClient.invalidateQueries({
+      queryKey: ["admin-user-detail", user.id],
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to update ban status.");
+  } finally {
+    setBanning(false);
+  }
+}
+
   return (
     <div
       className="glass-panel"
@@ -217,14 +260,18 @@ const queryClient = useQueryClient();
           }
         />
 
-        <ActionButton
-          title={user?.banned ? "Unban User" : "Ban User"}
-          subtitle="Prevent account access"
-          color="#f59e0b"
-          onClick={() =>
-            console.log("Ban:", user.id)
-          }
-        />
+      <ActionButton
+  title={
+    banning
+      ? "Updating..."
+      : user?.banned
+      ? "Unban User"
+      : "Ban User"
+  }
+  subtitle="Prevent account access"
+  color="#f59e0b"
+  onClick={toggleBan}
+/> 
 
         <ActionButton
           title="Shadow Ban"
