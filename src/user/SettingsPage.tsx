@@ -15,7 +15,9 @@ export default function SettingsPage() {
   const [savingNotifications, setSavingNotifications] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const [password, setPassword] = useState("");
+const [currentPassword, setCurrentPassword] = useState("");
+const [newPassword, setNewPassword] = useState("");
+const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
 
   useEffect(() => {
@@ -40,20 +42,40 @@ export default function SettingsPage() {
   };
 
   const changePassword = async () => {
-    if (!password) {
-      setPasswordMessage("Enter a new password.");
-      return;
-    }
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    setPasswordMessage("Please complete all password fields.");
+    return;
+  }
 
-    try {
-      await apiClient.post("/api/auth/change-password", { password });
-      setPassword("");
-      setPasswordMessage("Password updated successfully.");
-    } catch (err) {
-      console.error(err);
-      setPasswordMessage("Password update failed.");
-    }
-  };
+  if (newPassword !== confirmPassword) {
+    setPasswordMessage("New passwords do not match.");
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    setPasswordMessage("Password must be at least 6 characters.");
+    return;
+  }
+
+  try {
+    await apiClient.post("/api/auth/change-password", {
+      currentPassword,
+      newPassword,
+    });
+
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+
+    setPasswordMessage("Password updated successfully.");
+  } catch (err: any) {
+    console.error(err);
+
+    setPasswordMessage(
+      err?.response?.data?.error || "Password update failed."
+    );
+  }
+};
 
   const saveNotifications = async () => {
     try {
@@ -148,12 +170,28 @@ export default function SettingsPage() {
           <h2 className="font-semibold">Change Password</h2>
 
           <input
-            type="password"
-            placeholder="New password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 rounded bg-black/40"
-          />
+  type="password"
+  placeholder="Current password"
+  value={currentPassword}
+  onChange={(e) => setCurrentPassword(e.target.value)}
+  className="w-full p-3 rounded bg-black/40"
+/>
+
+<input
+  type="password"
+  placeholder="New password"
+  value={newPassword}
+  onChange={(e) => setNewPassword(e.target.value)}
+  className="w-full p-3 rounded bg-black/40"
+/>
+
+<input
+  type="password"
+  placeholder="Confirm new password"
+  value={confirmPassword}
+  onChange={(e) => setConfirmPassword(e.target.value)}
+  className="w-full p-3 rounded bg-black/40"
+/>
 
           <button
             onClick={changePassword}
