@@ -68,6 +68,8 @@ const [verifying, setVerifying] = useState(false);
 
 const [banning, setBanning] = useState(false);
 
+const [deleting, setDeleting] = useState(false);
+
 const queryClient = useQueryClient();
 
   async function sendMessage() {
@@ -167,6 +169,34 @@ async function toggleBan() {
     alert("Failed to update ban status.");
   } finally {
     setBanning(false);
+  }
+}
+
+async function deleteUser() {
+  const confirmed = window.confirm(
+    `Delete ${user.name || user.email}?\n\nThis cannot be undone.`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setDeleting(true);
+
+    await axios.delete(
+      `${import.meta.env.VITE_API_URL}/api/admin/users/${user.id}`,
+      {
+        withCredentials: true,
+      }
+    );
+
+    alert("User deleted successfully.");
+
+    window.location.href = "/admin/users";
+  } catch (err) {
+    console.error(err);
+    alert("Failed to delete user.");
+  } finally {
+    setDeleting(false);
   }
 }
 
@@ -282,14 +312,16 @@ async function toggleBan() {
           }
         />
 
-               <ActionButton
-          title="Delete Account"
-          subtitle="Permanent action"
-          color="#b91c1c"
-          onClick={() =>
-            console.log("Delete:", user.id)
-          }
-        />
+        <ActionButton
+  title={
+    deleting
+      ? "Deleting..."
+      : "Delete Account"
+  }
+  subtitle="Permanent action"
+  color="#b91c1c"
+  onClick={deleteUser}
+/>  
       </div>
 
       {messageOpen && (
