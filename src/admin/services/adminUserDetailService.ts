@@ -19,6 +19,7 @@ export interface AdminUserDetail {
   role?: string;
   verified?: boolean;
   banned?: boolean;
+  shadowBanned?: boolean;
 
   age: number | null;
   location: string | null;

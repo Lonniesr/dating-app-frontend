@@ -67,6 +67,7 @@ export default function UserModeration({ user }: Props) {
 const [verifying, setVerifying] = useState(false);
 
 const [banning, setBanning] = useState(false);
+const [shadowBanning, setShadowBanning] = useState(false);
 
 const [deleting, setDeleting] = useState(false);
 
@@ -171,7 +172,42 @@ async function toggleBan() {
     setBanning(false);
   }
 }
+async function toggleShadowBan() {
+  try {
+    setShadowBanning(true);
 
+    if (user.shadowBanned) {
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/admin/shadow-ban/${user.id}`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      alert("Shadow ban removed.");
+    } else {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/admin/shadow-ban/${user.id}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
+      alert("User shadow banned.");
+    }
+
+    await queryClient.invalidateQueries({
+      queryKey: ["admin-user-detail", user.id],
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to update shadow ban.");
+  } finally {
+    setShadowBanning(false);
+  }
+}
 async function deleteUser() {
   const confirmed = window.confirm(
     `Delete ${user.name || user.email}?\n\nThis cannot be undone.`
@@ -293,14 +329,18 @@ async function deleteUser() {
   onClick={toggleBan}
 /> 
 
-        <ActionButton
-          title="Shadow Ban"
-          subtitle="Hide user without notifying them"
-          color="#ef4444"
-          onClick={() =>
-            console.log("Shadow Ban:", user.id)
-          }
-        />
+       <ActionButton
+  title={
+    shadowBanning
+      ? "Updating..."
+      : user?.shadowBanned
+      ? "Remove Shadow Ban"
+      : "Shadow Ban"
+  }
+  subtitle="Hide user without notifying them"
+  color="#ef4444"
+  onClick={toggleShadowBan}
+/>
 
         <ActionButton
   title={
