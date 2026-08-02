@@ -24,6 +24,7 @@ import AdminReportsPage from "./admin/pages/AdminReportsPage";
 import AdminSupport from "./admin/pages/AdminSupport";
 import AdminAnalyticsDeepDivePage from "./admin/pages/AdminAnalyticsDeepDivePage";
 import AdminSystemLogsPage from "./admin/pages/AdminSystemLogsPage";
+import CreatorStudio from "./admin/pages/CreatorStudio";
 
 import LoginPage from "./user/LoginPage";
 import ForgotPasswordPage from "./user/ForgotPasswordPage";
@@ -77,6 +78,7 @@ export default function App() {
           <Route path="likes" element={<LikesPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
 
+          <Route path="users" element={<AdminUsers />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/:id" element={<ProfilePage />} />
 
@@ -131,8 +133,9 @@ export default function App() {
         <Route path="support" element={<AdminSupport />} />
         <Route path="analytics" element={<AdminAnalyticsDeepDivePage />} />
         <Route path="system-logs" element={<AdminSystemLogsPage />} />
+        <Route path="creator" element={<CreatorStudio />} />
 
-        <Route path="*" element={<Navigate to="dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
