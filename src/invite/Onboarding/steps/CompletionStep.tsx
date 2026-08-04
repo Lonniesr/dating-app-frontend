@@ -36,41 +36,7 @@ await queryClient.invalidateQueries({
   queryKey: ["authUser"],
 });
 
-const inviteData = JSON.parse(
-  localStorage.getItem("lynqInviteData") || "{}"
-);
 
-console.log(
-  "lynqInviteData raw:",
-  localStorage.getItem("lynqInviteData")
-);
-
-console.log(
-  "inviteData parsed:",
-  inviteData
-);
-
-if (
-  inviteData.redirectToInviter &&
-  inviteData.invitedById
-) {
-  console.log(
-    "✅ REDIRECTING TO INVITER:",
-    inviteData.invitedById
-  );
-
-  localStorage.removeItem("lynqInviteData");
-
-  navigate(
-    `/user/profile/${inviteData.invitedById}`
-  );
-} else {
-  console.log(
-    "❌ FALLING BACK TO DASHBOARD"
-  );
-
-  navigate("/dashboard");
-}
     } catch (err) {
       console.error("Onboarding completion failed:", err);
       alert("Something went wrong finishing onboarding.");
@@ -78,7 +44,8 @@ if (
       setLoading(false);
     }
   };
-
+    navigate("/onboarding/install");
+  
   return (
     <div className="text-center">
       <h1 className="text-3xl font-bold mb-4">You're All Set!</h1>

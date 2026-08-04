@@ -8,6 +8,7 @@ import BasicStep from "./steps/BasicStep";
 import PhotosStep from "./steps/PhotosStep";
 import PreferencesStep from "./steps/PreferencesStep";
 import PersonalityStep from "./steps/PersonalityStep";
+import InstallStep from "./steps/InstallStep";
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function Onboarding() {
 
   const hasInitialized = useRef(false); // 🔥 CRITICAL FIX
 
-  const totalSteps = 4;
+  const totalSteps = 5;
   const progressPercent = ((step + 1) / totalSteps) * 100;
 
   /* ================================
@@ -64,7 +65,7 @@ export default function Onboarding() {
     else if (!hasPhotos) setStep(1);
     else if (!hasPreferences) setStep(2);
     else if (!hasPrompts) setStep(3);
-    else navigate("/user/dashboard");
+    else setStep(4);
 
     hasInitialized.current = true; // 🔥 LOCK IT FOREVER
   }, [authUser, navigate]);
@@ -83,10 +84,6 @@ export default function Onboarding() {
     setStep((prev) => prev - 1);
   };
 
-  /* ================================
-     Finish
-  ================================= */
-
  const finish = async () => {
   try {
     await fetch(
@@ -94,7 +91,9 @@ export default function Onboarding() {
       {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ inviteCode }),
       }
     );
@@ -102,36 +101,8 @@ export default function Onboarding() {
     console.error("Error completing onboarding:", err);
   }
 
-  const inviteData = JSON.parse(
-    localStorage.getItem("lynqInviteData") || "{}"
-  );
-
-  console.log(
-    "Onboarding finish inviteData:",
-    inviteData
-  );
-
-  if (
-    inviteData.redirectToInviter &&
-    inviteData.invitedById
-  ) {
-    console.log(
-      "✅ Redirecting to inviter profile:",
-      inviteData.invitedById
-    );
-
-    localStorage.removeItem("lynqInviteData");
-
-    navigate(
-      `/user/profile/${inviteData.invitedById}`
-    );
-  } else {
-    console.log(
-      "❌ No inviter redirect data found"
-    );
-
-    navigate("/user/dashboard");
-  }
+  // Move to Install Step
+  setStep(4);
 };
 
   /* ================================
@@ -163,9 +134,16 @@ export default function Onboarding() {
         {step === 0 && <BasicStep next={goNext} />}
         {step === 1 && <PhotosStep next={goNext} back={goBack} />}
         {step === 2 && <PreferencesStep next={goNext} back={goBack} />}
-        {step === 3 && <PersonalityStep next={finish} back={goBack} />}
-      </div>
+        {step === 3 && (
+           <PersonalityStep
+           next={finish}
+           back={goBack}
+      />
+    )}
 
-    </div>
-  );
-}
+        {step === 4 && <InstallStep />}
+        </div>
+
+      </div>
+    );
+  }
