@@ -9,11 +9,11 @@ export default defineConfig({
     react(),
 
     visualizer({
-  filename: "stats.html",
-  open: true,
-  gzipSize: true,
-  brotliSize: true,
-}),
+      filename: "stats.html",
+      open: true,
+      gzipSize: true,
+      brotliSize: true,
+    }),
 
     VitePWA({
       registerType: "autoUpdate",
@@ -74,47 +74,6 @@ export default defineConfig({
 
   build: {
     sourcemap: false,
-
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes("node_modules")) {
-            
-
-            if (id.includes("@tanstack")) {
-              return "query";
-            }
-
-            if (id.includes("firebase")) {
-              return "firebase";
-            }
-
-            if (id.includes("socket.io")) {
-              return "socket";
-            }
-
-            if (
-              id.includes("chart.js") ||
-              id.includes("react-chartjs-2") ||
-              id.includes("recharts")
-            ) {
-              return "charts";
-            }
-
-            if (
-              id.includes("framer-motion") ||
-              id.includes("@react-spring")
-            ) {
-              return "animation";
-            }
-
-            
-
-            return "vendor";
-          }
-        },
-      },
-    },
   },
 
   server: {
