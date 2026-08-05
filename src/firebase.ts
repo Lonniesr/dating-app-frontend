@@ -1,5 +1,4 @@
 import { initializeApp } from "firebase/app";
-import { getMessaging, getToken, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCuaQAKF0pXrKWWrdRObhV158dNbIzQn4U",
@@ -12,40 +11,54 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-/**
- * 🔥 SAFELY GET MESSAGING INSTANCE
- */
-export async function getMessagingInstance() { // ✅ FIXED (export added)
-  const supported = await isSupported();
+/* =========================
+   GET MESSAGING INSTANCE
+========================= */
+
+export async function getMessagingInstance() {
+  const messagingModule = await import("firebase/messaging");
+
+  const supported =
+    await messagingModule.isSupported();
 
   if (!supported) {
-    console.warn("⚠️ Firebase messaging not supported in this browser");
+    console.warn(
+      "⚠️ Firebase messaging not supported."
+    );
     return null;
   }
 
-  return getMessaging(app);
+  return messagingModule.getMessaging(app);
 }
 
-/**
- * 🔥 GET PUSH TOKEN (FIXED)
- */
+/* =========================
+   GET PUSH TOKEN
+========================= */
+
 export async function getPushToken() {
   try {
-    console.log("🔥 Requesting notification permission...");
+    console.log(
+      "🔥 Requesting notification permission..."
+    );
 
-    const permission = await Notification.requestPermission();
+    const permission =
+      await Notification.requestPermission();
 
     if (permission !== "granted") {
-      console.warn("❌ Notification permission denied");
+      console.warn(
+        "❌ Notification permission denied"
+      );
       return null;
     }
 
-    const messaging = await getMessagingInstance();
+    const messaging =
+      await getMessagingInstance();
 
-    if (!messaging) {
-      console.warn("❌ Messaging not available");
-      return null;
-    }
+    if (!messaging) return null;
+
+    const { getToken } = await import(
+      "firebase/messaging"
+    );
 
     const token = await getToken(messaging, {
       vapidKey:
@@ -53,16 +66,20 @@ export async function getPushToken() {
     });
 
     if (!token) {
-      console.warn("❌ No push token received");
+      console.warn(
+        "❌ No push token received."
+      );
       return null;
     }
 
     console.log("🔥 PUSH TOKEN:", token);
 
     return token;
-
   } catch (err) {
-    console.error("❌ Push token error:", err);
+    console.error(
+      "❌ Push token error:",
+      err
+    );
     return null;
   }
 }

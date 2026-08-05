@@ -13,21 +13,6 @@ import { ThemeProvider } from "./user/context/ThemeContext";
 
 import { Toaster } from "react-hot-toast";
 
-// ✅ PWA Registration
-import { registerSW } from "virtual:pwa-register";
-
-const updateSW = registerSW({
-  immediate: true,
-
-  onNeedRefresh() {
-    console.log("🚀 New LynQ update available.");
-  },
-
-  onOfflineReady() {
-    console.log("✅ LynQ is ready for offline use.");
-  },
-});
-
 const queryClient = new QueryClient();
 
 ReactDOM.createRoot(
@@ -39,7 +24,6 @@ ReactDOM.createRoot(
         <ThemeProvider>
           <>
             <App />
-
             <Toaster position="top-center" />
           </>
         </ThemeProvider>

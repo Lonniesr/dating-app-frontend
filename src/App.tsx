@@ -1,30 +1,31 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import RouteGuard from "./admin/core/RouteGuard";
 import AdminLayout from "./admin/core/Layout";
 
-import AdminDashboard from "./admin/pages/AdminDashboard";
-import AdminUsers from "./admin/pages/AdminUsers";
-import AdminUserDetail from "./admin/pages/AdminUserDetail";
-import AdminRoles from "./admin/pages/AdminRoles";
-import AdminSettings from "./admin/pages/AdminSettings";
-import AdminInvites from "./admin/pages/AdminInvites";
-import AdminVerification from "./admin/pages/AdminVerification";
-import AdminMatches from "./admin/pages/AdminMatches";
-import AdminMessages from "./admin/pages/AdminMessages";
-import AdminSwipes from "./admin/pages/AdminSwipes";
-import AdminBans from "./admin/pages/AdminBans";
-import AdminUserSearchPage from "./admin/pages/AdminUserSearchPage";
-import AdminBillingPage from "./admin/pages/AdminBillingPage";
-import AdminNotificationsPage from "./admin/pages/AdminNotificationsPage";
-import AdminSystemStatusPage from "./admin/pages/AdminSystemStatusPage";
-import AdminIntegrationsPage from "./admin/pages/AdminIntegrationsPage";
-import AdminProfile from "./admin/pages/AdminProfile";
-import AdminReportsPage from "./admin/pages/AdminReportsPage";
-import AdminSupport from "./admin/pages/AdminSupport";
-import AdminAnalyticsDeepDivePage from "./admin/pages/AdminAnalyticsDeepDivePage";
-import AdminSystemLogsPage from "./admin/pages/AdminSystemLogsPage";
-import CreatorStudio from "./admin/pages/CreatorStudio";
+const AdminDashboard = lazy(() => import("./admin/pages/AdminDashboard"));
+const AdminUsers = lazy(() => import("./admin/pages/AdminUsers"));
+const AdminUserDetail = lazy(() => import("./admin/pages/AdminUserDetail"));
+const AdminRoles = lazy(() => import("./admin/pages/AdminRoles"));
+const AdminSettings = lazy(() => import("./admin/pages/AdminSettings"));
+const AdminInvites = lazy(() => import("./admin/pages/AdminInvites"));
+const AdminVerification = lazy(() => import("./admin/pages/AdminVerification"));
+const AdminMatches = lazy(() => import("./admin/pages/AdminMatches"));
+const AdminMessages = lazy(() => import("./admin/pages/AdminMessages"));
+const AdminSwipes = lazy(() => import("./admin/pages/AdminSwipes"));
+const AdminBans = lazy(() => import("./admin/pages/AdminBans"));
+const AdminUserSearchPage = lazy(() => import("./admin/pages/AdminUserSearchPage"));
+const AdminBillingPage = lazy(() => import("./admin/pages/AdminBillingPage"));
+const AdminNotificationsPage = lazy(() => import("./admin/pages/AdminNotificationsPage"));
+const AdminSystemStatusPage = lazy(() => import("./admin/pages/AdminSystemStatusPage"));
+const AdminIntegrationsPage = lazy(() => import("./admin/pages/AdminIntegrationsPage"));
+const AdminProfile = lazy(() => import("./admin/pages/AdminProfile"));
+const AdminReportsPage = lazy(() => import("./admin/pages/AdminReportsPage"));
+const AdminSupport = lazy(() => import("./admin/pages/AdminSupport"));
+const AdminAnalyticsDeepDivePage = lazy(() => import("./admin/pages/AdminAnalyticsDeepDivePage"));
+const AdminSystemLogsPage = lazy(() => import("./admin/pages/AdminSystemLogsPage"));
+const CreatorStudio = lazy(() => import("./admin/pages/CreatorStudio"));
 
 import LoginPage from "./user/LoginPage";
 import ForgotPasswordPage from "./user/ForgotPasswordPage";
@@ -54,7 +55,9 @@ import OnboardingPage from "./invite/Onboarding";
 import SignupPage from "./invite/Signup";
 
 export default function App() {
+  
   return (
+  <Suspense fallback={<div className="p-8 text-white">Loading...</div>}>
     <Routes>
 
       <Route path="/" element={<Navigate to="/login" replace />} />
@@ -141,5 +144,6 @@ export default function App() {
       <Route path="*" element={<Navigate to="/login" replace />} />
 
     </Routes>
+  </Suspense>
   );
 }

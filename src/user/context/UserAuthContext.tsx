@@ -29,6 +29,13 @@ type Preferences = {
   marketingNotifications?: boolean;
 };
 
+export interface BadgeCounts {
+  unreadMessages: number;
+  newLikes: number;
+  newMatches: number;
+  photoRequests: number;
+}
+
 export type AuthUser = {
   id: string;
   email: string;
@@ -73,14 +80,23 @@ export type AuthUser = {
 type AuthContextType = {
   authUser: AuthUser | null;
   isLoading: boolean;
+
+  badges: BadgeCounts;
+  setBadges: React.Dispatch<
+    React.SetStateAction<BadgeCounts>
+  >;
+
   logout: () => Promise<void>;
   refreshUser: () => Promise<AuthUser | null>;
-  getOnboardingStep: (user: AuthUser) => string | null;
+  getOnboardingStep: (
+    user: AuthUser
+  ) => string | null;
 };
 
-const UserAuthContext = createContext<AuthContextType | undefined>(
-  undefined
-);
+const UserAuthContext =
+  createContext<AuthContextType | undefined>(
+    undefined
+  );
 
 /* =========================
    PROVIDER
@@ -91,30 +107,58 @@ export function UserAuthProvider({
 }: {
   children: ReactNode;
 }) {
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [authUser, setAuthUser] =
+    useState<AuthUser | null>(null);
 
-  // 🔥 GLOBAL SOCKET CONNECTION (FIXED POSITION)
-  useUserSocket(authUser?.id);
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const [badges, setBadges] =
+    useState<BadgeCounts>({
+      unreadMessages: 0,
+      newLikes: 0,
+      newMatches: 0,
+      photoRequests: 0,
+    });
+
+  // 🔥 Global socket
+  const {
+    socket,
+    onlineUsers,
+    typingUsers,
+  } = useUserSocket(authUser?.id);
+
   async function setupPush() {
     try {
       const token = await getPushToken();
+
       if (!token) return;
 
-      console.log("🔥 Sending push token to backend:", token);
+      console.log(
+        "🔥 Sending push token:",
+        token
+      );
 
       await axios.post(
         `${import.meta.env.VITE_API_URL}/api/user/push-token`,
         { token },
-        { withCredentials: true }
+        {
+          withCredentials: true,
+        }
       );
     } catch (err) {
-      console.error("Push setup failed:", err);
+      console.error(
+        "Push setup failed:",
+        err
+      );
     }
   }
 
-  function getOnboardingStep(user: AuthUser): string | null {
-    if (user.role === "admin") return null;
+  function getOnboardingStep(
+    user: AuthUser
+  ): string | null {
+    if (user.role === "admin")
+      return null;
 
     const hasBasic =
       Boolean(user.name?.trim()) &&
@@ -130,25 +174,37 @@ export function UserAuthProvider({
 
     const hasPreferences =
       !!user.preferences &&
-      Boolean(user.preferences.interestedIn) &&
+      Boolean(
+        user.preferences.interestedIn
+      ) &&
       Boolean(user.preferences.minAge) &&
       Boolean(user.preferences.maxAge);
 
     const hasPrompts =
       !!user.prompts &&
-      Object.keys(user.prompts).length > 0;
+      Object.keys(user.prompts).length >
+        0;
 
-    if (!hasBasic) return "/invite/onboarding";
-    if (!hasIdentity) return "/invite/onboarding";
-    if (!hasPhotos) return "/invite/onboarding";
-    if (!hasPreferences) return "/invite/onboarding";
-    if (!hasPrompts) return "/invite/onboarding";
+    if (!hasBasic)
+      return "/invite/onboarding";
+
+    if (!hasIdentity)
+      return "/invite/onboarding";
+
+    if (!hasPhotos)
+      return "/invite/onboarding";
+
+    if (!hasPreferences)
+      return "/invite/onboarding";
+
+    if (!hasPrompts)
+      return "/invite/onboarding";
 
     return null;
   }
 
   /* =========================
-     LOAD PROFILE (FIXED)
+     LOAD PROFILE
   ========================= */
 
   async function loadProfile(): Promise<AuthUser | null> {
@@ -162,25 +218,65 @@ export function UserAuthProvider({
       );
 
       if (!res.ok) {
-        console.warn("Auth check failed, keeping existing session");
+        console.warn(
+          "Auth check failed"
+        );
         return authUser;
       }
 
-      const data: AuthUser = await res.json();
+      const data: AuthUser =
+        await res.json();
 
       setAuthUser(data);
+
       return data;
     } catch (err) {
-      console.error("Auth load failed:", err);
+      console.error(
+        "Auth load failed:",
+        err
+      );
+
       return authUser;
     } finally {
       setIsLoading(false);
     }
   }
+    /* =========================
+     LIVE SOCKET BADGES
+  ========================= */
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleBadges = (data: BadgeCounts) => {
+      console.log("📬 BADGES RECEIVED:", data);
+
+      setBadges({
+        unreadMessages: data.unreadMessages ?? 0,
+        newLikes: data.newLikes ?? 0,
+        newMatches: data.newMatches ?? 0,
+        photoRequests: data.photoRequests ?? 0,
+      });
+    };
+
+    socket.on("badges", handleBadges);
+
+    return () => {
+      socket.off("badges", handleBadges);
+    };
+  }, [socket]);
+
+  /* =========================
+     INITIAL PROFILE LOAD
+  ========================= */
 
   useEffect(() => {
     loadProfile();
   }, []);
+
+  /* =========================
+     PUSH SETUP
+  ========================= */
 
   useEffect(() => {
     if (authUser) {
@@ -200,10 +296,18 @@ export function UserAuthProvider({
     } catch {}
 
     setAuthUser(null);
+
+    setBadges({
+      unreadMessages: 0,
+      newLikes: 0,
+      newMatches: 0,
+      photoRequests: 0,
+    });
   }
 
   async function refreshUser(): Promise<AuthUser | null> {
     setIsLoading(true);
+
     return loadProfile();
   }
 
@@ -212,6 +316,10 @@ export function UserAuthProvider({
       value={{
         authUser,
         isLoading,
+
+        badges,
+        setBadges,
+
         logout,
         refreshUser,
         getOnboardingStep,
