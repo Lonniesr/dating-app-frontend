@@ -18,15 +18,26 @@ export function useUserSocket(userId?: string) {
     if (!userId) return;
 
    // 🛑 prevent duplicate sockets
+// 🛑 Reuse existing socket
 if (globalSocket) {
-
   console.log("🛑 GLOBAL SOCKET EXISTS");
 
   socketRef.current = globalSocket;
-
   setSocket(globalSocket);
-
   setReady(globalSocket.connected);
+
+  // ✅ Always (re)join the user room
+  if (globalSocket.connected) {
+    console.log("🔄 REJOIN USER ROOM:", userId);
+
+    globalSocket.emit("chat:join", userId);
+  } else {
+    globalSocket.once("connect", () => {
+      console.log("🔄 REJOIN USER ROOM AFTER CONNECT:", userId);
+
+      globalSocket?.emit("chat:join", userId);
+    });
+  }
 
   return;
 }
