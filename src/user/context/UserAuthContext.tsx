@@ -276,13 +276,27 @@ useEffect(() => {
     badges.newMatches +
     badges.photoRequests;
 
+  console.log(
+    "📱 Badge API supported:",
+    "setAppBadge" in navigator
+  );
+
+  console.log(
+    "📱 Badge total:",
+    total
+  );
+
   if ("setAppBadge" in navigator) {
     if (total > 0) {
       // @ts-ignore
       navigator.setAppBadge(total);
+
+      console.log("✅ App badge set");
     } else {
       // @ts-ignore
       navigator.clearAppBadge();
+
+      console.log("✅ App badge cleared");
     }
   }
 }, [badges]);
