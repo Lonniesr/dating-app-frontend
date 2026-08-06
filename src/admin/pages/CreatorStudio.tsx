@@ -22,6 +22,7 @@ const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const [showLike, setShowLike] = useState(true);
   const [showNope, setShowNope] = useState(false);
+const [screenshotMode, setScreenshotMode] = useState(false);
 
 function handleVideo(event: React.ChangeEvent<HTMLInputElement>) {
   const file = event.target.files?.[0];
@@ -35,6 +36,35 @@ function handlePhoto(event: React.ChangeEvent<HTMLInputElement>) {
   if (!file) return;
 
   setPhotoUrl(URL.createObjectURL(file));
+}
+
+if (screenshotMode) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black">
+      <CreatorPreview
+        creatorName={creatorName}
+        age={age}
+        city={city}
+        distance={distance}
+        notification={notification}
+        cta={cta}
+        videoUrl={videoUrl}
+        photoUrl={photoUrl}
+        verified={verified}
+        online={online}
+        topPick={topPick}
+        showLike={showLike}
+        showNope={showNope}
+      />
+
+      <button
+        onClick={() => setScreenshotMode(false)}
+        className="absolute right-6 top-6 rounded-xl bg-white/10 px-5 py-3 text-white backdrop-blur hover:bg-white/20"
+      >
+        Exit Screenshot Mode
+      </button>
+    </div>
+  );
 }
 
   return (
@@ -195,6 +225,13 @@ function handlePhoto(event: React.ChangeEvent<HTMLInputElement>) {
           </label>
 
         </div>
+
+<button
+  onClick={() => setScreenshotMode(true)}
+  className="w-full rounded-xl bg-pink-600 py-3 font-semibold text-white transition hover:bg-pink-700"
+>
+  📸 Screenshot Mode
+</button>
 
       </div>
 
