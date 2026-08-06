@@ -266,6 +266,27 @@ export function UserAuthProvider({
     };
   }, [socket]);
 
+/* =========================
+   APP ICON BADGES (ANDROID)
+========================= */
+
+useEffect(() => {
+  const total =
+    badges.unreadMessages +
+    badges.newMatches +
+    badges.photoRequests;
+
+  if ("setAppBadge" in navigator) {
+    if (total > 0) {
+      // @ts-ignore
+      navigator.setAppBadge(total);
+    } else {
+      // @ts-ignore
+      navigator.clearAppBadge();
+    }
+  }
+}, [badges]);
+
   /* =========================
      INITIAL PROFILE LOAD
   ========================= */
@@ -304,6 +325,11 @@ export function UserAuthProvider({
       photoRequests: 0,
     });
   }
+
+if ("clearAppBadge" in navigator) {
+  // @ts-ignore
+  navigator.clearAppBadge();
+}
 
   async function refreshUser(): Promise<AuthUser | null> {
     setIsLoading(true);
