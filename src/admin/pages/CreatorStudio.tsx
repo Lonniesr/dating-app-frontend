@@ -40,30 +40,34 @@ function handlePhoto(event: React.ChangeEvent<HTMLInputElement>) {
 
 if (screenshotMode) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black">
-      <CreatorPreview
-        creatorName={creatorName}
-        age={age}
-        city={city}
-        distance={distance}
-        notification={notification}
-        cta={cta}
-        videoUrl={videoUrl}
-        photoUrl={photoUrl}
-        verified={verified}
-        online={online}
-        topPick={topPick}
-        showLike={showLike}
-        showNope={showNope}
-      />
+ <div className="fixed inset-0 z-[9999] bg-black">
 
-      <button
-        onClick={() => setScreenshotMode(false)}
-        className="absolute right-6 top-6 rounded-xl bg-white/10 px-5 py-3 text-white backdrop-blur hover:bg-white/20"
-      >
-        Exit Screenshot Mode
-      </button>
-    </div>
+  <div className="flex h-screen w-screen items-center justify-center">
+    <CreatorPreview
+      creatorName={creatorName}
+      age={age}
+      city={city}
+      distance={distance}
+      notification={notification}
+      cta={cta}
+      videoUrl={videoUrl}
+      photoUrl={photoUrl}
+      verified={verified}
+      online={online}
+      topPick={topPick}
+      showLike={showLike}
+      showNope={showNope}
+    />
+  </div>
+
+  <button
+    onClick={() => setScreenshotMode(false)}
+    className="absolute right-6 top-6 rounded-xl bg-white/10 px-5 py-3 text-white backdrop-blur hover:bg-white/20"
+  >
+    Exit Screenshot Mode
+  </button>
+
+</div>
   );
 }
 
