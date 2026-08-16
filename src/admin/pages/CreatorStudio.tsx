@@ -1,4 +1,5 @@
 import { useState } from "react";
+import html2canvas from "html2canvas";
 import CreatorPreview from "../components/creator/CreatorPreview";
 
 export default function CreatorStudio() {
@@ -13,8 +14,7 @@ export default function CreatorStudio() {
 
   const [cta, setCta] = useState("Request your LynQ invite ↓");
 
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const [topPick, setTopPick] = useState(true);
   const [online, setOnline] = useState(true);
@@ -22,100 +22,56 @@ const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const [showLike, setShowLike] = useState(true);
   const [showNope, setShowNope] = useState(false);
-const [screenshotMode, setScreenshotMode] = useState(false);
 
-function handleVideo(event: React.ChangeEvent<HTMLInputElement>) {
-  const file = event.target.files?.[0];
-  if (!file) return;
+  function handlePhoto(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-  setVideoUrl(URL.createObjectURL(file));
-}
+    setPhotoUrl(URL.createObjectURL(file));
+  }
 
-function handlePhoto(event: React.ChangeEvent<HTMLInputElement>) {
-  const file = event.target.files?.[0];
-  if (!file) return;
+  async function downloadPromo() {
+    const element = document.getElementById("creator-preview");
+    if (!element) return;
 
-  setPhotoUrl(URL.createObjectURL(file));
-}
+    const canvas = await html2canvas(element, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: null,
+    });
 
-if (screenshotMode) {
-  return (
- <div className="fixed inset-0 z-[9999] bg-black">
-
-  <div className="flex h-screen w-screen items-center justify-center">
-    <CreatorPreview
-      creatorName={creatorName}
-      age={age}
-      city={city}
-      distance={distance}
-      notification={notification}
-      cta={cta}
-      videoUrl={videoUrl}
-      photoUrl={photoUrl}
-      verified={verified}
-      online={online}
-      topPick={topPick}
-      showLike={showLike}
-      showNope={showNope}
-    />
-  </div>
-
-  <button
-    onClick={() => setScreenshotMode(false)}
-    className="absolute right-6 top-6 rounded-xl bg-white/10 px-5 py-3 text-white backdrop-blur hover:bg-white/20"
-  >
-    Exit Screenshot Mode
-  </button>
-
-</div>
-  );
-}
+    const link = document.createElement("a");
+    link.download = `${creatorName.replace(/\s+/g, "_")}_LynQ.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }
 
   return (
     <div className="flex gap-12">
-
       {/* LEFT PANEL */}
 
       <div className="w-[340px] shrink-0 space-y-8">
-
         <h1 className="text-3xl font-bold">
           Creator Studio
         </h1>
 
         {/* Upload */}
 
-       <div className="space-y-5">
+        <div>
+          <label className="mb-2 block font-medium">
+            Upload Profile Photo
+          </label>
 
-  <div>
-    <label className="block mb-2 font-medium">
-      Upload Creator Video
-    </label>
-
-    <input
-      type="file"
-      accept="video/*"
-      onChange={handleVideo}
-    />
-  </div>
-
-  <div>
-    <label className="block mb-2 font-medium">
-      Upload Profile Photo
-    </label>
-
-    <input
-      type="file"
-      accept="image/*"
-      onChange={handlePhoto}
-    />
-  </div>
-
-</div>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handlePhoto}
+          />
+        </div>
 
         {/* Creator Details */}
 
         <div className="space-y-4">
-
           <h2 className="text-lg font-semibold">
             Creator Details
           </h2>
@@ -148,13 +104,11 @@ if (screenshotMode) {
             placeholder="Distance"
             className="w-full rounded-xl border border-white/10 bg-zinc-900 p-3"
           />
-
         </div>
 
         {/* Text */}
 
         <div className="space-y-4">
-
           <h2 className="text-lg font-semibold">
             Text
           </h2>
@@ -172,13 +126,10 @@ if (screenshotMode) {
             onChange={(e) => setCta(e.target.value)}
             className="w-full rounded-xl border border-white/10 bg-zinc-900 p-3"
           />
-
         </div>
-
-        {/* Display Options */}
+                {/* Display Options */}
 
         <div className="space-y-3">
-
           <h2 className="text-lg font-semibold">
             Display
           </h2>
@@ -227,22 +178,19 @@ if (screenshotMode) {
               onChange={() => setShowNope(!showNope)}
             />
           </label>
-
         </div>
 
-<button
-  onClick={() => setScreenshotMode(true)}
-  className="w-full rounded-xl bg-pink-600 py-3 font-semibold text-white transition hover:bg-pink-700"
->
-  📸 Screenshot Mode
-</button>
-
+        <button
+          onClick={downloadPromo}
+          className="w-full rounded-xl bg-green-600 py-3 font-semibold text-white transition hover:bg-green-700"
+        >
+          ⬇ Download Promo
+        </button>
       </div>
 
       {/* PREVIEW */}
 
       <div className="flex-1 flex justify-center">
-
         <CreatorPreview
           creatorName={creatorName}
           age={age}
@@ -250,7 +198,6 @@ if (screenshotMode) {
           distance={distance}
           notification={notification}
           cta={cta}
-          videoUrl={videoUrl}
           photoUrl={photoUrl}
           verified={verified}
           online={online}
@@ -258,9 +205,7 @@ if (screenshotMode) {
           showLike={showLike}
           showNope={showNope}
         />
-
       </div>
-
     </div>
   );
 }

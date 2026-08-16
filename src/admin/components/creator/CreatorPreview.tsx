@@ -14,7 +14,6 @@ interface Props {
   distance: string;
   notification: string;
   cta: string;
-  videoUrl: string | null;
   photoUrl: string | null;
 
   verified: boolean;
@@ -32,7 +31,6 @@ export default function CreatorPreview({
   distance,
   notification,
   cta,
-  videoUrl,
   photoUrl,
   verified,
   online,
@@ -43,28 +41,22 @@ export default function CreatorPreview({
   return (
     <div className="flex w-full items-center justify-center bg-[radial-gradient(circle_at_center,#222_0%,#111_45%,#000_100%)] p-10">
       {/* Phone */}
-      <div className="relative rounded-[54px] border border-zinc-700 bg-black p-[10px] shadow-[0_45px_120px_rgba(0,0,0,.75)]">
+      <div
+        id="creator-preview"
+        className="relative rounded-[54px] border border-zinc-700 bg-black p-[10px] shadow-[0_45px_120px_rgba(0,0,0,.75)]"
+      >
         {/* Screen */}
         <div className="relative h-[844px] w-[390px] overflow-hidden rounded-[44px] bg-black">
-         {/* Media */}
-{videoUrl ? (
-  <video
-    src={videoUrl}
-    autoPlay
-    muted
-    loop
-    playsInline
-    className="absolute inset-0 h-full w-full object-cover object-top"
-    />
-) : photoUrl ? (
-  <img
-    src={photoUrl}
-    alt={creatorName}
-    className="absolute inset-0 h-full w-full object-cover object-top"
-    />
-) : (
-  <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black" />
-)}
+          {/* Media */}
+          {photoUrl ? (
+            <img
+              src={photoUrl}
+              alt={creatorName}
+              className="absolute inset-0 h-full w-full object-cover object-top"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black" />
+          )}
 
           {/* Vignette */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/20" />
@@ -119,7 +111,6 @@ export default function CreatorPreview({
 
           {/* Bottom */}
           <div className="absolute bottom-0 left-0 right-0 z-40 p-6">
-            {/* Name */}
             <div className="mb-3">
               <div className="flex items-center gap-3">
                 <h2 className="text-4xl font-black text-white">
@@ -138,7 +129,8 @@ export default function CreatorPreview({
                   <span className="h-4 w-4 animate-pulse rounded-full bg-green-400 ring-2 ring-white" />
                 )}
               </div>
-                <div className="mt-1 flex items-center gap-2 text-white/80">
+
+              <div className="mt-1 flex items-center gap-2 text-white/80">
                 <MapPinIcon className="h-5 w-5" />
 
                 <span className="text-lg">
@@ -147,9 +139,9 @@ export default function CreatorPreview({
               </div>
             </div>
 
-           {/* CTA */}
+            {/* CTA */}
             <button className="mx-auto mb-5 w-[92%] rounded-2xl border border-white/10 bg-white/10 px-6 py-3 text-lg font-semibold text-white shadow-[0_8px_30px_rgba(255,255,255,.08)] backdrop-blur-2xl transition-all duration-300 hover:bg-white/20 active:scale-95">
-             {cta}
+              {cta}
             </button>
 
             {/* Swipe Buttons */}
