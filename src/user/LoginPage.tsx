@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect,useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserAuth } from "./context/UserAuthContext";
 import logo from "../assets/lynqlogo.png";
@@ -11,6 +11,51 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [usersActive, setUsersActive] = useState(false);
+
+   /* =========================
+     CHECK LYNQ ACTIVITY
+  ========================= */
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkActivity = async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/activity`
+        );
+
+        if (!res.ok) {
+          if (mounted) setUsersActive(false);
+          return;
+        }
+
+        const data = await res.json();
+
+        if (mounted) {
+          setUsersActive(data.active === true);
+        }
+      } catch (err) {
+        console.error("ACTIVITY CHECK ERROR:", err);
+
+        if (mounted) {
+          setUsersActive(false);
+        }
+      }
+    };
+
+    // Check immediately
+    checkActivity();
+
+    // Check again every 60 seconds
+    const interval = window.setInterval(checkActivity, 60_000);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+    };
+  }, []);
 
   const handleLogin = async () => {
     if (loading) return;
@@ -90,9 +135,22 @@ export default function LoginPage() {
           />
         </div>
 
-        <h1 className="text-2xl font-semibold mb-6 text-center tracking-wide">
-          Welcome Back
-        </h1>
+        <h1 className="text-2xl font-semibold mb-3 text-center tracking-wide">
+  Welcome Back
+</h1>
+
+{usersActive && (
+  <div className="flex items-center justify-center gap-2 mb-6">
+    <span className="relative flex h-2.5 w-2.5">
+      <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping" />
+      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
+    </span>
+
+    <span className="text-sm text-green-400 font-medium">
+      Users active now
+    </span>
+  </div>
+)}
 
         {error && (
           <div className="mb-4 text-red-400 text-center">
