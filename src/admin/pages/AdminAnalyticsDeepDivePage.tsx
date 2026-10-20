@@ -71,6 +71,7 @@ type Invite = {
 type AnalyticsState = {
   overview: Overview | null;
   scans: DailyScan[];
+  signups: DailySignup[];
   devices: Device[];
   leaderboard: Invite[];
   errors: {
@@ -87,6 +88,7 @@ type Range = "7" | "30" | "90" | "all";
 const initialState: AnalyticsState = {
   overview: null,
   scans: [],
+  signups: [],
   devices: [],
   leaderboard: [],
   errors: {},
@@ -184,6 +186,22 @@ function normalizeScans(data: DailyScan[]): DailyScan[] {
   return result;
 }
 
+function normalizeSignups(data: DailySignup[]): DailySignup[] {
+  if (!Array.isArray(data)) throw new Error("Invalid signup response");
+
+  const rows = data.map((row) => {
+    if (!row || !isValidDay(row.date) || !isCount(row.signups)) {
+      throw new Error("Invalid signup record");
+    }
+    return { date: row.date, scans: row.signups };
+  });
+
+  return normalizeScans(rows).map((row) => ({
+    date: row.date,
+    signups: row.scans,
+  }));
+}
+
 function normalizeDevices(data: Device[]) {
   if (!Array.isArray(data)) {
     throw new Error("Invalid device response");
@@ -256,10 +274,12 @@ export default function AdminAnalyticsDeepDivePage() {
         axios
           .get<DailyScan[]>(`${API}/api/admin/analytics/daily-scans`, options)
           .then(({ data }) => normalizeScans(data)),
-        axios.get<DailySignup[]>(
-          `${API}/api/admin/analytics/daily-conversion`,
-          options
-        ),
+        axios
+          .get<DailySignup[]>(
+            `${API}/api/admin/analytics/daily-conversion`,
+            options
+          )
+          .then(({ data }) => normalizeSignups(data)),
         axios
           .get<Device[]>(`${API}/api/admin/analytics/devices`, options)
           .then(({ data }) => normalizeDevices(data)),
@@ -272,24 +292,21 @@ export default function AdminAnalyticsDeepDivePage() {
 
       const [overview, scans, signups, devices, leaderboard] = results;
 
-      let signupMessage =
-        "Daily signup history is unavailable. Accurate daily counts require individual signup timestamps.";
+      let signupMessage = "";
 
-      if (signups.status === "fulfilled") {
+      if (signups.status === "rejected") {
         signupMessage =
-          "Daily signup data is not shown because the earlier endpoint assigned signups to invite creation dates. Timestamped signup records are needed to verify this chart.";
-      } else if (
-        !axios.isAxiosError(signups.reason) ||
-        signups.reason.response?.data?.code !==
-          "DAILY_SIGNUP_HISTORY_UNAVAILABLE"
-      ) {
-        signupMessage =
-          "Daily signup history could not be loaded. Other analytics are available independently.";
+          axios.isAxiosError(signups.reason) &&
+          signups.reason.response?.data?.code ===
+            "DAILY_SIGNUP_HISTORY_UNAVAILABLE"
+            ? "Daily signup history is unavailable. The backend needs the updated signup analytics route."
+            : "Daily signup data could not be loaded or contains invalid records. Try refreshing.";
       }
 
       setAnalytics({
         overview: overview.status === "fulfilled" ? overview.value : null,
         scans: scans.status === "fulfilled" ? scans.value : [],
+        signups: signups.status === "fulfilled" ? signups.value : [],
         devices: devices.status === "fulfilled" ? devices.value : [],
         leaderboard:
           leaderboard.status === "fulfilled" ? leaderboard.value : [],
@@ -343,6 +360,19 @@ export default function AdminAnalyticsDeepDivePage() {
 
     return withAverage.filter((point) => dateTimestamp(point.date) >= start);
   }, [analytics.scans, range]);
+
+  const signupChartData = useMemo(() => {
+    if (range === "all") return analytics.signups;
+    const start = dateTimestamp(utcToday()) - (Number(range) - 1) * DAY_MS;
+    return analytics.signups.filter(
+      (point) => dateTimestamp(point.date) >= start
+    );
+  }, [analytics.signups, range]);
+
+  const periodSignups = signupChartData.reduce(
+    (sum, day) => sum + day.signups,
+    0
+  );
 
   const periodScans = chartData.reduce((sum, day) => sum + day.scans, 0);
   const recordedScans = analytics.scans.reduce(
@@ -566,8 +596,100 @@ export default function AdminAnalyticsDeepDivePage() {
         )}
       </Section>
 
-      <Section title="Daily signups">
-        <Notice>{analytics.signupMessage}</Notice>
+      <Section
+        title="Daily invite signups"
+        description="Existing accounts with a saved invite code, grouped by account creation date in UTC. Uses the same date range selected above."
+      >
+        {analytics.signupMessage ? (
+          <Notice error>{analytics.signupMessage}</Notice>
+        ) : signupChartData.length === 0 ? (
+          <Notice>No recorded invite signups in this period.</Notice>
+        ) : (
+          <>
+            <div className="mb-5">
+              <div className="text-2xl font-semibold text-gold">
+                {numberFormat.format(periodSignups)}
+              </div>
+              <div className="text-sm text-gray-400">
+                Invite signups in displayed period
+              </div>
+            </div>
+            <div
+              role="img"
+              aria-label={`Daily invite signup chart showing ${numberFormat.format(periodSignups)} signups in the selected period`}
+            >
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={signupChartData}
+                  margin={{ top: 12, right: 12, left: 0, bottom: 8 }}
+                >
+                  <CartesianGrid vertical={false} stroke="#303030" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={formatTick}
+                    minTickGap={36}
+                    tick={{ fill: "#a3a3a3", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fill: "#a3a3a3", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={48}
+                  />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    labelStyle={{ color: "#fff" }}
+                    cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                    labelFormatter={(label) =>
+                      `${formatTick(label)}${label === today ? " · Today, partial" : ""}`
+                    }
+                  />
+                  <Bar
+                    dataKey="signups"
+                    name="Invite signups"
+                    fill="#5EEAD4"
+                    radius={[3, 3, 0, 0]}
+                    maxBarSize={28}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-gray-400">
+              Today is incomplete. Deleted accounts and accounts without a saved
+              invite code are excluded, so totals may differ from invite counters.
+            </p>
+            <details className="mt-5">
+              <summary className="cursor-pointer text-sm text-gray-300">
+                View daily signup counts
+              </summary>
+              <div className="mt-3 max-h-72 overflow-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-700 text-gray-400">
+                      <th scope="col" className="py-2">Date (UTC)</th>
+                      <th scope="col" className="py-2 text-right">Signups</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...signupChartData].reverse().map((row) => (
+                      <tr key={row.date} className="border-b border-gray-800">
+                        <td className="py-2">
+                          {row.date}{row.date === today ? " (partial)" : ""}
+                        </td>
+                        <td className="py-2 text-right">
+                          {numberFormat.format(row.signups)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </>
+        )}
       </Section>
 
       <Section
