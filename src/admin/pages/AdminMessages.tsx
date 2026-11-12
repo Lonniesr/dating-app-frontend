@@ -82,6 +82,129 @@ const [broadcastGroup, setBroadcastGroup] =
   </button>
 </div>
 
+     {/* Broadcast composer at the top of the inbox */}
+{broadcastOpen && (
+  <div style={{ marginBottom: "1.5rem" }}>
+    <div className="glass-panel" style={{ padding: "1.5rem" }}>
+      <h2 className="h2">
+        Send LynQ Team Announcement
+      </h2>
+
+      <div
+        style={{
+          marginTop: "1rem",
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.75rem",
+        }}
+      >
+        <label>
+          <input
+            type="radio"
+            checked={broadcastGroup === "all"}
+            onChange={() =>
+              setBroadcastGroup("all")
+            }
+          />{" "}
+          All Users
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            checked={broadcastGroup === "verified"}
+            onChange={() =>
+              setBroadcastGroup("verified")
+            }
+          />{" "}
+          Verified Users
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            checked={broadcastGroup === "unverified"}
+            onChange={() =>
+              setBroadcastGroup("unverified")
+            }
+          />{" "}
+          Non-Verified Users
+        </label>
+      </div>
+
+      <textarea
+        autoFocus
+        aria-label="Announcement message"
+        value={broadcastText}
+        onChange={(e) =>
+          setBroadcastText(e.target.value)
+        }
+        placeholder="Type your announcement..."
+        className="input"
+        style={{
+          width: "100%",
+          minHeight: "160px",
+          marginTop: "1rem",
+          color: "#fff",
+          background: "rgba(255,255,255,0.08)",
+          border: "1px solid rgba(255,255,255,0.15)",
+        }}
+      />
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: "1rem",
+          marginTop: "1rem",
+        }}
+      >
+        <button
+          className="btn-outline"
+          onClick={() => {
+            setBroadcastOpen(false);
+            setBroadcastText("");
+          }}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="btn-gold"
+          onClick={async () => {
+            if (!broadcastText.trim()) return;
+
+            if (broadcastGroup === "all") {
+              await adminMessagesService.sendToAll(
+                broadcastText
+              );
+            }
+
+            if (broadcastGroup === "verified") {
+              await adminMessagesService.sendToVerified(
+                broadcastText
+              );
+            }
+
+            if (broadcastGroup === "unverified") {
+              await adminMessagesService.sendToUnverified(
+                broadcastText
+              );
+            }
+
+            alert("Announcement sent!");
+
+            setBroadcastText("");
+            setBroadcastOpen(false);
+          }}
+        >
+          Send Announcement
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
       <DataTable
         searchable
         columns={[
@@ -240,126 +363,7 @@ receiver:
           </div>
         </div>
       )}
-     {/* Broadcast Modal */}
-{broadcastOpen && (
-  <div className="modal-backdrop">
-    <div className="glass-panel modal">
-      <h2 className="h2">
-        Send LynQ Team Announcement
-      </h2>
 
-      <div
-        style={{
-          marginTop: "1rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.75rem",
-        }}
-      >
-        <label>
-          <input
-            type="radio"
-            checked={broadcastGroup === "all"}
-            onChange={() =>
-              setBroadcastGroup("all")
-            }
-          />{" "}
-          All Users
-        </label>
-
-        <label>
-          <input
-            type="radio"
-            checked={broadcastGroup === "verified"}
-            onChange={() =>
-              setBroadcastGroup("verified")
-            }
-          />{" "}
-          Verified Users
-        </label>
-
-        <label>
-          <input
-            type="radio"
-            checked={broadcastGroup === "unverified"}
-            onChange={() =>
-              setBroadcastGroup("unverified")
-            }
-          />{" "}
-          Non-Verified Users
-        </label>
-      </div>
-
-      <textarea
-        value={broadcastText}
-        onChange={(e) =>
-          setBroadcastText(e.target.value)
-        }
-        placeholder="Type your announcement..."
-        className="input"
-        style={{
-          width: "100%",
-          minHeight: "160px",
-          marginTop: "1rem",
-          color: "#fff",
-          background: "rgba(255,255,255,0.08)",
-          border: "1px solid rgba(255,255,255,0.15)",
-        }}
-      />
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "1rem",
-          marginTop: "1rem",
-        }}
-      >
-        <button
-          className="btn-outline"
-          onClick={() => {
-            setBroadcastOpen(false);
-            setBroadcastText("");
-          }}
-        >
-          Cancel
-        </button>
-
-        <button
-          className="btn-gold"
-          onClick={async () => {
-            if (!broadcastText.trim()) return;
-
-            if (broadcastGroup === "all") {
-              await adminMessagesService.sendToAll(
-                broadcastText
-              );
-            }
-
-            if (broadcastGroup === "verified") {
-              await adminMessagesService.sendToVerified(
-                broadcastText
-              );
-            }
-
-            if (broadcastGroup === "unverified") {
-              await adminMessagesService.sendToUnverified(
-                broadcastText
-              );
-            }
-
-            alert("Announcement sent!");
-
-            setBroadcastText("");
-            setBroadcastOpen(false);
-          }}
-        >
-          Send Announcement
-        </button>
-      </div>
-    </div>
-  </div>
-)} 
     </div>
   );
 }
