@@ -10,6 +10,7 @@ import lynqlogo from "../assets/lynqlogo.png";
 import { messagesService } from "./services/messageService";
 import { useMatches } from "../hooks/useMatches";
 
+import AmbassadorBadge from "./components/AmbassadorBadge";
 import GenderIcon from "./components/GenderIcon";
 import SwipeStatsSection from "./components/SwipeStatsSection";
 import MatchCountSection from "./components/MatchCountSection";
@@ -53,7 +54,7 @@ export default function ProfilePage() {
   const viewingOtherUser = !!id;
 
   const profileUser = viewingOtherUser
-    ? otherUser ?? null
+    ? (otherUser?.id === id ? otherUser : null)
     : authUser;
 
   useEffect(() => {
@@ -85,6 +86,9 @@ export default function ProfilePage() {
 
   const photos = profileUser?.photos ?? [];
   const age = calculateAge(profileUser?.birthdate);
+  const isAmbassador = viewingOtherUser
+    ? profileUser?.isAmbassador === true
+    : authUser?.role === "ambassador";
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -236,6 +240,12 @@ console.log(
                 <GenderIcon gender={profileUser.gender} />
               )}
             </div>
+
+            {isAmbassador && (
+              <div className="mt-1">
+                <AmbassadorBadge />
+              </div>
+            )}
 
             <p className="text-white/60 text-sm">
               {profileUser.email}

@@ -4,6 +4,7 @@ import { motion, useMotionValue, useTransform } from "framer-motion";
 import { useDiscover } from "../../hooks/useDiscover";
 import { useSwipe } from "../hooks/useSwipe";
 import { getProfilePhoto } from "../../utils/getProfilePhoto";
+import AmbassadorBadge from "./AmbassadorBadge";
 import apiClient from "../../services/apiClient";
 
 const SWIPE_THRESHOLD = 120;
@@ -331,6 +332,12 @@ console.log(
                 {profileData.username || profileData.name}
                 {profileData.age && `, ${profileData.age}`}
               </h2>
+
+              {profileData.isAmbassador === true && (
+                <div className="mt-2">
+                  <AmbassadorBadge />
+                </div>
+              )}
 
               {(profileData.location || profileData.latitude) && (
                 <p className="text-white/60 mt-1">
