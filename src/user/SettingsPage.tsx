@@ -11,6 +11,9 @@ export default function SettingsPage() {
   const [messageNotifications, setMessageNotifications] = useState(false);
   const [matchNotifications, setMatchNotifications] = useState(false);
   const [marketingNotifications, setMarketingNotifications] = useState(false);
+  const [ghostMode, setGhostMode] = useState(false);
+  const [savingGhostMode, setSavingGhostMode] = useState(false);
+  const [ghostModeMessage, setGhostModeMessage] = useState("");
 
   const [savingNotifications, setSavingNotifications] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -29,7 +32,19 @@ const [confirmPassword, setConfirmPassword] = useState("");
     setMatchNotifications(prefs.matchNotifications ?? true);
     setMarketingNotifications(prefs.marketingNotifications ?? false);
 
-    setLoading(false);
+    const loadGhostMode = async () => {
+      try {
+        const response = await apiClient.get("/api/profile");
+        setGhostMode(Boolean(response.data?.ghostMode));
+      } catch (err) {
+        console.error("Failed to load Ghost Mode", err);
+        setGhostMode(Boolean((authUser as any).ghostMode));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadGhostMode();
   }, [authUser]);
 
   const handleLogout = async () => {
@@ -93,6 +108,31 @@ const [confirmPassword, setConfirmPassword] = useState("");
     }
   };
 
+  const updateGhostMode = async (enabled: boolean) => {
+    try {
+      setSavingGhostMode(true);
+      setGhostModeMessage("");
+
+      await apiClient.put("/api/profile", {
+        ghostMode: enabled,
+      });
+
+      setGhostMode(enabled);
+      setGhostModeMessage(
+        enabled
+          ? "Ghost Mode is on. Your profile is hidden from other Discover users."
+          : "Ghost Mode is off. Your profile can appear in Discover."
+      );
+    } catch (err: any) {
+      console.error("Failed to update Ghost Mode", err);
+      setGhostModeMessage(
+        err?.response?.data?.error || "Could not update Ghost Mode."
+      );
+    } finally {
+      setSavingGhostMode(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-6 text-white">Loading settings…</div>;
   }
@@ -122,6 +162,43 @@ const [confirmPassword, setConfirmPassword] = useState("");
             >
               Get Verified
             </button>
+          )}
+        </div>
+
+        {/* 🔹 GHOST MODE */}
+        <div className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3">
+          <div className="flex justify-between items-start gap-4">
+            <div>
+              <h2 className="font-semibold">Ghost Mode</h2>
+              <p className="text-sm text-white/70 mt-1">
+                Hide your profile from other people in Discover. People you swipe
+                on or message can still see your profile.
+              </p>
+            </div>
+
+            <label className="flex items-center gap-2 shrink-0">
+              <span className="text-sm">{ghostMode ? "On" : "Off"}</span>
+              <input
+                type="checkbox"
+                checked={ghostMode}
+                disabled={!authUser?.verified || savingGhostMode}
+                onChange={(e) => updateGhostMode(e.target.checked)}
+                aria-label="Toggle Ghost Mode"
+              />
+            </label>
+          </div>
+
+          {!authUser?.verified && (
+            <p className="text-sm text-white/70">
+              Ghost Mode is available to verified members. Get verified to turn
+              it on.
+            </p>
+          )}
+
+          {ghostModeMessage && (
+            <p className="text-sm text-white/80" role="status">
+              {ghostModeMessage}
+            </p>
           )}
         </div>
 
